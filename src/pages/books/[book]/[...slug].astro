@@ -1,0 +1,104 @@
+---
+import { render, getCollection } from "astro:content";
+import BookLayout from "@/layouts/BookLayout.astro";
+import { getBookConfig, getAllBookSlugs } from "@/books.config";
+import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
+import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
+
+export async function getStaticPaths() {
+  const allSlugs = getAllBookSlugs();
+  const paths = [];
+
+  for (const bookSlug of allSlugs) {
+    const chapters = await getCollection("books", ({ id }) =>
+      id.startsWith(bookSlug + "/")
+    );
+    for (const chapter of chapters) {
+      const chapterSlug = chapter.id.replace(bookSlug + "/", "");
+      paths.push({
+        params: { book: bookSlug, slug: chapterSlug },
+        props: { chapter },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { chapter } = Astro.props;
+const { book, slug } = Astro.params;
+
+const bookConfig = getBookConfig(book!);
+
+if (!bookConfig) {
+  return Astro.redirect("/404");
+}
+
+const { Content } = await render(chapter);
+
+const headings: { depth: number; slug: string; text: string }[] =
+  (chapter.rendered as any)?.metadata?.headings
+    ?.filter((h: any) => h.depth >= 2 && h.depth <= 4)
+    ?.map((h: any) => ({
+      depth: h.depth,
+      slug: h.slug,
+      text: h.text,
+    })) ?? [];
+
+const allChapters = await getCollection("books", ({ id }) =>
+  id.startsWith(bookConfig.slug + "/")
+);
+const titleMap: Record<string, string> = {};
+for (const ch of allChapters) {
+  const chSlug = ch.id.replace(bookConfig.slug + "/", "");
+  titleMap[chSlug] = ch.data.title;
+}
+
+const flatItems = bookConfig.sidebar.flatMap(g => g.items);
+const currentIndex = flatItems.indexOf(slug!);
+const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
+const nextSlug = currentIndex < flatItems.length - 1 ? flatItems[currentIndex + 1] : null;
+---
+
+<BookLayout
+  title={chapter.data.title}
+  description={chapter.data.description}
+  bookSlug={book!}
+  sidebar={bookConfig.sidebar}
+  currentSlug={slug!}
+  titleMap={titleMap}
+  {headings}
+>
+  <Content />
+
+  <hr class="my-8 border-dashed" />
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    {prevSlug ? (
+      <a
+        href={`/books/${book}/${prevSlug}`}
+        class="flex w-full gap-1 hover:opacity-75"
+      >
+        <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
+        <div>
+          <span class="text-sm text-foreground/60">上一章</span>
+          <div class="text-sm font-medium text-accent">{titleMap[prevSlug]}</div>
+        </div>
+      </a>
+    ) : (
+      <div />
+    )}
+    {nextSlug ? (
+      <a
+        href={`/books/${book}/${nextSlug}`}
+        class="flex w-full justify-end gap-1 text-end hover:opacity-75"
+      >
+        <div>
+          <span class="text-sm text-foreground/60">下一章</span>
+          <div class="text-sm font-medium text-accent">{titleMap[nextSlug]}</div>
+        </div>
+        <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
+      </a>
+    ) : null}
+  </div>
+</BookLayout>

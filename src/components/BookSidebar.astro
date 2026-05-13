@@ -1,0 +1,52 @@
+---
+import type { SidebarGroup } from "@/books.config";
+
+type Props = {
+  bookSlug: string;
+  sidebar: SidebarGroup[];
+  currentSlug: string;
+  titleMap?: Record<string, string>;
+};
+
+const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
+---
+
+<nav class="book-sidebar" aria-label="章节导航">
+  <ul class="space-y-4">
+    {sidebar.map(group => (
+      <li>
+        <div class="mb-1 text-xs font-semibold uppercase tracking-wider text-foreground/40">
+          {group.text}
+        </div>
+          <ul class="space-y-0.5 border-s-2 border-border">
+            {group.items.map(item => {
+              const href = `/books/${bookSlug}/${item}`;
+              const isActive = currentSlug === item;
+              const label = titleMap[item] || item;
+              return (
+                <li class:list={["toc-item", { active: isActive }]}>
+                  <a
+                  href={href}
+                  class:list={[
+                    "block truncate px-3 py-1.5 text-sm transition-colors",
+                    isActive
+                      ? "font-medium text-accent"
+                      : "text-foreground/60 hover:text-accent",
+                  ]}
+                >
+                  {label}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .toc-item.active {
+    border-inline-start: 2px solid var(--accent);
+  }
+</style>

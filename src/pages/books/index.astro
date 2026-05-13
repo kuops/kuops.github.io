@@ -1,0 +1,18 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import BookCard from "@/components/BookCard.astro";
+import { BOOKS } from "@/books.config";
+---
+
+<Layout title="Books | My Blog" description="我的书籍收藏">
+  <Header />
+  <main id="main-content" class="app-layout py-12">
+    <h1 class="mb-8 text-3xl font-bold">Books</h1>
+    <div class="grid gap-6 sm:grid-cols-2">
+      {BOOKS.map(book => <BookCard {book} />)}
+    </div>
+  </main>
+  <Footer />
+</Layout>

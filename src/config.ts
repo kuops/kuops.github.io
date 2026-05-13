@@ -1,0 +1,23 @@
+export const SITE = {
+  website: "https://blog.example.com/",
+  author: "Blog Author",
+  profile: "https://blog.example.com/",
+  desc: "一个基于 Astro 的个人博客。",
+  title: "My Blog",
+  ogImage: "astropaper-og.jpg",
+  lightAndDarkMode: true,
+  postPerIndex: 4,
+  postPerPage: 4,
+  scheduledPostMargin: 15 * 60 * 1000,
+  showArchives: true,
+  showBackButton: true,
+  editPost: {
+    enabled: false,
+    text: "Edit page",
+    url: "",
+  },
+  dynamicOgImage: true,
+  dir: "ltr",
+  lang: "zh",
+  timezone: "Asia/Shanghai",
+} as const;

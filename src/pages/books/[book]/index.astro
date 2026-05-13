@@ -1,0 +1,20 @@
+---
+import { getAllBookSlugs, getBookConfig } from "@/books.config";
+
+export async function getStaticPaths() {
+  return getAllBookSlugs().map(slug => ({
+    params: { book: slug },
+  }));
+}
+
+const { book } = Astro.params;
+const config = getBookConfig(book!);
+
+const firstItem = config?.sidebar[0]?.items[0];
+
+if (firstItem) {
+  return Astro.redirect(`/books/${book}/${firstItem}`);
+}
+
+return Astro.redirect("/books");
+---
