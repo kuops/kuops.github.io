@@ -1,20 +1,19 @@
 ---
+import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import Breadcrumb from "@/components/Breadcrumb.astro";
 import BookCard from "@/components/BookCard.astro";
 import { BOOKS } from "@/books.config";
 ---
 
 <Layout title="Books | My Blog" description="我的书籍收藏">
   <Header />
-  <Breadcrumb />
-  <main id="main-content" class="app-layout pb-12 pt-4">
-    <h1 class="mb-6 text-2xl font-semibold sm:text-3xl">Books</h1>
+  <Main pageTitle="Books" pageDesc="All the articles I've posted.">
     <div class="grid gap-6 sm:grid-cols-2">
       {BOOKS.map(book => <BookCard {book} />)}
     </div>
-  </main>
+  </Main>
   <Footer />
 </Layout>
