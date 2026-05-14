@@ -34,16 +34,10 @@ if (!bookConfig) {
   return Astro.redirect("/404");
 }
 
-const { Content } = await render(chapter);
+const { Content, headings: allHeadings } = await render(chapter);
 
-const headings: { depth: number; slug: string; text: string }[] =
-  (chapter.rendered as any)?.metadata?.headings
-    ?.filter((h: any) => h.depth >= 2 && h.depth <= 4)
-    ?.map((h: any) => ({
-      depth: h.depth,
-      slug: h.slug,
-      text: h.text,
-    })) ?? [];
+const headings = allHeadings
+  .filter(h => h.depth >= 2 && h.depth <= 4);
 
 const allChapters = await getCollection("books", ({ id }) =>
   id.startsWith(bookConfig.slug + "/")

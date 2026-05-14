@@ -37,16 +37,10 @@ const {
   hideEditPost,
 } = post.data;
 
-const { Content } = await render(post);
+const { Content, headings: allHeadings } = await render(post);
 
-const headings: { depth: number; slug: string; text: string }[] =
-  (post.rendered as any)?.metadata?.headings
-    ?.filter((h: any) => h.depth >= 2 && h.depth <= 4)
-    ?.map((h: any) => ({
-      depth: h.depth,
-      slug: h.slug,
-      text: h.text,
-    })) ?? [];
+const headings = allHeadings
+  .filter(h => h.depth >= 2 && h.depth <= 4);
 
 let ogImageUrl: string | undefined;
 
@@ -206,8 +200,12 @@ const nextPost =
           container.className = "mermaid-svg overflow-x-auto";
           container.innerHTML = svg;
           pre.replaceWith(container);
+          const errorEl = document.getElementById("d" + id);
+          if (errorEl) errorEl.remove();
         })
         .catch(() => {
+          const errorEl = document.getElementById("d" + id);
+          if (errorEl) errorEl.remove();
           pre.setAttribute("style", "color: red");
         });
     }
