@@ -198,6 +198,66 @@ www.example.com 也会自动链接。
 | 重点 | 高亮 | ==考试重点== |
 | 废弃 | 删除线 | ~~旧版本~~ |
 
+## Mermaid 图表（rehype-mermaid）
+
+### 流程图
+
+```mermaid
+graph TD
+    A[开始] --> B{判断条件}
+    B -->|是| C[执行操作 A]
+    B -->|否| D[执行操作 B]
+    C --> E[结束]
+    D --> E
+```
+
+### 时序图
+
+```mermaid
+sequenceDiagram
+    participant 用户
+    participant 前端
+    participant 后端
+    participant 数据库
+    用户->>前端: 发起请求
+    前端->>后端: API 调用
+    后端->>数据库: 查询数据
+    数据库-->>后端: 返回结果
+    后端-->>前端: JSON 响应
+    前端-->>用户: 渲染页面
+```
+
+### 甘特图
+
+```mermaid
+gantt
+    title 项目开发计划
+    dateFormat YYYY-MM-DD
+    section 设计
+        需求分析       :done, des1, 2026-01-01, 2026-01-15
+        UI 设计        :active, des2, 2026-01-10, 2026-02-01
+    section 开发
+        前端开发       :dev1, 2026-02-01, 2026-03-15
+        后端开发       :dev2, 2026-02-01, 2026-03-01
+    section 测试
+        集成测试       :test1, 2026-03-15, 2026-04-01
+        上线部署       :test2, 2026-04-01, 2026-04-15
+```
+
+### 手绘风格流程图
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+  A[Start] --> B{Decision}
+  B -->|Yes| C[Continue]
+  B -->|No| D[Stop]
+```
+
 ---
 
 **增强语法测试完成！**

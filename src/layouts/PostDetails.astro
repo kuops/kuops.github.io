@@ -305,3 +305,32 @@ const nextPost =
     window.scrollTo({ left: 0, top: 0, behavior: "instant" })
   );
 </script>
+
+<script>
+  import mermaid from "mermaid";
+
+  function renderMermaid() {
+    const mermaidBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
+    if (mermaidBlocks.length === 0) return;
+    mermaid.initialize({ startOnLoad: false, theme: "default" });
+    for (const pre of mermaidBlocks) {
+      const code = pre.querySelector("code");
+      const id = "mermaid-" + Math.random().toString(36).slice(2);
+      const source = code?.textContent || "";
+      mermaid
+        .render(id, source)
+        .then(({ svg }) => {
+          const container = document.createElement("div");
+          container.className = "mermaid-svg overflow-x-auto";
+          container.innerHTML = svg;
+          pre.replaceWith(container);
+        })
+        .catch(() => {
+          pre.setAttribute("style", "color: red");
+        });
+    }
+  }
+
+  renderMermaid();
+  document.addEventListener("astro:after-swap", renderMermaid);
+</script>
