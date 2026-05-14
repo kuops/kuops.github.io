@@ -175,32 +175,103 @@ const layoutProps = {
 <script>
   import mermaid from "mermaid";
 
-  function renderMermaid() {
+  const mermaidSources: { el: HTMLElement; source: string }[] = [];
+
+  function stripTheme(source: string) {
+    return source.replace(/^---\n[\s\S]*?^---\n/m, (frontmatter) => {
+      const cleaned = frontmatter.replace(/  theme:.*\n?/g, "");
+      const inner = cleaned.replace(/^---\n?/, "").replace(/\n?---\n?$/, "").trim();
+      if (!inner) return "";
+      return `---\n${inner}\n---\n`;
+    });
+  }
+
+  function initMermaidConfig() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? "dark" : "default",
+      themeVariables: isDark
+        ? {
+            primaryColor: "#c678dd",
+            primaryTextColor: "#eaedf3",
+            primaryBorderColor: "#3e4451",
+            lineColor: "#abb2bf",
+            secondaryColor: "#353c4d",
+            tertiaryColor: "#2c313a",
+            noteBkgColor: "#353c4d",
+            noteTextColor: "#eaedf3",
+            actorTextColor: "#eaedf3",
+            actorBkgColor: "#353c4d",
+            actorBorder: "#3e4451",
+            labelTextColor: "#eaedf3",
+            loopTextColor: "#eaedf3",
+            sectionBkgColor: "#353c4d",
+            altSectionBkgColor: "#2c313a",
+            taskTextColor: "#eaedf3",
+            taskBkgColor: "#c678dd",
+            gridColor: "#3e4451",
+            todayLineColor: "#e5c07b",
+          }
+        : {},
+    });
+  }
+
+  async function renderMermaid() {
     const mermaidBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
     if (mermaidBlocks.length === 0) return;
-    mermaid.initialize({ startOnLoad: false, theme: "default" });
+
+    initMermaidConfig();
+
     for (const pre of mermaidBlocks) {
       const code = pre.querySelector("code");
+      const source = stripTheme(code?.textContent || "");
+      const el = pre as HTMLElement;
+
+      mermaidSources.push({ el, source });
+
       const id = "mermaid-" + Math.random().toString(36).slice(2);
-      const source = code?.textContent || "";
-      mermaid
-        .render(id, source)
-        .then(({ svg }) => {
-          const container = document.createElement("div");
-          container.className = "mermaid-svg overflow-x-auto";
-          container.innerHTML = svg;
-          pre.replaceWith(container);
-          const errorEl = document.getElementById("d" + id);
-          if (errorEl) errorEl.remove();
-        })
-        .catch(() => {
-          const errorEl = document.getElementById("d" + id);
-          if (errorEl) errorEl.remove();
-          pre.setAttribute("style", "color: red");
-        });
+      try {
+        const { svg } = await mermaid.render(id, source);
+        const container = document.createElement("div");
+        container.className = "mermaid-svg overflow-x-auto";
+        container.dataset.mermaidSource = source;
+        container.innerHTML = svg;
+        el.replaceWith(container);
+      } catch {
+        el.setAttribute("style", "color: red");
+      } finally {
+        document.getElementById("d" + id)?.remove();
+      }
+    }
+  }
+
+  async function rerenderMermaid() {
+    const containers = document.querySelectorAll(".mermaid-svg[data-mermaid-source]");
+    if (containers.length === 0) return;
+
+    initMermaidConfig();
+
+    for (const container of containers) {
+      const source = (container as HTMLElement).dataset.mermaidSource || "";
+      const id = "mermaid-" + Math.random().toString(36).slice(2);
+      try {
+        const { svg } = await mermaid.render(id, source);
+        container.innerHTML = svg;
+      } catch {
+        // keep existing svg on error
+      } finally {
+        document.getElementById("d" + id)?.remove();
+      }
     }
   }
 
   renderMermaid();
   document.addEventListener("astro:after-swap", renderMermaid);
+
+  new MutationObserver(() => {
+    rerenderMermaid();
+  }).observe(document.documentElement, {
+    attributeFilter: ["data-theme"],
+  });
 </script>
