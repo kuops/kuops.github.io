@@ -71,9 +71,6 @@ html[data-theme="dark"] {
 }
 
 @layer base {
-  body {
-    font-family: var(--font-google-sans-code), "Noto Sans SC", sans-serif;
-  }
   h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
   }

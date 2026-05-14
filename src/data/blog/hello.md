@@ -16,8 +16,8 @@ tags: ["hello"]
 ```markdown
 ---
 title: "文章标题"
-summary: "文章摘要"
-publishDate: "2026-05-13"
+description: "文章描述"
+pubDatetime: 2026-05-13
 tags: ["标签"]
 ---
 

@@ -80,6 +80,7 @@ export default defineConfig({
         fallbacks: ["sans-serif"],
         weights: [300, 400, 500, 600, 700],
         styles: ["normal", "italic"],
+        display: "block",
       },
       {
         name: "Noto Sans SC",

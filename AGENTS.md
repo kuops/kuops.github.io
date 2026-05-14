@@ -54,3 +54,16 @@ Set `src/config.ts` `website` to the actual GitHub Pages URL. If deploying to `<
 - ESLint: `no-console: error`, astro plugin + typescript-eslint
 - Prettier: astro + tailwind plugins
 - No comments in code unless requested
+
+## Content length guidelines
+
+### Blog posts
+- **Length:** 1000–2500 字（阅读 5–10 分钟）
+- 太短像碎片，太长读者容易流失
+- 教程/深度解析可放宽至 3000+ 字
+
+### Book chapters
+- **Length:** 3000–8000 字（阅读 15–30 分钟）
+- 小说章节通常更短（2000–5000 字）
+- 非虚构/技术书可更长
+- **核心原则：** 一个章节只讲清楚一个主题，自然分段

@@ -8,7 +8,7 @@ import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
   class:list={[
     "fixed end-4 bottom-8 z-50",
     "md:sticky md:end-auto md:float-end md:me-1",
-    "translate-y-14 opacity-0 transition duration-500",
+    "pointer-events-none translate-y-14 opacity-0 transition duration-500",
   ]}
 >
   <button
@@ -69,6 +69,8 @@ import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
         btnContainer.classList.toggle("translate-y-0", isVisible);
         btnContainer.classList.toggle("opacity-0", !isVisible);
         btnContainer.classList.toggle("translate-y-14", !isVisible);
+        btnContainer.classList.toggle("pointer-events-none", !isVisible);
+        btnContainer.classList.toggle("pointer-events-auto", isVisible);
         lastVisible = isVisible;
       }
     }
