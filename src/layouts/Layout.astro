@@ -186,8 +186,12 @@ const structuredData = {
     </pagefind-modal>
 
     <script>
-      const { configureInstance } = await import("@pagefind/component-ui");
-      configureInstance("default", {
+      async function initPagefind() {
+        const existing = document.getElementById("pf-theme-style");
+        if (existing) return;
+
+        const { configureInstance } = await import("@pagefind/component-ui");
+        configureInstance("default", {
         translations: {
           placeholder: "搜索文章、书籍...",
           zero_results: "未找到 [SEARCH_TERM] 的相关结果",
@@ -198,6 +202,7 @@ const structuredData = {
       });
 
       const themeStyle = document.createElement("style");
+      themeStyle.id = "pf-theme-style";
       themeStyle.textContent = `
         dialog.pf-modal::backdrop {
           backdrop-filter: blur(8px) saturate(1.8) !important;
@@ -341,6 +346,10 @@ const structuredData = {
         dialog.pf-modal .pf-result-excerpt {
           color: var(--foreground) !important;
           opacity: 0.6 !important;
+        }
+
+        dialog.pf-modal .pf-result:has(.pf-heading-chips) .pf-result-excerpt {
+          display: none !important;
         }
 
         dialog.pf-modal .pf-result-excerpt mark,
@@ -507,7 +516,11 @@ const structuredData = {
           updateTreeLines();
         });
         observer.observe(modalEl, { childList: true, subtree: true });
+        }
       }
+
+      initPagefind();
+      document.addEventListener("astro:after-swap", initPagefind);
     </script>
 
     <style is:global>
