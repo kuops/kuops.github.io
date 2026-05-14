@@ -118,18 +118,15 @@ const isActive = (path: string) => {
           )
         }
         <li class="col-span-1 flex items-center justify-center">
-          <LinkButton
-            href="/search"
-            class:list={[
-              "focus-outline flex p-3 sm:p-1",
-              { "[&>svg]:stroke-accent": isActive("/search") },
-            ]}
-            title="Search"
+          <button
+            id="search-btn"
+            class="focus-outline flex p-3 sm:p-1 hover:stroke-accent"
+            title="搜索 (Ctrl+K)"
             aria-label="search"
           >
             <IconSearch />
             <span class="sr-only">Search</span>
-          </LinkButton>
+          </button>
         </li>
         {
           SITE.lightAndDarkMode && (
@@ -175,6 +172,19 @@ const isActive = (path: string) => {
 
   toggleNav();
 
+  function bindSearchBtn() {
+    const searchBtn = document.querySelector("#search-btn");
+    if (!searchBtn) return;
+    searchBtn.addEventListener("click", () => {
+      const modal = document.querySelector("pagefind-modal");
+      if (modal && typeof (modal as any).open === "function") {
+        (modal as any).open();
+      }
+    });
+  }
+  bindSearchBtn();
+
   // Runs on view transitions navigation
   document.addEventListener("astro:after-swap", toggleNav);
+  document.addEventListener("astro:after-swap", bindSearchBtn);
 </script>

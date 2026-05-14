@@ -173,6 +173,379 @@ const structuredData = {
   <body>
     <slot />
 
+    <pagefind-modal>
+      <pagefind-modal-header>
+        <pagefind-input></pagefind-input>
+      </pagefind-modal-header>
+      <pagefind-modal-body>
+        <pagefind-results></pagefind-results>
+      </pagefind-modal-body>
+      <pagefind-modal-footer>
+        <pagefind-keyboard-hints></pagefind-keyboard-hints>
+      </pagefind-modal-footer>
+    </pagefind-modal>
+
+    <script>
+      const { configureInstance } = await import("@pagefind/component-ui");
+      configureInstance("default", {
+        translations: {
+          placeholder: "搜索文章、书籍...",
+          zero_results: "未找到 [SEARCH_TERM] 的相关结果",
+          many_results: "{count} 个结果",
+          one_result: "{count} 个结果",
+          searching: "搜索中...",
+        },
+      });
+
+      const themeStyle = document.createElement("style");
+      themeStyle.textContent = `
+        dialog.pf-modal::backdrop {
+          backdrop-filter: blur(8px) saturate(1.8) !important;
+          -webkit-backdrop-filter: blur(8px) saturate(1.8) !important;
+        }
+
+        dialog.pf-modal .pf-input {
+          color: var(--foreground) !important;
+          background: transparent !important;
+          border: none !important;
+          caret-color: var(--accent) !important;
+        }
+
+        dialog.pf-modal .pf-input::placeholder {
+          color: var(--foreground) !important;
+          opacity: 0.4 !important;
+        }
+
+        dialog.pf-modal .pf-input:focus-visible {
+          outline: none !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+
+        dialog.pf-modal .pf-input-wrapper::before {
+          background-color: var(--foreground) !important;
+          opacity: 0.35 !important;
+        }
+
+        dialog.pf-modal .pf-input-clear {
+          color: var(--foreground) !important;
+          opacity: 0.5 !important;
+        }
+
+        dialog.pf-modal .pf-input-clear:hover {
+          background: var(--muted) !important;
+          opacity: 1 !important;
+        }
+
+        dialog.pf-modal .pf-modal-header {
+          border-bottom: 1px solid var(--border) !important;
+        }
+
+        dialog.pf-modal .pf-modal-footer {
+          border-top: 1px solid var(--border) !important;
+        }
+
+        dialog.pf-modal .pf-modal-footer,
+        dialog.pf-modal .pf-keyboard-hints {
+          color: var(--foreground) !important;
+          opacity: 0.65 !important;
+        }
+
+        dialog.pf-modal .pf-key,
+        dialog.pf-modal .pf-modal-footer-key,
+        dialog.pf-modal .pf-keyboard-key {
+          background: var(--muted) !important;
+          border-color: var(--border) !important;
+          color: var(--foreground) !important;
+          opacity: 0.7 !important;
+        }
+
+        dialog.pf-modal .pf-summary {
+          color: var(--foreground) !important;
+          opacity: 0.5 !important;
+        }
+
+        dialog.pf-modal .pf-result {
+          width: 100% !important;
+          gap: 0 !important;
+        }
+
+        dialog.pf-modal .pf-result-card {
+          background: var(--background) !important;
+          border: none !important;
+          border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent) !important;
+          border-radius: 0 !important;
+          padding: 8px 12px !important;
+          min-height: 40px !important;
+          transition: background 0.15s ease !important;
+        }
+
+        dialog.pf-modal .pf-result:first-child > .pf-result-card {
+          border-radius: 8px 8px 0 0 !important;
+        }
+
+        dialog.pf-modal .pf-result:last-child > .pf-result-card {
+          border-bottom: none !important;
+          border-radius: 0 0 8px 8px !important;
+        }
+
+        dialog.pf-modal .pf-result:only-child > .pf-result-card {
+          border-radius: 8px !important;
+        }
+
+        dialog.pf-modal .pf-result-card:hover {
+          background: color-mix(in srgb, var(--accent) 6%, var(--background)) !important;
+          box-shadow: none !important;
+        }
+
+        dialog.pf-modal .pf-result-card:has(.pf-result-link:focus-visible) {
+          outline: none !important;
+          background: color-mix(in srgb, var(--accent) 8%, var(--background)) !important;
+          box-shadow: none !important;
+        }
+
+        dialog.pf-modal .pf-result-card:has([data-pf-selected]) {
+          background: color-mix(in srgb, var(--accent) 10%, var(--background)) !important;
+          box-shadow: none !important;
+          border-radius: 8px !important;
+        }
+
+        dialog.pf-modal .pf-result-title::before {
+          content: "";
+          display: inline-block;
+          width: 14px;
+          height: 14px;
+          margin-inline-end: 6px;
+          vertical-align: -1px;
+          background: var(--foreground);
+          opacity: 0.4;
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+          -webkit-mask-size: 100%;
+          mask-size: 100%;
+        }
+
+        dialog.pf-modal .pf-result-title {
+          font-size: 14px !important;
+        }
+
+        dialog.pf-modal .pf-result-link {
+          color: var(--foreground) !important;
+          font-weight: 600 !important;
+        }
+
+        dialog.pf-modal .pf-result-link:hover {
+          color: var(--accent) !important;
+        }
+
+        dialog.pf-modal .pf-result-excerpt {
+          color: var(--foreground) !important;
+          opacity: 0.6 !important;
+        }
+
+        dialog.pf-modal .pf-result-excerpt mark,
+        dialog.pf-modal .pf-heading-excerpt mark {
+          color: var(--accent) !important;
+          background: transparent !important;
+          font-weight: 700 !important;
+        }
+
+        dialog.pf-modal .pf-heading-chips {
+          gap: 0 !important;
+          padding-inline-start: 0 !important;
+          margin-top: 0 !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip {
+          background: var(--background) !important;
+          border: none !important;
+          border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent) !important;
+          border-radius: 0 !important;
+          padding: 6px 12px 6px 28px !important;
+          min-height: 36px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 2px !important;
+          box-sizing: border-box !important;
+          position: relative !important;
+          transition: background 0.15s ease !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip::before {
+          content: "├" !important;
+          position: absolute !important;
+          left: 12px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          color: var(--foreground) !important;
+          opacity: 0.25 !important;
+          font-size: 12px !important;
+          font-family: monospace !important;
+          line-height: 1 !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip[data-tree-last]::before {
+          content: "└" !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip:last-child {
+          border-bottom: none !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip:hover {
+          border: none !important;
+          border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent) !important;
+          background: color-mix(in srgb, var(--accent) 6%, var(--background)) !important;
+          box-shadow: none !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip:last-child:hover {
+          border-bottom: none !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip:has(.pf-heading-link:focus-visible) {
+          outline: none !important;
+          background: color-mix(in srgb, var(--accent) 8%, var(--background)) !important;
+          box-shadow: none !important;
+          border: none !important;
+          border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent) !important;
+        }
+
+        dialog.pf-modal .pf-heading-chip:has([data-pf-selected]) {
+          background: color-mix(in srgb, var(--accent) 10%, var(--background)) !important;
+          box-shadow: none !important;
+          border: none !important;
+          border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent) !important;
+        }
+
+        dialog.pf-modal .pf-heading-link {
+          color: var(--foreground) !important;
+          font-size: 13px !important;
+          font-weight: 500 !important;
+          opacity: 0.75 !important;
+        }
+
+        dialog.pf-modal .pf-heading-link:before {
+          content: "#" !important;
+          color: var(--foreground) !important;
+          opacity: 0.25 !important;
+          margin-inline-end: 4px !important;
+          font-weight: 400 !important;
+        }
+
+        dialog.pf-modal .pf-heading-link:hover {
+          color: var(--accent) !important;
+          opacity: 1 !important;
+        }
+
+        dialog.pf-modal .pf-heading-excerpt {
+          opacity: 0.5 !important;
+          font-size: 12px !important;
+        }
+
+        dialog.pf-modal .pf-modal-close {
+          color: var(--foreground) !important;
+          opacity: 0.5 !important;
+        }
+
+        dialog.pf-modal .pf-modal-close:hover {
+          background: var(--muted) !important;
+          opacity: 1 !important;
+        }
+
+        dialog.pf-modal .pf-skeleton {
+          background: var(--muted) !important;
+        }
+
+        dialog.pf-modal .pf-summary:empty {
+          display: none !important;
+        }
+
+        dialog.pf-modal .pf-results:empty {
+          display: none !important;
+        }
+
+        dialog.pf-modal .pf-empty {
+          display: none !important;
+        }
+
+        dialog.pf-modal .pf-modal-body:not(:has(.pf-result, .pf-skeleton-title, .pf-empty:not([data-pf-hidden]))) {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(themeStyle);
+
+      const modalEl = document.querySelector("pagefind-modal");
+      if (modalEl) {
+        let updatingTree = false;
+        const updateTreeLines = () => {
+          if (updatingTree) return;
+          updatingTree = true;
+          try {
+            const chipsContainers = modalEl.querySelectorAll(".pf-heading-chips");
+            chipsContainers.forEach(container => {
+              const chips = container.querySelectorAll(".pf-heading-chip");
+              chips.forEach(chip => chip.removeAttribute("data-tree-last"));
+              if (chips.length > 0) {
+                chips[chips.length - 1].setAttribute("data-tree-last", "");
+              }
+            });
+            observer.takeRecords();
+          } finally {
+            updatingTree = false;
+          }
+        };
+
+        const observer = new MutationObserver(() => {
+          const dialog = modalEl.querySelector("dialog.pf-modal") as HTMLDialogElement | null;
+          if (dialog) {
+            dialog.style.setProperty("backdrop-filter", "blur(16px) saturate(1.8)");
+            dialog.style.setProperty("-webkit-backdrop-filter", "blur(16px) saturate(1.8)");
+            dialog.style.setProperty("background", "color-mix(in srgb, var(--background) 85%, transparent)");
+            dialog.style.setProperty("border", "none");
+          }
+          updateTreeLines();
+        });
+        observer.observe(modalEl, { childList: true, subtree: true });
+      }
+    </script>
+
+    <style is:global>
+      @import "@pagefind/component-ui/css";
+
+      :root {
+        --pf-font: var(--font-app);
+        --pf-text: var(--foreground);
+        --pf-text-secondary: var(--foreground);
+        --pf-text-muted: var(--muted);
+        --pf-background: var(--background);
+        --pf-border: var(--border);
+        --pf-border-focus: var(--muted);
+        --pf-hover: var(--muted);
+        --pf-mark: var(--accent);
+        --pf-outline-focus: var(--muted);
+        --pf-outline-width: 1px;
+
+        --pf-modal-backdrop: rgba(0, 0, 0, 0.4);
+        --pf-modal-max-width: 560px;
+        --pf-modal-max-height: min(70dvh, 640px);
+        --pf-modal-top: 12dvh;
+
+        --pf-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        --pf-border-radius: 12px;
+
+        --pf-input-height: 44px;
+        --pf-input-font-size: 16px;
+        --pf-result-title-font-size: 14px;
+        --pf-result-excerpt-font-size: 13px;
+      }
+
+      html[data-theme="dark"] {
+        --pf-modal-backdrop: rgba(0, 0, 0, 0.6);
+        --pf-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+
     <!-- Load full theme logic -->
     <script src="../scripts/theme.ts"></script>
   </body>

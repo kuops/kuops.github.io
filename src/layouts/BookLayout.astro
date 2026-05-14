@@ -31,7 +31,7 @@ const {
 
 <Layout title={title} description={description} scrollSmooth>
   <Header maxWidth="mx-auto w-full max-w-7xl px-4" />
-  <main id="main-content" class="mx-auto w-full max-w-7xl px-4 py-12 pb-12" transition:animate={fade({ duration: "0.15s" })}>
+  <main id="main-content" class="mx-auto w-full max-w-7xl px-4 py-12 pb-12" data-pagefind-body data-pagefind-filter="type:book" transition:animate={fade({ duration: "0.15s" })}>
     <div class="flex gap-8">
       <aside class="hidden w-56 flex-none lg:block">
         <div class="sticky top-24">
@@ -39,7 +39,7 @@ const {
         </div>
       </aside>
       <div class="min-w-0 flex-1">
-        <h1 class="mb-8 text-2xl font-bold text-accent sm:text-3xl">
+        <h1 class="mb-8 text-2xl font-bold text-accent sm:text-3xl" data-pagefind-meta="title">
           {title}
         </h1>
         <article
