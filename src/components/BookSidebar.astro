@@ -11,42 +11,142 @@ type Props = {
 const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
 ---
 
-<nav class="book-sidebar" aria-label="章节导航">
-  <ul class="space-y-4">
-    {sidebar.map(group => (
-      <li>
-        <div class="mb-1 text-xs font-semibold uppercase tracking-wider text-foreground/40">
+<nav class="book-sidebar space-y-3" data-book-sidebar={bookSlug} aria-label="章节导航">
+  {sidebar.map(group => {
+    const isActive = group.items.includes(currentSlug);
+    return (
+      <details open={isActive} class="book-group group" data-book-group={group.text}>
+        <summary class="book-group-title">
+          <svg class="book-group-arrow" viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+            <path d="M6 3.5L10.5 8L6 12.5z" />
+          </svg>
           {group.text}
-        </div>
-          <ul class="space-y-0.5 border-s-2 border-border">
-            {group.items.map(item => {
-              const href = `/books/${bookSlug}/${item}`;
-              const isActive = currentSlug === item;
-              const label = titleMap[item] || item;
-              return (
-                <li class:list={["toc-item", { active: isActive }]}>
-                  <a
-                  href={href}
-                  class:list={[
-                    "block truncate px-3 py-1.5 text-sm transition-colors",
-                    isActive
-                      ? "font-medium text-accent"
-                      : "text-foreground/60 hover:text-accent",
-                  ]}
-                >
-                  {label}
-                </a>
-              </li>
+        </summary>
+        <div class="book-group-body">
+          {group.items.map(item => {
+            const href = `/books/${bookSlug}/${item}`;
+            const isCurrent = currentSlug === item;
+            const label = titleMap[item] || item;
+            return (
+              <a
+                href={href}
+                class:list={["book-chapter-link", { active: isCurrent }]}
+              >
+                {label}
+              </a>
             );
           })}
-        </ul>
-      </li>
-    ))}
-  </ul>
+        </div>
+      </details>
+    );
+  })}
 </nav>
 
+<script is:inline data-astro-rerun>
+  (function () {
+    var sidebar = document.querySelector("[data-book-sidebar]");
+    if (!sidebar) return;
+    var bookSlug = sidebar.getAttribute("data-book-sidebar");
+    var key = "book-sidebar:" + bookSlug;
+    var groups = sidebar.querySelectorAll("details[data-book-group]");
+
+    function loadState() {
+      try {
+        var saved = JSON.parse(localStorage.getItem(key) || "{}");
+      } catch { return; }
+      groups.forEach(function (el) {
+        var name = el.getAttribute("data-book-group");
+        if (name in saved) {
+          el.open = saved[name];
+        }
+      });
+      var active = sidebar.querySelector(".book-chapter-link.active");
+      if (active) {
+        var parent = active.closest("details[data-book-group]");
+        if (parent) parent.open = true;
+      }
+    }
+
+    function saveState() {
+      var state = {};
+      groups.forEach(function (el) {
+        state[el.getAttribute("data-book-group")] = el.open;
+      });
+      try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+    }
+
+    groups.forEach(function (el) {
+      el.addEventListener("toggle", saveState);
+    });
+
+    loadState();
+  })();
+</script>
+
 <style>
-  .toc-item.active {
-    border-inline-start: 2px solid var(--accent);
+  .book-group {
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .book-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--foreground);
+    color: color-mix(in srgb, var(--foreground) 45%, transparent);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    background: color-mix(in srgb, var(--foreground) 3%, transparent);
+    transition: color 0.15s ease;
+  }
+  .book-group-title:hover {
+    color: var(--foreground);
+    color: color-mix(in srgb, var(--foreground) 70%, transparent);
+  }
+  .book-group-title::-webkit-details-marker,
+  .book-group-title::marker {
+    display: none;
+    content: "";
+  }
+  .book-group-arrow {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    opacity: 0.5;
+  }
+  details[open] > .book-group-title .book-group-arrow {
+    transform: rotate(90deg);
+  }
+  .book-group-body {
+    padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .book-chapter-link {
+    display: block;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    color: color-mix(in srgb, var(--foreground) 55%, transparent);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .book-chapter-link:hover {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--accent);
+  }
+  .book-chapter-link.active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    font-weight: 500;
   }
 </style>
