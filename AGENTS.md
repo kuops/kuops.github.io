@@ -8,7 +8,15 @@
 - `npm run format:check` — prettier check
 - `npm run format` — prettier write
 
-Always run `npm run build` to verify changes. It includes type checking, build, and search index generation.
+## Verification (MUST run after code changes)
+
+写完代码后，必须按 CI 步骤逐一验证，确保全部通过：
+
+1. `npm run format:check` — prettier 格式检查
+2. `npm run lint` — eslint 检查
+3. `npm run build` — astro check + build + pagefind 搜索索引
+
+以上三项全部通过才算完成。如果 `format:check` 不通过，先运行 `npm run format` 自动修复再重新检查。
 
 ## Architecture
 

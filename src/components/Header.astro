@@ -37,7 +37,10 @@ const isActive = (path: string) => {
 </a>
 
 <header
-  class:list={[maxWidth ?? "app-layout", "flex flex-col items-center justify-between sm:flex-row"]}
+  class:list={[
+    maxWidth ?? "app-layout",
+    "flex flex-col items-center justify-between sm:flex-row",
+  ]}
 >
   <div
     id="top-nav-wrap"
@@ -120,7 +123,7 @@ const isActive = (path: string) => {
         <li class="col-span-1 flex items-center justify-center">
           <button
             id="search-btn"
-            class="focus-outline flex p-3 sm:p-1 hover:stroke-accent"
+            class="focus-outline flex p-3 hover:stroke-accent sm:p-1"
             title="搜索 (Ctrl+K)"
             aria-label="search"
           >
@@ -177,7 +180,11 @@ const isActive = (path: string) => {
     if (!searchBtn) return;
     searchBtn.addEventListener("click", () => {
       const modal = document.querySelector("pagefind-modal");
-      if (modal && "open" in modal && typeof (modal as Record<string, unknown>).open === "function") {
+      if (
+        modal &&
+        "open" in modal &&
+        typeof (modal as Record<string, unknown>).open === "function"
+      ) {
         (modal as Record<string, unknown>).open();
       }
     });

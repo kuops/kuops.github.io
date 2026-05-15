@@ -20,9 +20,13 @@ if (breadcrumbList[0] === "posts") {
 // if breadcrumb is Home > Books > [book] > [chapter]
 // replace book slug with book name
 if (breadcrumbList[0] === "books" && breadcrumbList.length > 1) {
-  breadcrumbList[1] = breadcrumbList[1].replace("-", " ").replace(/\b\w/g, c => c.toUpperCase());
+  breadcrumbList[1] = breadcrumbList[1]
+    .replace("-", " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
   if (breadcrumbList.length > 2) {
-    breadcrumbList[2] = breadcrumbList[2].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    breadcrumbList[2] = breadcrumbList[2]
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
   breadcrumbList[0] = "Books";
 }

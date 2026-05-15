@@ -9,7 +9,10 @@ import { SITE } from "@/config";
   <Header />
   <main class="app-layout py-8">
     <p class="text-center text-foreground/60">
-      点击右上角搜索图标或按 <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-sm">Ctrl+K</kbd> 打开搜索
+      点击右上角搜索图标或按 <kbd
+        class="rounded border border-border bg-muted px-1.5 py-0.5 text-sm"
+        >Ctrl+K</kbd
+      > 打开搜索
     </p>
   </main>
   <Footer />
@@ -17,7 +20,11 @@ import { SITE } from "@/config";
 
 <script>
   const modal = document.querySelector("pagefind-modal");
-  if (modal && "open" in modal && typeof (modal as Record<string, unknown>).open === "function") {
+  if (
+    modal &&
+    "open" in modal &&
+    typeof (modal as Record<string, unknown>).open === "function"
+  ) {
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q");
     if (query) {

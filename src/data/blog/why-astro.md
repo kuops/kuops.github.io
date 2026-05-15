@@ -28,9 +28,9 @@ Astro 允许你在同一个项目中混合使用不同的框架组件：
 
 ```astro
 ---
-import ReactComponent from './ReactComponent.jsx';
-import VueComponent from './VueComponent.vue';
-import SvelteComponent from './SvelteComponent.svelte';
+import ReactComponent from "./ReactComponent.jsx";
+import VueComponent from "./VueComponent.vue";
+import SvelteComponent from "./SvelteComponent.svelte";
 ---
 
 <ReactComponent client:load />

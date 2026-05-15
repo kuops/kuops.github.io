@@ -21,7 +21,8 @@ html[data-theme="dark"] {
 }
 
 @theme inline {
-  --font-app: var(--font-google-sans-code), var(--font-noto-sans-sc), sans-serif;
+  --font-app:
+    var(--font-google-sans-code), var(--font-noto-sans-sc), sans-serif;
   --font-mono: var(--font-google-sans-code), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -71,10 +72,18 @@ html[data-theme="dark"] {
 }
 
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 700;
   }
-  p, li, blockquote, figcaption {
+  p,
+  li,
+  blockquote,
+  figcaption {
     font-weight: 400;
   }
 }

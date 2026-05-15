@@ -41,8 +41,7 @@ const {
 
 const { Content, headings: allHeadings } = await render(post);
 
-const headings = allHeadings
-  .filter(h => h.depth >= 2 && h.depth <= 4);
+const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
 
 let ogImageUrl: string | undefined;
 
@@ -75,14 +74,13 @@ const layoutProps = {
 };
 
 /* ========== Prev/Next Posts ========== */
-
 ---
 
 <Layout {...layoutProps}>
   <Header maxWidth="mx-auto w-full max-w-5xl px-4" />
   <main
     id="main-content"
-    class:list={["pb-12 mx-auto w-full max-w-5xl px-4"]}
+    class:list={["mx-auto w-full max-w-5xl px-4 pb-12"]}
     data-pagefind-body
     data-pagefind-filter="type:blog"
   >
@@ -113,13 +111,15 @@ const layoutProps = {
           <Content />
         </article>
       </div>
-      {headings.length > 0 && (
-        <aside class="hidden w-52 flex-none xl:block">
-          <div class="sticky top-20">
-            <TableOfContents {headings} />
-          </div>
-        </aside>
-      )}
+      {
+        headings.length > 0 && (
+          <aside class="hidden w-52 flex-none xl:block">
+            <div class="sticky top-20">
+              <TableOfContents {headings} />
+            </div>
+          </aside>
+        )
+      }
     </div>
 
     <hr class="my-8 border-dashed" />
@@ -181,16 +181,20 @@ const layoutProps = {
   const mermaidSources: { el: HTMLElement; source: string }[] = [];
 
   function stripTheme(source: string) {
-    return source.replace(/^---\n[\s\S]*?^---\n/m, (frontmatter) => {
+    return source.replace(/^---\n[\s\S]*?^---\n/m, frontmatter => {
       const cleaned = frontmatter.replace(/  theme:.*\n?/g, "");
-      const inner = cleaned.replace(/^---\n?/, "").replace(/\n?---\n?$/, "").trim();
+      const inner = cleaned
+        .replace(/^---\n?/, "")
+        .replace(/\n?---\n?$/, "")
+        .trim();
       if (!inner) return "";
       return `---\n${inner}\n---\n`;
     });
   }
 
   function initMermaidConfig() {
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
     mermaid.initialize({
       startOnLoad: false,
       theme: isDark ? "dark" : "default",
@@ -221,7 +225,9 @@ const layoutProps = {
   }
 
   async function renderMermaid() {
-    const mermaidBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
+    const mermaidBlocks = document.querySelectorAll(
+      'pre[data-language="mermaid"]'
+    );
     if (mermaidBlocks.length === 0) return;
 
     initMermaidConfig();
@@ -250,7 +256,9 @@ const layoutProps = {
   }
 
   async function rerenderMermaid() {
-    const containers = document.querySelectorAll(".mermaid-svg[data-mermaid-source]");
+    const containers = document.querySelectorAll(
+      ".mermaid-svg[data-mermaid-source]"
+    );
     if (containers.length === 0) return;
 
     initMermaidConfig();
