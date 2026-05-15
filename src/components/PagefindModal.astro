@@ -1,4 +1,5 @@
 ---
+
 ---
 
 <pagefind-modal>
@@ -319,8 +320,7 @@
         if (updatingTree) return;
         updatingTree = true;
         try {
-          const chipsContainers =
-            modalEl.querySelectorAll(".pf-heading-chips");
+          const chipsContainers = modalEl.querySelectorAll(".pf-heading-chips");
           chipsContainers.forEach(container => {
             const chips = container.querySelectorAll(".pf-heading-chip");
             chips.forEach(chip => chip.removeAttribute("data-tree-last"));

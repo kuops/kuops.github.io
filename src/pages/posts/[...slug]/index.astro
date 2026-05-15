@@ -21,7 +21,10 @@ export async function getStaticPaths() {
       props: {
         post,
         prevPost: currentIndex > 0 ? sortedPosts[currentIndex - 1] : null,
-        nextPost: currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null,
+        nextPost:
+          currentIndex < sortedPosts.length - 1
+            ? sortedPosts[currentIndex + 1]
+            : null,
       },
     };
   });

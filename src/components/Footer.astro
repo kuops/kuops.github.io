@@ -9,11 +9,20 @@ type Props = {
   maxWidth?: string;
 } & HTMLAttributes<"footer">;
 
-const { noMarginTop = false, maxWidth, class: className, ...attrs } = Astro.props;
+const {
+  noMarginTop = false,
+  maxWidth,
+  class: className,
+  ...attrs
+} = Astro.props;
 ---
 
 <footer
-  class:list={[maxWidth ?? "app-layout", { "mt-auto": !noMarginTop }, className]}
+  class:list={[
+    maxWidth ?? "app-layout",
+    { "mt-auto": !noMarginTop },
+    className,
+  ]}
   {...attrs}
 >
   <div

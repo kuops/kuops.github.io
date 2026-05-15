@@ -11,31 +11,36 @@ type Props = {
 
 const { headings } = Astro.props;
 
-const minDepth = headings.length > 0 ? Math.min(...headings.map(h => h.depth)) : 2;
+const minDepth =
+  headings.length > 0 ? Math.min(...headings.map(h => h.depth)) : 2;
 ---
 
 <nav class="toc hidden xl:block" aria-label="Table of contents">
-  <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-foreground/60">
+  <h2
+    class="mb-2 text-sm font-semibold tracking-wider text-foreground/60 uppercase"
+  >
     目录
   </h2>
   <ul class="space-y-1 border-s-2 border-border text-sm">
-    {headings.map(({ depth, slug, text }) => {
-      const indent = depth - minDepth;
-      return (
-        <li
-          class="toc-item"
-          style={`padding-inline-start: ${indent * 0.75 + 0.75}rem`}
-        >
-          <a
-            href={`#${slug}`}
-            class="toc-link block truncate py-0.5 pe-2 text-foreground/60 transition-colors hover:text-accent"
-            data-heading-slug={slug}
+    {
+      headings.map(({ depth, slug, text }) => {
+        const indent = depth - minDepth;
+        return (
+          <li
+            class="toc-item"
+            style={`padding-inline-start: ${indent * 0.75 + 0.75}rem`}
           >
-            {text}
-          </a>
-        </li>
-      );
-    })}
+            <a
+              href={`#${slug}`}
+              class="toc-link block truncate py-0.5 pe-2 text-foreground/60 transition-colors hover:text-accent"
+              data-heading-slug={slug}
+            >
+              {text}
+            </a>
+          </li>
+        );
+      })
+    }
   </ul>
 </nav>
 
@@ -47,9 +52,7 @@ const minDepth = headings.length > 0 ? Math.min(...headings.map(h => h.depth)) :
     const article = document.getElementById("article");
     if (!article) return;
 
-    const headings = Array.from(
-      article.querySelectorAll("h2, h3, h4, h5, h6")
-    );
+    const headings = Array.from(article.querySelectorAll("h2, h3, h4, h5, h6"));
 
     function setActive() {
       let currentId = "";

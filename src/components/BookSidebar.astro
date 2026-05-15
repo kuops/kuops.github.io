@@ -11,68 +11,89 @@ type Props = {
 const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
 ---
 
-<nav class="book-sidebar space-y-3" data-book-sidebar={bookSlug} aria-label="章节导航">
-  {sidebar.map(group => {
-    const isActive = group.items.includes(currentSlug);
-    return (
-      <details open={isActive} class="book-group group" data-book-group={group.text}>
-        <summary class="book-group-title">
-          <svg class="book-group-arrow" viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
-            <path d="M6 3.5L10.5 8L6 12.5z" />
-          </svg>
-          {group.text}
-        </summary>
-        <div class="book-group-body">
-          {group.items.map(item => {
-            const href = `/books/${bookSlug}/${item}`;
-            const isCurrent = currentSlug === item;
-            const label = titleMap[item] || item;
-            return (
-              <a
-                href={href}
-                class:list={["book-chapter-link", { active: isCurrent }]}
-              >
-                {label}
-              </a>
-            );
-          })}
-        </div>
-      </details>
-    );
-  })}
+<nav
+  class="book-sidebar space-y-3"
+  data-book-sidebar={bookSlug}
+  aria-label="章节导航"
+>
+  {
+    sidebar.map(group => {
+      const isActive = group.items.includes(currentSlug);
+      return (
+        <details
+          open={isActive}
+          class="book-group group"
+          data-book-group={group.text}
+        >
+          <summary class="book-group-title">
+            <svg
+              class="book-group-arrow"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              width="12"
+              height="12"
+            >
+              <path d="M6 3.5L10.5 8L6 12.5z" />
+            </svg>
+            {group.text}
+          </summary>
+          <div class="book-group-body">
+            {group.items.map(item => {
+              const href = `/books/${bookSlug}/${item}`;
+              const isCurrent = currentSlug === item;
+              const label = titleMap[item] || item;
+              return (
+                <a
+                  href={href}
+                  class:list={["book-chapter-link", { active: isCurrent }]}
+                >
+                  {label}
+                </a>
+              );
+            })}
+          </div>
+        </details>
+      );
+    })
+  }
 </nav>
 
 <script is:inline data-astro-rerun>
   (function () {
-    var sidebar = document.querySelector("[data-book-sidebar]");
+    const sidebar = document.querySelector("[data-book-sidebar]");
     if (!sidebar) return;
-    var bookSlug = sidebar.getAttribute("data-book-sidebar");
-    var key = "book-sidebar:" + bookSlug;
-    var groups = sidebar.querySelectorAll("details[data-book-group]");
+    const bookSlug = sidebar.getAttribute("data-book-sidebar");
+    const key = "book-sidebar:" + bookSlug;
+    const groups = sidebar.querySelectorAll("details[data-book-group]");
 
     function loadState() {
+      let saved = /** @type {Record<string, boolean>} */ ({});
       try {
-        var saved = JSON.parse(localStorage.getItem(key) || "{}");
-      } catch { return; }
+        saved = JSON.parse(localStorage.getItem(key) || "{}");
+      } catch {
+        return;
+      }
       groups.forEach(function (el) {
-        var name = el.getAttribute("data-book-group");
+        const name = el.getAttribute("data-book-group");
         if (name in saved) {
           el.open = saved[name];
         }
       });
-      var active = sidebar.querySelector(".book-chapter-link.active");
+      const active = sidebar.querySelector(".book-chapter-link.active");
       if (active) {
-        var parent = active.closest("details[data-book-group]");
+        const parent = active.closest("details[data-book-group]");
         if (parent) parent.open = true;
       }
     }
 
     function saveState() {
-      var state = {};
+      const state = {};
       groups.forEach(function (el) {
         state[el.getAttribute("data-book-group")] = el.open;
       });
-      try { localStorage.setItem(key, JSON.stringify(state)); } catch {}
+      try {
+        localStorage.setItem(key, JSON.stringify(state));
+      } catch {}
     }
 
     groups.forEach(function (el) {
@@ -135,7 +156,9 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
     font-size: 0.8125rem;
     color: color-mix(in srgb, var(--foreground) 55%, transparent);
     text-decoration: none;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
