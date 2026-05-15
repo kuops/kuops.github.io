@@ -23,12 +23,12 @@ import { SITE } from "@/config";
   if (
     modal &&
     "open" in modal &&
-    typeof (modal as Record<string, unknown>).open === "function"
+    typeof (modal as { open: unknown }).open === "function"
   ) {
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q");
     if (query) {
-      (modal as Record<string, unknown>).open();
+      (modal as { open: () => void }).open();
     }
   }
 </script>

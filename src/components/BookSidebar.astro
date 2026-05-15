@@ -67,7 +67,7 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
     const groups = sidebar.querySelectorAll("details[data-book-group]");
 
     function loadState() {
-      let saved: Record<string, boolean> = {};
+      let saved = /** @type {Record<string, boolean>} */ ({});
       try {
         saved = JSON.parse(localStorage.getItem(key) || "{}");
       } catch {

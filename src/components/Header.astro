@@ -183,9 +183,9 @@ const isActive = (path: string) => {
       if (
         modal &&
         "open" in modal &&
-        typeof (modal as Record<string, unknown>).open === "function"
+        typeof (modal as { open: unknown }).open === "function"
       ) {
-        (modal as Record<string, unknown>).open();
+        (modal as { open: () => void }).open();
       }
     });
   }
