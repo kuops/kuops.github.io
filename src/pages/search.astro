@@ -17,11 +17,11 @@ import { SITE } from "@/config";
 
 <script>
   const modal = document.querySelector("pagefind-modal");
-  if (modal && typeof (modal as any).open === "function") {
+  if (modal && "open" in modal && typeof (modal as Record<string, unknown>).open === "function") {
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q");
     if (query) {
-      (modal as any).open();
+      (modal as Record<string, unknown>).open();
     }
   }
 </script>

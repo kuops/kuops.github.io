@@ -177,8 +177,8 @@ const isActive = (path: string) => {
     if (!searchBtn) return;
     searchBtn.addEventListener("click", () => {
       const modal = document.querySelector("pagefind-modal");
-      if (modal && typeof (modal as any).open === "function") {
-        (modal as any).open();
+      if (modal && "open" in modal && typeof (modal as Record<string, unknown>).open === "function") {
+        (modal as Record<string, unknown>).open();
       }
     });
   }

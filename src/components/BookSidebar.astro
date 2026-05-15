@@ -44,31 +44,32 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
 
 <script is:inline data-astro-rerun>
   (function () {
-    var sidebar = document.querySelector("[data-book-sidebar]");
+    const sidebar = document.querySelector("[data-book-sidebar]");
     if (!sidebar) return;
-    var bookSlug = sidebar.getAttribute("data-book-sidebar");
-    var key = "book-sidebar:" + bookSlug;
-    var groups = sidebar.querySelectorAll("details[data-book-group]");
+    const bookSlug = sidebar.getAttribute("data-book-sidebar");
+    const key = "book-sidebar:" + bookSlug;
+    const groups = sidebar.querySelectorAll("details[data-book-group]");
 
     function loadState() {
+      let saved: Record<string, boolean> = {};
       try {
-        var saved = JSON.parse(localStorage.getItem(key) || "{}");
+        saved = JSON.parse(localStorage.getItem(key) || "{}");
       } catch { return; }
       groups.forEach(function (el) {
-        var name = el.getAttribute("data-book-group");
+        const name = el.getAttribute("data-book-group");
         if (name in saved) {
           el.open = saved[name];
         }
       });
-      var active = sidebar.querySelector(".book-chapter-link.active");
-      if (active) {
-        var parent = active.closest("details[data-book-group]");
+        const active = sidebar.querySelector(".book-chapter-link.active");
+        if (active) {
+          const parent = active.closest("details[data-book-group]");
         if (parent) parent.open = true;
       }
     }
 
     function saveState() {
-      var state = {};
+      const state = {};
       groups.forEach(function (el) {
         state[el.getAttribute("data-book-group")] = el.open;
       });

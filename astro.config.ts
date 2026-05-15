@@ -30,7 +30,8 @@ export default defineConfig({
       [remarkCollapse, { test: "Table of contents" }],
       remarkSupersub,
       [remarkGfm, { singleTilde: false }],
-      // @ts-ignore remarkMark type incompatibility
+      // @ts-expect-error remarkMark type incompatibility
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       remarkMark as any,
     ],
     shikiConfig: {
