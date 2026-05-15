@@ -6,6 +6,7 @@ import Footer from "@/components/Footer.astro";
 import BookSidebar from "@/components/BookSidebar.astro";
 import TableOfContents from "@/components/TableOfContents.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
+import MobileToc from "@/components/MobileToc.astro";
 import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
 import type { SidebarGroup } from "@/books.config";
 
@@ -59,6 +60,7 @@ const {
       )}
     </div>
     <BackToTopButton />
+    {headings.length > 0 && <MobileToc {headings} />}
   </main>
   <Footer maxWidth="mx-auto w-full max-w-7xl px-4" />
 </Layout>

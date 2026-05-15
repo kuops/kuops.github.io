@@ -1,0 +1,124 @@
+---
+import IconHash from "@/assets/icons/IconHash.svg";
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+type Props = {
+  headings: Heading[];
+};
+
+const { headings } = Astro.props;
+
+const minDepth = headings.length > 0 ? Math.min(...headings.map(h => h.depth)) : 2;
+---
+
+<div class="mobile-toc xl:hidden">
+  <button
+    id="mobile-toc-btn"
+    class="fixed bottom-[45vh] end-2 z-40 flex size-10 items-center justify-center rounded-full bg-background shadow-lg transition-all duration-300 hover:text-accent active:scale-95 translate-x-[65%]"
+    aria-label="打开目录"
+  >
+    <IconHash class="size-5" />
+  </button>
+
+  <div
+    id="mobile-toc-overlay"
+    class="fixed inset-0 z-50 bg-black/40 opacity-0 transition-opacity duration-300 pointer-events-none"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    id="mobile-toc-drawer"
+    class="fixed inset-x-0 bottom-0 z-50 max-h-[50vh] translate-y-full overflow-y-auto overscroll-contain rounded-t-2xl bg-background shadow-2xl transition-transform duration-300 ease-out pointer-events-none"
+  >
+    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-foreground/60">
+        目录
+      </h2>
+      <button
+        id="mobile-toc-close"
+        class="text-foreground/60 transition-colors hover:text-accent"
+        aria-label="关闭目录"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <nav class="overflow-y-auto p-4" aria-label="移动端目录">
+      <ul class="space-y-1 border-s-2 border-border text-sm">
+        {headings.map(({ depth, slug, text }) => {
+          const indent = depth - minDepth;
+          return (
+            <li
+              class="mobile-toc-item"
+              style={`padding-inline-start: ${indent * 0.75 + 0.75}rem`}
+            >
+              <a
+                href={`#${slug}`}
+                class="mobile-toc-link block truncate py-1.5 pe-2 text-foreground/60 transition-colors hover:text-accent"
+                data-heading-slug={slug}
+              >
+                {text}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script is:inline data-astro-rerun>
+  function initMobileToc() {
+    const btn = document.getElementById("mobile-toc-btn");
+    const overlay = document.getElementById("mobile-toc-overlay");
+    const drawer = document.getElementById("mobile-toc-drawer");
+    const closeBtn = document.getElementById("mobile-toc-close");
+    if (!btn || !overlay || !drawer || !closeBtn) return;
+
+    let open = false;
+    let hideTimer = null;
+
+    function expandBtn(show) {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      btn.classList.toggle("translate-x-0", show);
+      btn.classList.toggle("translate-x-[65%]", !show);
+    }
+
+    function scheduleHide() {
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => { if (!open) expandBtn(false); }, 1500);
+    }
+
+    btn.addEventListener("pointerenter", () => expandBtn(true));
+    btn.addEventListener("pointerleave", () => { if (!open) scheduleHide(); });
+    btn.addEventListener("touchstart", () => expandBtn(true), { passive: true });
+    btn.addEventListener("touchend", () => scheduleHide(), { passive: true });
+
+    function toggle(show) {
+      open = show;
+      overlay.classList.toggle("opacity-100", open);
+      overlay.classList.toggle("opacity-0", !open);
+      overlay.classList.toggle("pointer-events-auto", open);
+      overlay.classList.toggle("pointer-events-none", !open);
+      overlay.setAttribute("aria-hidden", String(!open));
+      drawer.classList.toggle("translate-y-0", open);
+      drawer.classList.toggle("translate-y-full", !open);
+      drawer.classList.toggle("pointer-events-auto", open);
+      drawer.classList.toggle("pointer-events-none", !open);
+      if (!open) expandBtn(false);
+    }
+
+    btn.addEventListener("click", () => toggle(true));
+    overlay.addEventListener("click", () => toggle(false));
+    closeBtn.addEventListener("click", () => toggle(false));
+
+    drawer.querySelectorAll(".mobile-toc-link").forEach(link => {
+      link.addEventListener("click", () => toggle(false));
+    });
+  }
+  initMobileToc();
+</script>

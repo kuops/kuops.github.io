@@ -10,6 +10,7 @@ import ShareLinks from "@/components/ShareLinks.astro";
 import BackButton from "@/components/BackButton.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import TableOfContents from "@/components/TableOfContents.astro";
+import MobileToc from "@/components/MobileToc.astro";
 import { getPath } from "@/utils/getPath";
 import { slugifyStr } from "@/utils/slugify";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
@@ -130,6 +131,8 @@ const layoutProps = {
     </ul>
 
     <BackToTopButton />
+
+    {headings.length > 0 && <MobileToc {headings} />}
 
     <ShareLinks />
 

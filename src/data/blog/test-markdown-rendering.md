@@ -309,7 +309,7 @@ ___
 ## HTML 混排
 
 <div style="background: var(--purple-hsl); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
-  <p style="color: var(--white); margin: 0;">这是嵌入的 HTML 内容</p>
+  <p style="margin: 0;">这是嵌入的 HTML 内容</p>
 </div>
 
 <details>

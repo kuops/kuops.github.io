@@ -1,7 +1,6 @@
 @plugin "@tailwindcss/typography";
 
 @layer base {
-  /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
     @apply prose;
 
@@ -11,6 +10,11 @@
     h4,
     th {
       @apply mb-3 text-foreground;
+    }
+
+    h5,
+    h6 {
+      @apply text-foreground;
     }
 
     h3 {
@@ -78,20 +82,31 @@
       @apply border-s-accent/80 wrap-break-word opacity-80;
     }
 
-    details {
-      @apply inline-block cursor-pointer text-foreground select-none [&_p]:hidden [&_ul]:my-0!;
-    }
-
-    summary {
-      @apply focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent focus-visible:outline-dashed;
-    }
-
-    pre {
-      @apply focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+    mark {
+      strong {
+        color: inherit;
+      }
     }
   }
 
-  /* ===== Code Blocks & Syntax Highlighting ===== */
+  html[data-theme="dark"] .app-prose kbd {
+    color: var(--foreground);
+    background-color: var(--muted);
+    border-color: var(--border);
+  }
+
+  html[data-theme="dark"] .app-prose details summary {
+    color: var(--foreground);
+  }
+
+  html[data-theme="dark"] .app-prose dt {
+    color: var(--foreground);
+  }
+
+  html[data-theme="dark"] .app-prose dd {
+    color: var(--foreground);
+  }
+
   .astro-code {
     @apply flex border bg-(--shiki-light-bg) font-mono text-(--shiki-light) outline-border [&_span]:text-(--shiki-light);
   }
@@ -100,8 +115,6 @@
     @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
   }
 
-  /* Styles for Shiki transformers */
-  /* https://shiki.style/packages/transformers */
   .astro-code {
     .line.diff.add {
       @apply relative inline-block w-full bg-green-400/20 before:absolute before:-left-3 before:text-green-500 before:content-['+'];
