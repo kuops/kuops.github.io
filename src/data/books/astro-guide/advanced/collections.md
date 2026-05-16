@@ -1,7 +1,7 @@
 ---
-title: "第四章 内容集合"
+title: "内容集合"
 description: "使用 Content Collections 管理 Markdown 内容"
-order: 4
+order: 2
 ---
 
 ## 什么是内容集合

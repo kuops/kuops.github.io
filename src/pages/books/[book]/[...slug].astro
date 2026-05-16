@@ -1,23 +1,37 @@
 ---
-import { render, getCollection } from "astro:content";
+import { render } from "astro:content";
 import BookLayout from "@/layouts/BookLayout.astro";
-import { getBookConfig, getAllBookSlugs } from "@/books.config";
+import {
+  getBookEntries,
+  buildSidebar,
+  buildTitleMap,
+  getFlatItems,
+  getAllBooks,
+} from "@/utils/books";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 
 export async function getStaticPaths() {
-  const allSlugs = getAllBookSlugs();
+  const books = await getAllBooks();
   const paths = [];
 
-  for (const bookSlug of allSlugs) {
-    const chapters = await getCollection("books", ({ id }) =>
-      id.startsWith(bookSlug + "/")
-    );
-    for (const chapter of chapters) {
-      const chapterSlug = chapter.id.replace(bookSlug + "/", "");
+  for (const book of books) {
+    const entries = await getBookEntries(book.slug);
+    for (const entry of entries) {
+      const fp = entry.filePath || "";
+      if (
+        fp.endsWith("/index.md") ||
+        fp.endsWith("/_index.md") ||
+        fp === "index.md"
+      ) {
+        continue;
+      }
+      const relativePath =
+        entry.id === book.slug ? "" : entry.id.replace(book.slug + "/", "");
+      if (!relativePath) continue;
       paths.push({
-        params: { book: bookSlug, slug: chapterSlug },
-        props: { chapter },
+        params: { book: book.slug, slug: relativePath },
+        props: { chapter: entry },
       });
     }
   }
@@ -28,26 +42,14 @@ export async function getStaticPaths() {
 const { chapter } = Astro.props;
 const { book, slug } = Astro.params;
 
-const bookConfig = getBookConfig(book!);
-
-if (!bookConfig) {
-  return Astro.redirect("/404");
-}
+const entries = await getBookEntries(book!);
+const sidebar = await buildSidebar(book!, entries);
+const titleMap = buildTitleMap(entries, book!);
 
 const { Content, headings: allHeadings } = await render(chapter);
-
 const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
 
-const allChapters = await getCollection("books", ({ id }) =>
-  id.startsWith(bookConfig.slug + "/")
-);
-const titleMap: Record<string, string> = {};
-for (const ch of allChapters) {
-  const chSlug = ch.id.replace(bookConfig.slug + "/", "");
-  titleMap[chSlug] = ch.data.title;
-}
-
-const flatItems = bookConfig.sidebar.flatMap(g => g.items);
+const flatItems = getFlatItems(sidebar);
 const currentIndex = flatItems.indexOf(slug!);
 const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
 const nextSlug =
@@ -58,9 +60,9 @@ const nextSlug =
   title={chapter.data.title}
   description={chapter.data.description}
   bookSlug={book!}
-  sidebar={bookConfig.sidebar}
+  {sidebar}
   currentSlug={slug!}
-  titleMap={titleMap}
+  {titleMap}
   {headings}
 >
   <Content />

@@ -1,19 +1,17 @@
 ---
-import { getAllBookSlugs, getBookConfig } from "@/books.config";
+import { getAllBooks, getBookEntries, getFirstChapter } from "@/utils/books";
 
 export async function getStaticPaths() {
-  return getAllBookSlugs().map(slug => ({
-    params: { book: slug },
-  }));
+  const books = await getAllBooks();
+  return books.map(b => ({ params: { book: b.slug } }));
 }
 
 const { book } = Astro.params;
-const config = getBookConfig(book!);
+const entries = await getBookEntries(book!);
+const first = await getFirstChapter(book!, entries);
 
-const firstItem = config?.sidebar[0]?.items[0];
-
-if (firstItem) {
-  return Astro.redirect(`/books/${book}/${firstItem}`);
+if (first) {
+  return Astro.redirect(`/books/${book}/${first}`);
 }
 
 return Astro.redirect("/books");

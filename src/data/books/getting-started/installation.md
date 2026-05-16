@@ -1,5 +1,5 @@
 ---
-title: "第二章 安装"
+title: "安装"
 description: "安装指南"
 order: 2
 ---

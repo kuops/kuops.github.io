@@ -25,11 +25,13 @@ const blog = defineCollection({
 });
 
 const books = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.md", base: `./${BOOKS_PATH}` }),
+  loader: glob({ pattern: "**/{[^_]*.md,_index.md}", base: `./${BOOKS_PATH}` }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
     order: z.number().default(0),
+    group: z.string().optional(),
+    draft: z.boolean().optional(),
   }),
 });
 

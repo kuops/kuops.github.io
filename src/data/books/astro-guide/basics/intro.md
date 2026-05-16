@@ -1,5 +1,5 @@
 ---
-title: "第一章 认识 Astro"
+title: "认识 Astro"
 description: "了解 Astro 是什么、为什么选择 Astro"
 order: 1
 ---
@@ -51,4 +51,4 @@ node --version
 
 ## 下一步
 
-准备好了吗？继续阅读 [安装与创建项目](./ch02) 开始动手实践。
+准备好了吗？继续阅读 [安装与创建项目](./installation) 开始动手实践。

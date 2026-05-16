@@ -1,5 +1,5 @@
 ---
-title: "第一章 简介"
+title: "简介"
 description: "了解基本概念"
 order: 1
 ---
@@ -16,4 +16,4 @@ order: 1
 
 ## 下一步
 
-阅读 [第二章](./ch02) 了解更多。
+阅读 [安装](./installation) 了解更多。
