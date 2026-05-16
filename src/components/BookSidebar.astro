@@ -27,6 +27,7 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
           <a
             href={href}
             class:list={["book-chapter-link", { active: isCurrent }]}
+            aria-current={isCurrent ? "page" : undefined}
           >
             {label}
           </a>

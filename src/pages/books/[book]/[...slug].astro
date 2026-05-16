@@ -7,6 +7,8 @@ import {
   buildTitleMap,
   getFlatItems,
   getAllBooks,
+  isBookIndex,
+  isGroupIndex,
 } from "@/utils/books";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
@@ -18,12 +20,7 @@ export async function getStaticPaths() {
   for (const book of books) {
     const entries = await getBookEntries(book.slug);
     for (const entry of entries) {
-      const fp = entry.filePath || "";
-      if (
-        fp.endsWith("/index.md") ||
-        fp.endsWith("/_index.md") ||
-        fp === "index.md"
-      ) {
+      if (isBookIndex(entry) || isGroupIndex(entry)) {
         continue;
       }
       const relativePath =
@@ -31,7 +28,7 @@ export async function getStaticPaths() {
       if (!relativePath) continue;
       paths.push({
         params: { book: book.slug, slug: relativePath },
-        props: { chapter: entry },
+        props: { chapter: entry, entries },
       });
     }
   }
@@ -39,11 +36,10 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { chapter } = Astro.props;
+const { chapter, entries } = Astro.props;
 const { book, slug } = Astro.params;
 
-const entries = await getBookEntries(book!);
-const sidebar = await buildSidebar(book!, entries);
+const sidebar = buildSidebar(book!, entries);
 const titleMap = buildTitleMap(entries, book!);
 
 const { Content, headings: allHeadings } = await render(chapter);
@@ -69,7 +65,7 @@ const nextSlug =
 
   <hr class="my-8 border-dashed" />
 
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
     {
       prevSlug ? (
         <a
@@ -80,7 +76,7 @@ const nextSlug =
           <div>
             <span class="text-sm text-foreground/60">上一章</span>
             <div class="text-sm font-medium text-accent">
-              {titleMap[prevSlug]}
+              {titleMap[prevSlug] || prevSlug}
             </div>
           </div>
         </a>
@@ -97,7 +93,7 @@ const nextSlug =
           <div>
             <span class="text-sm text-foreground/60">下一章</span>
             <div class="text-sm font-medium text-accent">
-              {titleMap[nextSlug]}
+              {titleMap[nextSlug] || nextSlug}
             </div>
           </div>
           <IconChevronRight class="inline-block flex-none rtl:rotate-180" />

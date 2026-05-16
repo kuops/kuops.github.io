@@ -8,7 +8,7 @@ export async function getStaticPaths() {
 
 const { book } = Astro.params;
 const entries = await getBookEntries(book!);
-const first = await getFirstChapter(book!, entries);
+const first = getFirstChapter(book!, entries);
 
 if (first) {
   return Astro.redirect(`/books/${book}/${first}`);

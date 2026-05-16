@@ -8,6 +8,8 @@ import TableOfContents from "@/components/TableOfContents.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import MobileToc from "@/components/MobileToc.astro";
 import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
+import MermaidRenderer from "@/components/MermaidRenderer.astro";
+import { SITE } from "@/config";
 import type { SidebarGroup } from "@/types/books";
 
 type Props = {
@@ -31,18 +33,22 @@ const {
 } = Astro.props;
 ---
 
-<Layout title={title} description={description} scrollSmooth>
+<Layout
+  title={`${title} | ${SITE.title}`}
+  description={description}
+  scrollSmooth
+>
   <Header maxWidth="mx-auto w-full max-w-7xl px-4" />
   <main
     id="main-content"
-    class="mx-auto w-full max-w-7xl px-4 py-12 pb-12"
+    class="mx-auto w-full max-w-7xl px-4 py-12"
     data-pagefind-body
     data-pagefind-filter="type:book"
     transition:animate={fade({ duration: "0.15s" })}
   >
     <div class="flex gap-8">
       <aside class="hidden w-56 flex-none lg:block">
-        <div class="sticky top-24">
+        <div class="sticky top-20">
           <BookSidebar {bookSlug} {sidebar} {currentSlug} {titleMap} />
         </div>
       </aside>
@@ -63,7 +69,7 @@ const {
       {
         headings.length > 0 && (
           <aside class="hidden w-52 flex-none xl:block">
-            <div class="sticky top-24">
+            <div class="sticky top-20">
               <TableOfContents {headings} />
             </div>
           </aside>
@@ -77,3 +83,5 @@ const {
 </Layout>
 
 <ArticleEnhancements />
+
+<MermaidRenderer />

@@ -10,11 +10,11 @@ interface BookMeta {
   order: number;
 }
 
-function isBookIndex(e: BookEntry) {
+export function isBookIndex(e: BookEntry) {
   return e.filePath?.endsWith("/index.md") || e.filePath === "index.md";
 }
 
-function isGroupIndex(e: BookEntry) {
+export function isGroupIndex(e: BookEntry) {
   return e.filePath?.endsWith("/_index.md");
 }
 
@@ -32,7 +32,10 @@ function getGroupDir(id: string) {
 }
 
 export async function getAllBooks(): Promise<BookMeta[]> {
-  const entries = await getCollection("books", e => isBookIndex(e));
+  const entries = await getCollection(
+    "books",
+    e => isBookIndex(e) && !e.data.draft
+  );
   return entries
     .map(e => ({
       slug: getBookSlug(e.id),
@@ -43,18 +46,11 @@ export async function getAllBooks(): Promise<BookMeta[]> {
     .sort((a, b) => a.order - b.order);
 }
 
-export async function getBookMeta(
-  bookSlug: string
-): Promise<BookMeta | undefined> {
-  const books = await getAllBooks();
-  return books.find(b => b.slug === bookSlug);
-}
-
 export async function getBookEntries(bookSlug: string): Promise<BookEntry[]> {
   const prefix = bookSlug + "/";
   return getCollection(
     "books",
-    ({ id }) => id === bookSlug || id.startsWith(prefix)
+    ({ id, data }) => (id === bookSlug || id.startsWith(prefix)) && !data.draft
   );
 }
 
@@ -64,10 +60,10 @@ interface GroupMeta {
   order: number;
 }
 
-export async function buildSidebar(
+export function buildSidebar(
   bookSlug: string,
   entries: BookEntry[]
-): Promise<SidebarGroup[]> {
+): SidebarGroup[] {
   const groupIndexEntries = entries.filter(
     e => getBookSlug(e.id) === bookSlug && isGroupIndex(e)
   );
@@ -89,7 +85,7 @@ export async function buildSidebar(
   const hasGroups = groupMap.size > 0;
 
   if (!hasGroups) {
-    const sorted = chapters.sort(
+    const sorted = [...chapters].sort(
       (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0)
     );
     return [
@@ -116,7 +112,7 @@ export async function buildSidebar(
   const result: SidebarGroup[] = [];
 
   if (rootChapters.length > 0) {
-    const sorted = rootChapters.sort(
+    const sorted = [...rootChapters].sort(
       (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0)
     );
     result.push({
@@ -128,7 +124,7 @@ export async function buildSidebar(
   const sortedGroups = [...groupMap.values()].sort((a, b) => a.order - b.order);
 
   for (const g of sortedGroups) {
-    const items = (groupsByDir.get(g.dir) || []).sort(
+    const items = [...(groupsByDir.get(g.dir) || [])].sort(
       (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0)
     );
     if (items.length > 0) {
@@ -157,11 +153,11 @@ export function getFlatItems(sidebar: SidebarGroup[]) {
   return sidebar.flatMap(g => g.items);
 }
 
-export async function getFirstChapter(
+export function getFirstChapter(
   bookSlug: string,
   entries: BookEntry[]
-): Promise<string | null> {
-  const sidebar = await buildSidebar(bookSlug, entries);
+): string | null {
+  const sidebar = buildSidebar(bookSlug, entries);
   const flat = getFlatItems(sidebar);
   return flat.length > 0 ? flat[0] : null;
 }
