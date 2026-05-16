@@ -1,7 +1,7 @@
 ---
-title: "第三章 组件与页面"
+title: "组件与页面"
 description: "学习 Astro 组件语法和页面路由"
-order: 3
+order: 1
 ---
 
 ## Astro 组件基础
@@ -149,4 +149,4 @@ npx astro add tailwind
 
 ## 下一步
 
-掌握了组件和页面后，继续阅读 [内容集合](./ch04) 学习如何管理 Markdown 内容。
+掌握了组件和页面后，继续阅读 [内容集合](./collections) 学习如何管理 Markdown 内容。

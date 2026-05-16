@@ -1,5 +1,5 @@
 ---
-title: "第二章 安装与创建项目"
+title: "安装与创建项目"
 description: "使用 Astro CLI 创建你的第一个项目"
 order: 2
 ---
@@ -75,4 +75,4 @@ export default defineConfig({
 
 ## 下一步
 
-项目跑起来后，继续阅读 [组件与页面](./ch03) 学习 Astro 的核心语法。
+项目跑起来后，继续阅读 [组件与页面](../advanced/components) 学习 Astro 的核心语法。

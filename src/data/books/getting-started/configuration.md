@@ -1,5 +1,5 @@
 ---
-title: "第三章 配置"
+title: "配置"
 description: "配置说明"
 order: 3
 ---

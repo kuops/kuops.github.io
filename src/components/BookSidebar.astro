@@ -1,5 +1,5 @@
 ---
-import type { SidebarGroup } from "@/books.config";
+import type { SidebarGroup } from "@/types/books";
 
 type Props = {
   bookSlug: string;
@@ -19,6 +19,25 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
   {
     sidebar.map(group => {
       const isActive = group.items.includes(currentSlug);
+      const links = group.items.map(item => {
+        const href = `/books/${bookSlug}/${item}`;
+        const isCurrent = currentSlug === item;
+        const label = titleMap[item] || item;
+        return (
+          <a
+            href={href}
+            class:list={["book-chapter-link", { active: isCurrent }]}
+            aria-current={isCurrent ? "page" : undefined}
+          >
+            {label}
+          </a>
+        );
+      });
+
+      if (!group.text) {
+        return <div class="book-group-body space-y-0.5">{links}</div>;
+      }
+
       return (
         <details
           open={isActive}
@@ -37,21 +56,7 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
             </svg>
             {group.text}
           </summary>
-          <div class="book-group-body">
-            {group.items.map(item => {
-              const href = `/books/${bookSlug}/${item}`;
-              const isCurrent = currentSlug === item;
-              const label = titleMap[item] || item;
-              return (
-                <a
-                  href={href}
-                  class:list={["book-chapter-link", { active: isCurrent }]}
-                >
-                  {label}
-                </a>
-              );
-            })}
-          </div>
+          <div class="book-group-body">{links}</div>
         </details>
       );
     })

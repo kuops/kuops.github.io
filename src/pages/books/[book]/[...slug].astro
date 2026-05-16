@@ -1,23 +1,34 @@
 ---
-import { render, getCollection } from "astro:content";
+import { render } from "astro:content";
 import BookLayout from "@/layouts/BookLayout.astro";
-import { getBookConfig, getAllBookSlugs } from "@/books.config";
+import {
+  getBookEntries,
+  buildSidebar,
+  buildTitleMap,
+  getFlatItems,
+  getAllBooks,
+  isBookIndex,
+  isGroupIndex,
+} from "@/utils/books";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 
 export async function getStaticPaths() {
-  const allSlugs = getAllBookSlugs();
+  const books = await getAllBooks();
   const paths = [];
 
-  for (const bookSlug of allSlugs) {
-    const chapters = await getCollection("books", ({ id }) =>
-      id.startsWith(bookSlug + "/")
-    );
-    for (const chapter of chapters) {
-      const chapterSlug = chapter.id.replace(bookSlug + "/", "");
+  for (const book of books) {
+    const entries = await getBookEntries(book.slug);
+    for (const entry of entries) {
+      if (isBookIndex(entry) || isGroupIndex(entry)) {
+        continue;
+      }
+      const relativePath =
+        entry.id === book.slug ? "" : entry.id.replace(book.slug + "/", "");
+      if (!relativePath) continue;
       paths.push({
-        params: { book: bookSlug, slug: chapterSlug },
-        props: { chapter },
+        params: { book: book.slug, slug: relativePath },
+        props: { chapter: entry, entries },
       });
     }
   }
@@ -25,29 +36,16 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { chapter } = Astro.props;
+const { chapter, entries } = Astro.props;
 const { book, slug } = Astro.params;
 
-const bookConfig = getBookConfig(book!);
-
-if (!bookConfig) {
-  return Astro.redirect("/404");
-}
+const sidebar = buildSidebar(book!, entries);
+const titleMap = buildTitleMap(entries, book!);
 
 const { Content, headings: allHeadings } = await render(chapter);
-
 const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
 
-const allChapters = await getCollection("books", ({ id }) =>
-  id.startsWith(bookConfig.slug + "/")
-);
-const titleMap: Record<string, string> = {};
-for (const ch of allChapters) {
-  const chSlug = ch.id.replace(bookConfig.slug + "/", "");
-  titleMap[chSlug] = ch.data.title;
-}
-
-const flatItems = bookConfig.sidebar.flatMap(g => g.items);
+const flatItems = getFlatItems(sidebar);
 const currentIndex = flatItems.indexOf(slug!);
 const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
 const nextSlug =
@@ -58,16 +56,16 @@ const nextSlug =
   title={chapter.data.title}
   description={chapter.data.description}
   bookSlug={book!}
-  sidebar={bookConfig.sidebar}
+  {sidebar}
   currentSlug={slug!}
-  titleMap={titleMap}
+  {titleMap}
   {headings}
 >
   <Content />
 
   <hr class="my-8 border-dashed" />
 
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
     {
       prevSlug ? (
         <a
@@ -78,7 +76,7 @@ const nextSlug =
           <div>
             <span class="text-sm text-foreground/60">上一章</span>
             <div class="text-sm font-medium text-accent">
-              {titleMap[prevSlug]}
+              {titleMap[prevSlug] || prevSlug}
             </div>
           </div>
         </a>
@@ -95,7 +93,7 @@ const nextSlug =
           <div>
             <span class="text-sm text-foreground/60">下一章</span>
             <div class="text-sm font-medium text-accent">
-              {titleMap[nextSlug]}
+              {titleMap[nextSlug] || nextSlug}
             </div>
           </div>
           <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
