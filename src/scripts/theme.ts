@@ -30,7 +30,11 @@ function setPreference(): void {
 }
 
 function reflectPreference(): void {
-  document.firstElementChild?.setAttribute("data-theme", themeValue);
+  const html = document.firstElementChild;
+  if (html) {
+    html.setAttribute("data-theme", themeValue);
+    html.classList.add("theme-ready");
+  }
 
   document.querySelector("#theme-btn")?.setAttribute("aria-label", themeValue);
 
