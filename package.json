@@ -1,7 +1,7 @@
 {
   "name": "blog",
   "type": "module",
-  "version": "5.5.1",
+  "version": "6.0.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/",
@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.14",
-    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/sitemap": "^3.7.2",
     "@pagefind/component-ui": "^1.5.2",
     "@resvg/resvg-js": "^2.6.2",
-    "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.16.6",
+    "@tailwindcss/postcss": "^4.3.0",
+    "astro": "^6.3.3",
     "dayjs": "^1.11.19",
     "lodash.kebabcase": "^4.1.1",
     "mermaid": "^11.15.0",

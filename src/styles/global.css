@@ -32,6 +32,9 @@ html[data-theme="dark"] {
 }
 
 @layer base {
+  html[data-fonts-loading] body {
+    visibility: hidden;
+  }
   * {
     @apply border-border outline-accent/75;
     scrollbar-width: auto;

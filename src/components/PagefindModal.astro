@@ -292,7 +292,7 @@
         }
 
         dialog.pf-modal .pf-skeleton {
-          background: var(--muted) !important;
+          background: transparent !important;
         }
 
         dialog.pf-modal .pf-summary:empty {
@@ -304,7 +304,10 @@
         }
 
         dialog.pf-modal .pf-empty {
-          display: none !important;
+          color: var(--foreground) !important;
+          opacity: 0.6 !important;
+          padding: 24px 16px !important;
+          text-align: center !important;
         }
 
         dialog.pf-modal .pf-modal-body:not(:has(.pf-result, .pf-skeleton-title, .pf-empty:not([data-pf-hidden]))) {
@@ -313,6 +316,7 @@
       `;
     document.head.appendChild(themeStyle);
 
+    let treeObserver: MutationObserver | undefined;
     const modalEl = document.querySelector("pagefind-modal");
     if (modalEl) {
       let updatingTree = false;
@@ -328,13 +332,14 @@
               chips[chips.length - 1].setAttribute("data-tree-last", "");
             }
           });
-          observer.takeRecords();
+          treeObserver?.takeRecords();
         } finally {
           updatingTree = false;
         }
       };
 
-      const observer = new MutationObserver(() => {
+      treeObserver?.disconnect();
+      treeObserver = new MutationObserver(() => {
         const dialog = modalEl.querySelector(
           "dialog.pf-modal"
         ) as HTMLDialogElement | null;
@@ -355,7 +360,134 @@
         }
         updateTreeLines();
       });
-      observer.observe(modalEl, { childList: true, subtree: true });
+      treeObserver.observe(modalEl, { childList: true, subtree: true });
+
+      const patchContainer = (): boolean => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const inst = (modalEl as any).instance;
+          if (!inst?.__hooks__) return false;
+          const resultsEl = modalEl.querySelector("pagefind-results");
+          if (!resultsEl) return false;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const loadingHooks: any[] = inst.__hooks__.loading;
+          if (!loadingHooks?.length) return false;
+
+          for (let i = 0; i < loadingHooks.length; i++) {
+            if (
+              typeof loadingHooks[i] === "object" &&
+              loadingHooks[i].owner === resultsEl
+            ) {
+              loadingHooks[i] = { ...loadingHooks[i], callback: () => {} };
+            }
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const container = (resultsEl as any).containerEl as HTMLElement;
+          if (!container) return true;
+          if ((container as unknown as Record<string, boolean>).__patched)
+            return true;
+          (container as unknown as Record<string, boolean>).__patched = true;
+
+          const origSet = Object.getOwnPropertyDescriptor(
+            Element.prototype,
+            "innerHTML"
+          )!.set!;
+          const origAppend = container.appendChild.bind(container);
+
+          let suppressClear = false;
+          const staging = document.createDocumentFragment();
+
+          const finishBatch = () => {
+            clearTimeout(safetyTimer);
+            origSet.call(container, "");
+            origAppend(staging);
+            suppressClear = false;
+          };
+
+          let safetyTimer: ReturnType<typeof setTimeout>;
+
+          Object.defineProperty(container, "innerHTML", {
+            configurable: true,
+            enumerable: true,
+            get: Object.getOwnPropertyDescriptor(
+              Element.prototype,
+              "innerHTML"
+            )!.get!,
+            set(v: string) {
+              if (v === "" && suppressClear) return;
+              origSet.call(container, v);
+            },
+          });
+
+          container.appendChild = function <T extends Node>(node: T): T {
+            if (!suppressClear) return origAppend(node) as T;
+            staging.appendChild(node);
+            return node;
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const resHooks: any[] = inst.__hooks__.results;
+          for (let i = 0; i < resHooks.length; i++) {
+            if (
+              typeof resHooks[i] === "object" &&
+              resHooks[i].owner === resultsEl
+            ) {
+              const origCb = resHooks[i].callback;
+              resHooks[i] = {
+                ...resHooks[i],
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                callback: (...args: any[]) => {
+                  clearTimeout(safetyTimer);
+                  suppressClear = true;
+                  staging.replaceChildren();
+                  origCb(...args);
+
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const results: any[] = (resultsEl as any).results;
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const unload = results.filter((r: any) => r.result === null);
+                  if (unload.length === 0) {
+                    finishBatch();
+                    return;
+                  }
+
+                  safetyTimer = setTimeout(finishBatch, 3000);
+                  let done = 0;
+                  for (const r of unload) {
+                    if (r.observer) {
+                      r.observer.disconnect();
+                      r.observer = null;
+                    }
+                    const origOnLoad = r.onLoad;
+                    r.onLoad = () => {
+                      origOnLoad?.();
+                      done++;
+                      if (done === unload.length) finishBatch();
+                    };
+                    try {
+                      r.load();
+                    } catch {
+                      done++;
+                      if (done === unload.length) finishBatch();
+                    }
+                  }
+                },
+              };
+            }
+          }
+
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      let retries = 0;
+      const tryPatch = () => {
+        if (patchContainer() || ++retries > 60) return;
+        requestAnimationFrame(tryPatch);
+      };
+      tryPatch();
     }
   }
 
