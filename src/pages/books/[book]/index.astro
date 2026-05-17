@@ -1,18 +1,100 @@
 ---
-import { getAllBooks, getBookEntries, getFirstChapter } from "@/utils/books";
+import { render } from "astro:content";
+import BookLayout from "@/layouts/BookLayout.astro";
+import {
+  getBookEntries,
+  buildSidebar,
+  buildTitleMap,
+  getFlatItems,
+  getAllBooks,
+  getFirstChapter,
+  getChapterEntry,
+} from "@/utils/books";
+import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
+import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 
 export async function getStaticPaths() {
   const books = await getAllBooks();
-  return books.map(b => ({ params: { book: b.slug } }));
+  const paths = [];
+
+  for (const book of books) {
+    const entries = await getBookEntries(book.slug);
+    const firstSlug = getFirstChapter(book.slug, entries);
+    if (!firstSlug) continue;
+    const chapter = getChapterEntry(entries, book.slug, firstSlug);
+    if (!chapter) continue;
+    paths.push({
+      params: { book: book.slug },
+      props: { chapter, entries, slug: firstSlug },
+    });
+  }
+
+  return paths;
 }
 
+const { chapter, entries, slug } = Astro.props;
 const { book } = Astro.params;
-const entries = await getBookEntries(book!);
-const first = getFirstChapter(book!, entries);
 
-if (first) {
-  return Astro.redirect(`/books/${book}/${first}`);
-}
+const sidebar = buildSidebar(book!, entries);
+const titleMap = buildTitleMap(entries, book!);
 
-return Astro.redirect("/books");
+const { Content, headings: allHeadings } = await render(chapter);
+const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
+
+const flatItems = getFlatItems(sidebar);
+const currentIndex = flatItems.indexOf(slug);
+const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
+const nextSlug =
+  currentIndex < flatItems.length - 1 ? flatItems[currentIndex + 1] : null;
 ---
+
+<BookLayout
+  title={chapter.data.title}
+  description={chapter.data.description}
+  bookSlug={book!}
+  {sidebar}
+  currentSlug={slug}
+  {titleMap}
+  {headings}
+>
+  <Content />
+
+  <hr class="my-8 border-dashed" />
+
+  <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    {
+      prevSlug ? (
+        <a
+          href={`/books/${book}/${prevSlug}`}
+          class="flex w-full gap-1 hover:opacity-75"
+        >
+          <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
+          <div>
+            <span class="text-sm text-foreground/60">上一章</span>
+            <div class="text-sm font-medium text-accent">
+              {titleMap[prevSlug] || prevSlug}
+            </div>
+          </div>
+        </a>
+      ) : (
+        <div />
+      )
+    }
+    {
+      nextSlug ? (
+        <a
+          href={`/books/${book}/${nextSlug}`}
+          class="flex w-full justify-end gap-1 text-end hover:opacity-75"
+        >
+          <div>
+            <span class="text-sm text-foreground/60">下一章</span>
+            <div class="text-sm font-medium text-accent">
+              {titleMap[nextSlug] || nextSlug}
+            </div>
+          </div>
+          <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
+        </a>
+      ) : null
+    }
+  </div>
+</BookLayout>
