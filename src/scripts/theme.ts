@@ -30,7 +30,11 @@ function setPreference(): void {
 }
 
 function reflectPreference(): void {
-  document.firstElementChild?.setAttribute("data-theme", themeValue);
+  const html = document.firstElementChild;
+  if (html) {
+    html.setAttribute("data-theme", themeValue);
+    html.classList.add("theme-ready");
+  }
 
   document.querySelector("#theme-btn")?.setAttribute("aria-label", themeValue);
 
@@ -93,6 +97,11 @@ document.addEventListener("astro:after-swap", setThemeFeature);
 // to avoid navigation bar color flickering in Android dark mode
 document.addEventListener("astro:before-swap", event => {
   const astroEvent = event;
+  const newHtml = astroEvent.newDocument.documentElement;
+
+  newHtml.setAttribute("data-theme", themeValue);
+  newHtml.classList.add("theme-ready");
+
   const bgColor = document
     .querySelector("meta[name='theme-color']")
     ?.getAttribute("content");

@@ -161,3 +161,14 @@ export function getFirstChapter(
   const flat = getFlatItems(sidebar);
   return flat.length > 0 ? flat[0] : null;
 }
+
+export function getChapterEntry(
+  entries: BookEntry[],
+  bookSlug: string,
+  relativeSlug: string
+): BookEntry | undefined {
+  const prefix = bookSlug + "/";
+  return entries.find(
+    e => !isBookIndex(e) && !isGroupIndex(e) && e.id === prefix + relativeSlug
+  );
+}

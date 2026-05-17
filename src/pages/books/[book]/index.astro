@@ -1,18 +1,53 @@
 ---
-import { getAllBooks, getBookEntries, getFirstChapter } from "@/utils/books";
+import {
+  getBookEntries,
+  buildSidebar,
+  buildTitleMap,
+  getFlatItems,
+  getAllBooks,
+  getFirstChapter,
+  getChapterEntry,
+} from "@/utils/books";
+import BookChapterContent from "@/components/BookChapterContent.astro";
 
 export async function getStaticPaths() {
   const books = await getAllBooks();
-  return books.map(b => ({ params: { book: b.slug } }));
+  const paths = [];
+
+  for (const book of books) {
+    const entries = await getBookEntries(book.slug);
+    const firstSlug = getFirstChapter(book.slug, entries);
+    if (!firstSlug) continue;
+    const chapter = getChapterEntry(entries, book.slug, firstSlug);
+    if (!chapter) continue;
+    paths.push({
+      params: { book: book.slug },
+      props: { chapter, entries, slug: firstSlug },
+    });
+  }
+
+  return paths;
 }
 
+const { chapter, entries, slug } = Astro.props;
 const { book } = Astro.params;
-const entries = await getBookEntries(book!);
-const first = getFirstChapter(book!, entries);
 
-if (first) {
-  return Astro.redirect(`/books/${book}/${first}`);
-}
+const sidebar = buildSidebar(book!, entries);
+const titleMap = buildTitleMap(entries, book!);
 
-return Astro.redirect("/books");
+const flatItems = getFlatItems(sidebar);
+const currentIndex = flatItems.indexOf(slug);
+const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
+const nextSlug =
+  currentIndex < flatItems.length - 1 ? flatItems[currentIndex + 1] : null;
 ---
+
+<BookChapterContent
+  {chapter}
+  book={book!}
+  {slug}
+  {sidebar}
+  {titleMap}
+  {prevSlug}
+  {nextSlug}
+/>

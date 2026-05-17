@@ -55,11 +55,17 @@ const structuredData = {
 <html
   dir={SITE.dir}
   lang=`${SITE.lang ?? "en"}`
-  class={`${scrollSmooth && "scroll-smooth"}`}
+  class={scrollSmooth ? "scroll-smooth" : undefined}
 >
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
+    <script is:inline>
+      document.documentElement.setAttribute("data-fonts-loading", "");
+      document.fonts.ready.then(function () {
+        document.documentElement.removeAttribute("data-fonts-loading");
+      });
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
@@ -72,6 +78,7 @@ const structuredData = {
         { subset: "latin", weight: 600, style: "normal" },
         { subset: "latin", weight: 700, style: "normal" },
         { subset: "latin", weight: 400, style: "italic" },
+        { subset: "latin", weight: 600, style: "italic" },
       ]}
     />
     <Font
@@ -152,7 +159,6 @@ const structuredData = {
 
     <ClientRouter />
 
-    <!-- Minimal inline script to prevent FOUC - sets theme immediately -->
     <script is:inline>
       (function () {
         const initialColorScheme = ""; // "light" | "dark"
@@ -168,8 +174,8 @@ const structuredData = {
 
         const themeValue = getPreferTheme();
 
-        // Set theme immediately to prevent flash
         document.firstElementChild?.setAttribute("data-theme", themeValue);
+        document.firstElementChild?.classList.add("theme-ready");
 
         // Export minimal API for external script
         window.theme = {
@@ -179,6 +185,14 @@ const structuredData = {
             window.theme.themeValue = val;
           },
         };
+      })();
+
+      (function () {
+        document.addEventListener("astro:after-swap", function () {
+          document.fonts.ready.then(function () {
+            document.documentElement.removeAttribute("data-fonts-loading");
+          });
+        });
       })();
     </script>
   </head>
