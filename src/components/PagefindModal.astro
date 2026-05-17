@@ -452,6 +452,7 @@
                     return;
                   }
 
+                  // Fallback: force-finish if load() never resolves (e.g. network error)
                   safetyTimer = setTimeout(finishBatch, 3000);
                   let done = 0;
                   for (const r of unload) {
@@ -479,6 +480,12 @@
 
           return true;
         } catch {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              "[pagefind] patchContainer failed, falling back to default behavior"
+            );
+          }
           return false;
         }
       };

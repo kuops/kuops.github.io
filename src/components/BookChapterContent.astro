@@ -1,0 +1,75 @@
+---
+import { render } from "astro:content";
+import BookLayout from "@/layouts/BookLayout.astro";
+import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
+import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
+import type { CollectionEntry } from "astro:content";
+import type { SidebarGroup } from "@/types/books";
+
+interface Props {
+  chapter: CollectionEntry<"books">;
+  book: string;
+  slug: string;
+  sidebar: SidebarGroup[];
+  titleMap: Record<string, string>;
+  prevSlug: string | null;
+  nextSlug: string | null;
+}
+
+const { chapter, book, slug, sidebar, titleMap, prevSlug, nextSlug } =
+  Astro.props;
+
+const { Content, headings: allHeadings } = await render(chapter);
+const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
+---
+
+<BookLayout
+  title={chapter.data.title}
+  description={chapter.data.description}
+  bookSlug={book}
+  {sidebar}
+  currentSlug={slug}
+  {titleMap}
+  {headings}
+>
+  <Content />
+
+  <hr class="my-8 border-dashed" />
+
+  <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    {
+      prevSlug ? (
+        <a
+          href={`/books/${book}/${prevSlug}`}
+          class="flex w-full gap-1 hover:opacity-75"
+        >
+          <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
+          <div>
+            <span class="text-sm text-foreground/60">上一章</span>
+            <div class="text-sm font-medium text-accent">
+              {titleMap[prevSlug] || prevSlug}
+            </div>
+          </div>
+        </a>
+      ) : (
+        <div />
+      )
+    }
+    {
+      nextSlug ? (
+        <a
+          href={`/books/${book}/${nextSlug}`}
+          class="flex w-full justify-end gap-1 text-end hover:opacity-75"
+        >
+          <div>
+            <span class="text-sm text-foreground/60">下一章</span>
+            <div class="text-sm font-medium text-accent">
+              {titleMap[nextSlug] || nextSlug}
+            </div>
+          </div>
+          <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
+        </a>
+      ) : null
+    }
+  </div>
+</BookLayout>

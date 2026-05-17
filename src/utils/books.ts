@@ -169,9 +169,6 @@ export function getChapterEntry(
 ): BookEntry | undefined {
   const prefix = bookSlug + "/";
   return entries.find(
-    e =>
-      !isBookIndex(e) &&
-      !isGroupIndex(e) &&
-      (e.id === relativeSlug || e.id === prefix + relativeSlug)
+    e => !isBookIndex(e) && !isGroupIndex(e) && e.id === prefix + relativeSlug
   );
 }
