@@ -1,6 +1,15 @@
 ---
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
 
+const t = useTranslations(SITE.lang);
 ---
+
+<span
+  class="hidden"
+  id="i18n-copy"
+  data-copy={t.post.copyCode}
+  data-copied={t.post.copied}></span>
 
 <script is:inline data-astro-rerun>
   function createProgressBar() {
@@ -54,7 +63,9 @@
   addHeadingLinks();
 
   function attachCopyButtons() {
-    const copyButtonLabel = "Copy";
+    const i18nEl = document.getElementById("i18n-copy");
+    const copyButtonLabel = i18nEl?.dataset.copy || "Copy";
+    const copiedLabel = i18nEl?.dataset.copied || "Copied";
     const codeBlocks = Array.from(document.querySelectorAll("pre"));
 
     for (const codeBlock of codeBlocks) {
@@ -84,7 +95,7 @@
 
         await navigator.clipboard.writeText(text ?? "");
 
-        copyButton.innerText = "Copied";
+        copyButton.innerText = copiedLabel;
         setTimeout(() => {
           copyButton.innerText = copyButtonLabel;
         }, 700);
