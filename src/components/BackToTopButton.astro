@@ -58,7 +58,8 @@ const t = useTranslations(SITE.lang);
     function handleScroll() {
       const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
       const scrollTop = rootElement.scrollTop;
-      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+      const scrollPercent =
+        scrollTotal > 0 ? Math.floor((scrollTop / scrollTotal) * 100) : 0;
 
       progressIndicator.style.setProperty(
         "background-image",

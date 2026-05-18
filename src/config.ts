@@ -54,4 +54,3 @@ export const SITE = {
 
 export const SOCIALS = resolvedConfig.socials;
 export const SHARE_LINKS = resolvedConfig.shareLinks;
-export const FEATURES = resolvedConfig.features;

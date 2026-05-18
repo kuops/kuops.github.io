@@ -8,6 +8,7 @@ export default {
     archives: "Archives",
     search: "Search",
     books: "Books",
+    home: "Home",
   },
   post: {
     previous: "Previous Post",
@@ -56,5 +57,10 @@ export default {
     previousChapter: "Previous Chapter",
     nextChapter: "Next Chapter",
     tableOfContents: "Contents",
+    chapterNav: "Chapter Navigation",
+  },
+  booksPage: {
+    title: "Books",
+    description: "All the books I've written.",
   },
 } satisfies UIStrings;

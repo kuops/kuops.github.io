@@ -8,6 +8,7 @@ export default {
     archives: "归档",
     search: "搜索",
     books: "书籍",
+    home: "首页",
   },
   post: {
     previous: "上一篇",
@@ -56,5 +57,10 @@ export default {
     previousChapter: "上一章",
     nextChapter: "下一章",
     tableOfContents: "目录",
+    chapterNav: "章节导航",
+  },
+  booksPage: {
+    title: "书籍",
+    description: "我写的所有书籍。",
   },
 } satisfies UIStrings;

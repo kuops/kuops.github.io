@@ -6,6 +6,7 @@ export interface UIStrings {
     archives: string;
     search: string;
     books: string;
+    home: string;
   };
   post: {
     previous: string;
@@ -54,5 +55,10 @@ export interface UIStrings {
     previousChapter: string;
     nextChapter: string;
     tableOfContents: string;
+    chapterNav: string;
+  };
+  booksPage: {
+    title: string;
+    description: string;
   };
 }

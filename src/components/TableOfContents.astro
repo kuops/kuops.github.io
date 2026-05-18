@@ -1,4 +1,9 @@
 ---
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(SITE.lang);
+
 interface Heading {
   depth: number;
   slug: string;
@@ -19,7 +24,7 @@ const minDepth =
   <h2
     class="mb-2 text-sm font-semibold tracking-wider text-foreground/60 uppercase"
   >
-    目录
+    {t.pages.toc}
   </h2>
   <ul class="space-y-1 border-s-2 border-border text-sm">
     {

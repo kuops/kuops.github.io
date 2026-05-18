@@ -6,13 +6,16 @@ import Footer from "@/components/Footer.astro";
 import BookCard from "@/components/BookCard.astro";
 import { getAllBooks } from "@/utils/books";
 import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(SITE.lang);
 
 const books = await getAllBooks();
 ---
 
-<Layout title={`Books | ${SITE.title}`}>
+<Layout title={`${t.booksPage.title} | ${SITE.title}`}>
   <Header />
-  <Main pageTitle="Books" pageDesc="All the books I've written.">
+  <Main pageTitle={t.booksPage.title} pageDesc={t.booksPage.description}>
     <div class="grid gap-6 sm:grid-cols-2">
       {
         books.map(book => (
