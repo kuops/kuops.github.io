@@ -32,7 +32,7 @@ export default defineAstroPaperConfig({
   socials: [
     { name: "github", url: "https://github.com/satnaing/astro-paper" },
     { name: "x", url: "https://x.com/username" },
-    { name: "linkedin", url: "https://www.linkedin.com/in/username/" },
+    { name: "wechat", url: "#" },
     { name: "mail", url: "mailto:yourmail@gmail.com" },
   ],
   shareLinks: [
