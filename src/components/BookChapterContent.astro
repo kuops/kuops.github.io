@@ -5,6 +5,9 @@ import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import type { CollectionEntry } from "astro:content";
 import type { SidebarGroup } from "@/types/books";
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(SITE.lang);
 
 interface Props {
   chapter: CollectionEntry<"books">;
@@ -45,7 +48,9 @@ const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
         >
           <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
           <div>
-            <span class="text-sm text-foreground/60">上一章</span>
+            <span class="text-sm text-foreground/60">
+              {t.book.previousChapter}
+            </span>
             <div class="text-sm font-medium text-accent">
               {titleMap[prevSlug] || prevSlug}
             </div>
@@ -62,7 +67,7 @@ const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
           class="flex w-full justify-end gap-1 text-end hover:opacity-75"
         >
           <div>
-            <span class="text-sm text-foreground/60">下一章</span>
+            <span class="text-sm text-foreground/60">{t.book.nextChapter}</span>
             <div class="text-sm font-medium text-accent">
               {titleMap[nextSlug] || nextSlug}
             </div>

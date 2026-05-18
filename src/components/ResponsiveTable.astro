@@ -1,0 +1,21 @@
+---
+type Props = {
+  variant?: "default" | "minimal" | "striped" | "striped-minimal";
+};
+
+const { variant = "default" } = Astro.props;
+---
+
+<div
+  class:list={[
+    "overflow-x-auto",
+    {
+      "rounded border border-border":
+        variant === "default" || variant === "striped",
+    },
+  ]}
+>
+  <div class:list={["min-w-[500px]", { "[&>table]:mb-0": true }]}>
+    <slot />
+  </div>
+</div>

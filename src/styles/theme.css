@@ -1,0 +1,20 @@
+:root,
+html[data-theme="light"] {
+  --background: #fdfdfd;
+  --foreground: #282728;
+  --accent: #006cac;
+  --accent-foreground: #fdfdfd;
+  --muted: #e6e6e6;
+  --muted-foreground: #737373;
+  --border: #ece9e9;
+}
+
+html[data-theme="dark"] {
+  --background: #282c34;
+  --foreground: #eaedf3;
+  --accent: #c678dd;
+  --accent-foreground: #fdfdfd;
+  --muted: #353c4d;
+  --muted-foreground: #a0a0a0;
+  --border: #3e4451;
+}

@@ -3,16 +3,19 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(SITE.lang);
 ---
 
-<Layout title={`Search | ${SITE.title}`}>
+<Layout title={`${t.nav.search} | ${SITE.title}`}>
   <Header />
   <main class="app-layout py-8">
     <p class="text-center text-foreground/60">
-      点击右上角搜索图标或按 <kbd
-        class="rounded border border-border bg-muted px-1.5 py-0.5 text-sm"
+      {t.pages.searchHintBefore}
+      <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-sm"
         >Ctrl+K</kbd
-      > 打开搜索
+      >
+      {t.pages.searchHintAfter}
     </p>
   </main>
   <Footer />

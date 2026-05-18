@@ -18,6 +18,8 @@ import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
 import MermaidRenderer from "@/components/MermaidRenderer.astro";
 import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(SITE.lang);
 
 type Props = {
   post: CollectionEntry<"blog">;
@@ -149,7 +151,7 @@ const layoutProps = {
           >
             <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
             <div>
-              <span>Previous Post</span>
+              <span>{t.post.previous}</span>
               <div class="text-sm text-accent/85">{prevPost.data.title}</div>
             </div>
           </a>
@@ -162,7 +164,7 @@ const layoutProps = {
             class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"
           >
             <div>
-              <span>Next Post</span>
+              <span>{t.post.next}</span>
               <div class="text-sm text-accent/85">{nextPost.data.title}</div>
             </div>
             <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
