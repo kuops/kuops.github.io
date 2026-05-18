@@ -8,7 +8,7 @@ export const BOOKS_PATH = "src/data/books";
 export const PAGES_PATH = "src/data/pages";
 
 const blog = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.md", base: `./${BLOG_PATH}` }),
+  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
   schema: ({ image }) =>
     z.object({
       author: z.string().default(SITE.author),
@@ -38,7 +38,7 @@ const books = defineCollection({
 });
 
 const pages = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.md", base: `./${PAGES_PATH}` }),
+  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${PAGES_PATH}` }),
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
