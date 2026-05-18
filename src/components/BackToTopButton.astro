@@ -1,6 +1,9 @@
 ---
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(SITE.lang);
 ---
 
 <div
@@ -27,7 +30,7 @@ import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
     <IconChevronLeft class="inline-block rotate-90 md:hidden" />
     <span class="sr-only text-sm group-hover:text-accent md:not-sr-only">
       <IconArrowNarrowUp class="inline-block size-4" />
-      Back To Top
+      {t.post.backToTop}
     </span>
   </button>
 </div>
@@ -55,7 +58,8 @@ import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
     function handleScroll() {
       const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
       const scrollTop = rootElement.scrollTop;
-      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+      const scrollPercent =
+        scrollTotal > 0 ? Math.floor((scrollTop / scrollTotal) * 100) : 0;
 
       progressIndicator.style.setProperty(
         "background-image",

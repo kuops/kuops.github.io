@@ -1,4 +1,11 @@
-import { defineConfig, envField, fontProviders } from "astro/config";
+import {
+  defineConfig,
+  envField,
+  fontProviders,
+  svgoOptimizer,
+} from "astro/config";
+import tailwindcss from "@tailwindcss/vite";
+import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
@@ -18,6 +25,7 @@ import { SITE } from "./src/config";
 export default defineConfig({
   site: SITE.website,
   integrations: [
+    mdx(),
     sitemap({
       filter: page => SITE.showArchives || !page.endsWith("/archives"),
     }),
@@ -46,7 +54,11 @@ export default defineConfig({
       ],
     },
   },
+  experimental: {
+    svgOptimizer: svgoOptimizer(),
+  },
   vite: {
+    plugins: [tailwindcss()],
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
     },

@@ -1,76 +1,110 @@
 ---
-// Remove current url path and remove trailing slash if exists
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(SITE.lang);
+
 const currentUrlPath = Astro.url.pathname.replace(/\/+$/, "");
+const segments = currentUrlPath.split("/").slice(1);
+const breadcrumbList: { label: string; href: string }[] = [];
 
-// Get url array from path
-// eg: /tags/tailwindcss => ['tags', 'tailwindcss']
-const breadcrumbList = currentUrlPath.split("/").slice(1);
-
-// if breadcrumb is Home > Posts > 1 <etc>
-// replace Posts with Posts (page number)
-if (breadcrumbList[0] === "posts") {
-  const pageNum = Number(breadcrumbList[1]) || 1;
+if (segments[0] === "posts") {
+  const pageNum = Number(segments[1]) || 1;
   if (pageNum === 1) {
-    breadcrumbList.splice(0, 2, "Posts");
+    breadcrumbList.push({ label: t.nav.posts, href: "/posts/" });
   } else {
-    breadcrumbList.splice(0, 2, `Posts (page ${pageNum})`);
+    breadcrumbList.push({
+      label: `${t.nav.posts} (page ${pageNum})`,
+      href: `/posts/${pageNum}/`,
+    });
   }
-}
-
-// if breadcrumb is Home > Books > [book] > [chapter]
-// replace book slug with book name
-if (breadcrumbList[0] === "books" && breadcrumbList.length > 1) {
-  breadcrumbList[1] = breadcrumbList[1]
-    .replace("-", " ")
-    .replace(/\b\w/g, c => c.toUpperCase());
-  if (breadcrumbList.length > 2) {
-    breadcrumbList[2] = breadcrumbList[2]
+} else if (segments[0] === "books" && segments.length > 1) {
+  breadcrumbList.push({ label: t.nav.books, href: "/books/" });
+  if (segments.length > 2) {
+    const bookLabel = segments[1]
       .replace(/-/g, " ")
       .replace(/\b\w/g, c => c.toUpperCase());
+    breadcrumbList.push({
+      label: bookLabel,
+      href: `/books/${segments[1]}/`,
+    });
+    if (segments.length > 3) {
+      const groupLabel = segments[2]
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+      breadcrumbList.push({
+        label: groupLabel,
+        href: `/books/${segments[1]}/${segments[2]}/`,
+      });
+      if (segments.length > 4) {
+        breadcrumbList.push({
+          label: decodeURIComponent(segments[3]),
+          href: `/books/${segments[1]}/${segments[2]}/${segments[3]}/`,
+        });
+      }
+    } else {
+      breadcrumbList.push({
+        label: decodeURIComponent(segments[2]),
+        href: `/books/${segments[1]}/${segments[2]}/`,
+      });
+    }
+  } else {
+    breadcrumbList.push({
+      label: segments[1]
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase()),
+      href: `/books/${segments[1]}/`,
+    });
   }
-  breadcrumbList[0] = "Books";
-}
-
-// if breadcrumb is Home > Tags > [tag] > [page] <etc>
-// replace [tag] > [page] with [tag] (page number)
-if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
-  breadcrumbList.splice(
-    1,
-    3,
-    `${breadcrumbList[1]} ${Number(breadcrumbList[2]) === 1 ? "" : "(page " + breadcrumbList[2] + ")"}`
-  );
+} else if (segments[0] === "tags" && !isNaN(Number(segments[2]))) {
+  const pageNum = Number(segments[2]);
+  if (pageNum === 1) {
+    breadcrumbList.push({
+      label: segments[1],
+      href: `/tags/${segments[1]}/`,
+    });
+  } else {
+    breadcrumbList.push({
+      label: `${segments[1]} (page ${pageNum})`,
+      href: `/tags/${segments[1]}/${pageNum}/`,
+    });
+  }
+} else {
+  for (let i = 0; i < segments.length; i++) {
+    const href = "/" + segments.slice(0, i + 1).join("/") + "/";
+    breadcrumbList.push({ label: decodeURIComponent(segments[i]), href });
+  }
 }
 ---
 
 <nav class="app-layout mt-8 mb-1" aria-label="breadcrumb">
-  <ul
+  <ol
     class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"
   >
     <li>
-      <a href="/" class="opacity-80">Home</a>
+      <a href="/" class="opacity-80">{t.nav.home}</a>
       <span aria-hidden="true" class="opacity-80">&raquo;</span>
     </li>
     {
-      breadcrumbList.map((breadcrumb, index) =>
+      breadcrumbList.map((item, index) =>
         index + 1 === breadcrumbList.length ? (
           <li>
             <span
               class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
               aria-current="page"
             >
-              {/* make the last part lowercase in Home > Tags > some-tag */}
-              {decodeURIComponent(breadcrumb)}
+              {item.label}
             </span>
           </li>
         ) : (
           <li>
-            <a href={`/${breadcrumb}/`} class="capitalize opacity-70">
-              {breadcrumb}
+            <a href={item.href} class="capitalize opacity-70">
+              {item.label}
             </a>
             <span aria-hidden="true">&raquo;</span>
           </li>
         )
       )
     }
-  </ul>
+  </ol>
 </nav>

@@ -1,25 +1,48 @@
 ---
-import { SHARE_LINKS } from "@/constants";
+import { SHARE_LINKS } from "@/config";
+import { SITE } from "@/config";
 import LinkButton from "./LinkButton.astro";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(SITE.lang);
 
 const URL = Astro.url;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const socialIcons = import.meta.glob<{ default: any }>(
+  "@/assets/icons/socials/*.svg",
+  { eager: true }
+);
+
+function getSocialIcon(name: string) {
+  const key = Object.keys(socialIcons).find(k =>
+    k.toLowerCase().endsWith(`/${name.toLowerCase()}.svg`)
+  );
+  return key ? socialIcons[key].default : null;
+}
 ---
 
 {
   SHARE_LINKS.length > 0 && (
     <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
-      <span class="italic">Share this post on:</span>
+      <span class="italic">{t.post.share}</span>
       <div class="text-center">
-        {SHARE_LINKS.map(social => (
-          <LinkButton
-            href={`${social.href + URL}`}
-            class="scale-90 p-2 hover:rotate-6 sm:p-1"
-            title={social.linkTitle}
-          >
-            <social.icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" />
-            <span class="sr-only">{social.linkTitle}</span>
-          </LinkButton>
-        ))}
+        {SHARE_LINKS.map(social => {
+          const Icon = getSocialIcon(social.name);
+          const linkTitle =
+            social.linkTitle ?? `Share this post via ${social.name}`;
+          return (
+            Icon && (
+              <LinkButton
+                href={`${social.url + URL}`}
+                class="scale-90 p-2 hover:rotate-6 sm:p-1"
+                title={linkTitle}
+              >
+                <Icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" />
+                <span class="sr-only">{linkTitle}</span>
+              </LinkButton>
+            )
+          );
+        })}
       </div>
     </div>
   )

@@ -5,9 +5,10 @@ import { SITE } from "@/config";
 
 export const BLOG_PATH = "src/data/blog";
 export const BOOKS_PATH = "src/data/books";
+export const PAGES_PATH = "src/data/pages";
 
 const blog = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.md", base: `./${BLOG_PATH}` }),
+  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
   schema: ({ image }) =>
     z.object({
       author: z.string().default(SITE.author),
@@ -36,4 +37,14 @@ const books = defineCollection({
   }),
 });
 
-export const collections = { blog, books };
+const pages = defineCollection({
+  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${PAGES_PATH}` }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    ogImage: z.string().optional(),
+    canonicalURL: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, books, pages };

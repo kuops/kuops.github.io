@@ -1,5 +1,9 @@
 ---
 import type { SidebarGroup } from "@/types/books";
+import { SITE } from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(SITE.lang);
 
 type Props = {
   bookSlug: string;
@@ -14,7 +18,7 @@ const { bookSlug, sidebar, currentSlug, titleMap = {} } = Astro.props;
 <nav
   class="book-sidebar space-y-3"
   data-book-sidebar={bookSlug}
-  aria-label="章节导航"
+  aria-label={t.book.chapterNav}
 >
   {
     sidebar.map(group => {
