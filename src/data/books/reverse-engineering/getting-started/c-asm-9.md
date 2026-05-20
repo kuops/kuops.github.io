@@ -2,7 +2,7 @@
 title: 结构体
 draft: true
 description: 结构体在内存里就是一段连续空间，字段按顺序排列。用 IDA 创建结构体定义，反编译结果立刻变得可读。
-order: 11
+order: 16
 ---
 
 # 结构体

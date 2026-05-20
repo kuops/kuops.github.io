@@ -2,7 +2,7 @@
 title: if/else 分支
 draft: true
 description: if/else 在汇编里就是 CMP + 条件跳转。搞懂条件标志和跳转指令，就能看懂程序的所有分支逻辑。
-order: 5
+order: 10
 ---
 
 # if/else 分支

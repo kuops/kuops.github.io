@@ -2,7 +2,7 @@
 title: 运算与位操作
 draft: true
 description: 加减乘除在汇编里长什么样？为什么逆向中到处是 XOR 和 SHL？写 C 对照看，搞懂运算的底层形态。
-order: 4
+order: 9
 ---
 
 # 运算与位操作

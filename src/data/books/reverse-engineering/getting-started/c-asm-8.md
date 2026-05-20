@@ -2,7 +2,7 @@
 title: 函数调用
 draft: true
 description: 函数调用在汇编里是一套固定流程：push 参数→call→push ebp→执行→eax 返回→ret。搞懂这套流程，就能追踪任何函数。
-order: 10
+order: 15
 ---
 
 # 函数调用

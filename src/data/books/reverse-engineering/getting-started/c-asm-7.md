@@ -2,7 +2,7 @@
 title: 指针与内存
 draft: true
 description: 指针就是地址。多级指针是指针的指针。逆向中到处都是指针链，搞懂这个才能追踪数据。
-order: 9
+order: 14
 ---
 
 # 指针与内存

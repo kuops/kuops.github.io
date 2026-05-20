@@ -2,7 +2,7 @@
 title: switch 与跳转表
 draft: true
 description: switch 在汇编里不只有一个样子。少几个 case 是连续 cmp+je，多了就变成跳转表。两种都要认得。
-order: 6
+order: 11
 ---
 
 # switch 与跳转表

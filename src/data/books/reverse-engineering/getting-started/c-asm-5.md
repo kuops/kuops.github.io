@@ -2,7 +2,7 @@
 title: 循环
 draft: true
 description: for、while、do-while 在汇编里都是"检查→执行→跳回"的结构。搞懂这个固定模式，所有循环都能认。
-order: 7
+order: 12
 ---
 
 # 循环

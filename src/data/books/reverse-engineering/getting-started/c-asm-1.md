@@ -2,7 +2,7 @@
 title: 变量与赋值
 draft: true
 description: 用 VS 写最简单的 C 代码，编译后用 x64dbg 单步对照看，搞懂变量在机器层面就是内存地址上的一个值。
-order: 3
+order: 8
 ---
 
 # 变量与赋值

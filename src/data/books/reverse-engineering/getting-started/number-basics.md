@@ -2,7 +2,7 @@
 title: 数字在计算机里长什么样
 draft: true
 description: 二进制、十六进制、内存模型、字节序。用 010 Editor 打开 exe 看看数据在磁盘上的真实样子。
-order: 2
+order: 7
 ---
 
 # 数字在计算机里长什么样
