@@ -1,0 +1,57 @@
+---
+import {
+  getBookEntries,
+  buildSidebar,
+  buildTitleMap,
+  getFlatItems,
+  getAllBooks,
+  isBookIndex,
+  isGroupIndex,
+} from "@/utils/books";
+import BookChapterContent from "@/components/BookChapterContent.astro";
+
+export async function getStaticPaths() {
+  const books = await getAllBooks();
+  const paths = [];
+
+  for (const book of books) {
+    const entries = await getBookEntries(book.slug);
+    for (const entry of entries) {
+      if (isBookIndex(entry) || isGroupIndex(entry)) {
+        continue;
+      }
+      const relativePath =
+        entry.id === book.slug ? "" : entry.id.replace(book.slug + "/", "");
+      if (!relativePath) continue;
+      paths.push({
+        params: { book: book.slug, slug: relativePath },
+        props: { chapter: entry, entries },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { chapter, entries } = Astro.props;
+const { book, slug } = Astro.params;
+
+const sidebar = buildSidebar(book!, entries);
+const titleMap = buildTitleMap(entries, book!);
+
+const flatItems = getFlatItems(sidebar);
+const currentIndex = flatItems.indexOf(slug!);
+const prevSlug = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
+const nextSlug =
+  currentIndex < flatItems.length - 1 ? flatItems[currentIndex + 1] : null;
+---
+
+<BookChapterContent
+  {chapter}
+  book={book!}
+  slug={slug!}
+  {sidebar}
+  {titleMap}
+  {prevSlug}
+  {nextSlug}
+/>

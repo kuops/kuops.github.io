@@ -1,0 +1,20 @@
+---
+type Props = {
+  slug: string;
+  title: string;
+  description: string;
+};
+
+const { slug, title, description } = Astro.props;
+---
+
+<a
+  href={`/books/${slug}`}
+  class="group block rounded-lg border border-border p-6 transition-colors hover:border-accent"
+>
+  <h2 class="text-xl font-semibold text-foreground group-hover:text-accent">
+    {title}
+  </h2>
+  <p class="mt-2 text-sm text-foreground/60">{description}</p>
+  <span class="mt-4 inline-block text-sm text-accent"> 开始阅读 → </span>
+</a>

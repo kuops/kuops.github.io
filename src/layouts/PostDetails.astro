@@ -1,0 +1,184 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Tag from "@/components/Tag.astro";
+import Datetime from "@/components/Datetime.astro";
+import EditPost from "@/components/EditPost.astro";
+import ShareLinks from "@/components/ShareLinks.astro";
+import BackButton from "@/components/BackButton.astro";
+import BackToTopButton from "@/components/BackToTopButton.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+import MobileToc from "@/components/MobileToc.astro";
+import { getPath } from "@/utils/getPath";
+import { slugifyStr } from "@/utils/slugify";
+import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
+import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
+import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
+import MermaidRenderer from "@/components/MermaidRenderer.astro";
+import ImageLightbox from "@/components/ImageLightbox.astro";
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(config.site.lang);
+
+type Props = {
+  post: CollectionEntry<"blog">;
+  prevPost: CollectionEntry<"blog"> | null;
+  nextPost: CollectionEntry<"blog"> | null;
+};
+
+const { post, prevPost, nextPost } = Astro.props;
+
+const {
+  title,
+  author,
+  description,
+  ogImage: initOgImage,
+  canonicalURL,
+  pubDatetime,
+  modDatetime,
+  timezone,
+  tags,
+  hideEditPost,
+} = post.data;
+
+const { Content, headings: allHeadings } = await render(post);
+
+const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
+
+let ogImageUrl: string | undefined;
+
+// Determine OG image source
+if (typeof initOgImage === "string") {
+  ogImageUrl = initOgImage; // Remote OG image (absolute URL)
+} else if (initOgImage?.src) {
+  ogImageUrl = initOgImage.src; // Local asset
+}
+
+// Use dynamic OG image if enabled and no remote|local ogImage
+if (!ogImageUrl && config.features.dynamicOgImage) {
+  ogImageUrl = `${getPath(post.id, post.filePath)}/index.png`;
+}
+
+// Resolve OG image URL (or fallback to config.site.ogImage / default `og.png`)
+const ogImage = ogImageUrl
+  ? new URL(ogImageUrl, Astro.url.origin).href
+  : undefined;
+
+const layoutProps = {
+  title: `${title} | ${config.site.title}`,
+  author,
+  description,
+  pubDatetime,
+  modDatetime,
+  canonicalURL,
+  ogImage,
+  scrollSmooth: true,
+};
+
+/* ========== Prev/Next Posts ========== */
+---
+
+<Layout {...layoutProps}>
+  <Header maxWidth="mx-auto w-full max-w-5xl px-4" />
+  <main
+    id="main-content"
+    class:list={["mx-auto w-full max-w-5xl px-4 pb-12"]}
+    data-pagefind-body
+    data-pagefind-filter="type:blog"
+  >
+    <BackButton />
+    <div class="flex gap-8">
+      <div class="min-w-0 flex-1">
+        <h1
+          transition:name={slugifyStr(title.replaceAll(".", "-"))}
+          class="inline-block text-2xl font-bold text-accent sm:text-3xl"
+        >
+          {title}
+        </h1>
+        <div class="my-2 flex items-center gap-2">
+          <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
+          <span
+            aria-hidden="true"
+            class:list={[
+              "max-sm:hidden",
+              { hidden: !config.features.editPost.enabled || hideEditPost },
+            ]}>|</span
+          >
+          <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+        </div>
+        <article
+          id="article"
+          class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
+        >
+          <Content />
+        </article>
+      </div>
+      {
+        headings.length > 0 && (
+          <aside class="hidden w-52 flex-none xl:block">
+            <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain">
+              <TableOfContents {headings} />
+            </div>
+          </aside>
+        )
+      }
+    </div>
+
+    <hr class="my-8 border-dashed" />
+
+    <EditPost class="sm:hidden" {hideEditPost} {post} />
+
+    <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
+      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />)}
+    </ul>
+
+    <BackToTopButton />
+
+    {headings.length > 0 && <MobileToc {headings} />}
+
+    <ShareLinks />
+
+    <hr class="my-6 border-dashed" />
+
+    <!-- Previous/Next Post Buttons -->
+    <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      {
+        prevPost && (
+          <a
+            href={getPath(prevPost.id, prevPost.filePath)}
+            class="flex w-full gap-1 hover:opacity-75"
+          >
+            <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
+            <div>
+              <span>{t.post.previousPost}</span>
+              <div class="text-sm text-accent/85">{prevPost.data.title}</div>
+            </div>
+          </a>
+        )
+      }
+      {
+        nextPost && (
+          <a
+            href={getPath(nextPost.id, nextPost.filePath)}
+            class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"
+          >
+            <div>
+              <span>{t.post.nextPost}</span>
+              <div class="text-sm text-accent/85">{nextPost.data.title}</div>
+            </div>
+            <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
+          </a>
+        )
+      }
+    </div>
+  </main>
+  <Footer maxWidth="mx-auto w-full max-w-5xl px-4" />
+</Layout>
+
+<ArticleEnhancements />
+
+<MermaidRenderer />
+
+<ImageLightbox />

@@ -1,0 +1,594 @@
+---
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+const t = useTranslations(config.site.lang);
+---
+
+<span id="i18n-mermaid-preview" class="hidden" data-label={t.mermaid.preview}
+></span>
+<span id="i18n-mermaid-source" class="hidden" data-label={t.mermaid.source}
+></span>
+<span id="i18n-mermaid-copy" class="hidden" data-label={t.mermaid.copySource}
+></span>
+<span
+  id="i18n-mermaid-fullscreen"
+  class="hidden"
+  data-label={t.mermaid.fullscreen}></span>
+<span id="i18n-mermaid-close" class="hidden" data-label={t.mermaid.close}
+></span>
+
+<style is:global>
+  .mermaid-wrapper {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .mermaid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: var(--muted);
+  }
+
+  :root:not([data-theme="dark"]) .mermaid-header {
+    background: var(--muted);
+  }
+
+  .mermaid-tab-group {
+    display: flex;
+    gap: 1px;
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    padding: 2px;
+  }
+
+  .mermaid-tab {
+    padding: 2px 12px;
+    border-radius: 0.25rem;
+    border: none;
+    background: transparent;
+    color: color-mix(in srgb, var(--foreground) 60%, transparent);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    line-height: 1.5;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+
+  .mermaid-tab.active {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .mermaid-tab:hover:not(.active) {
+    color: var(--foreground);
+  }
+
+  .mermaid-actions {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .mermaid-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    border: none;
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    opacity: 0.6;
+    transition:
+      opacity 0.15s,
+      background 0.15s;
+  }
+
+  .mermaid-action-btn:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  }
+
+  .mermaid-body {
+    background: var(--background);
+  }
+
+  .mermaid-preview {
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .mermaid-preview svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .mermaid-source {
+    display: none;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family:
+      var(--font-google-sans-code), var(--font-noto-sans-sc), monospace;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre;
+    color: var(--foreground);
+    margin: 0;
+  }
+
+  .mermaid-wrapper[data-mode="source"] .mermaid-preview {
+    display: none;
+  }
+
+  .mermaid-wrapper[data-mode="source"] .mermaid-source {
+    display: block;
+  }
+
+  .mermaid-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .mermaid-fullscreen .mermaid-fs-canvas {
+    flex: 1;
+    overflow: hidden;
+    cursor: grab;
+    width: 100%;
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--background);
+  }
+
+  .mermaid-fullscreen .mermaid-fs-canvas:active {
+    cursor: grabbing;
+  }
+
+  .mermaid-fullscreen .mermaid-fs-canvas svg {
+    max-width: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .mermaid-fs-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    flex-shrink: 0;
+  }
+
+  .mermaid-fs-toolbar button {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: var(--muted);
+    color: var(--foreground);
+    font-size: 0.875rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .mermaid-fs-toolbar button:hover {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .mermaid-fs-toolbar .zoom-label {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    min-width: 3rem;
+    text-align: center;
+    color: var(--foreground);
+  }
+</style>
+
+<script>
+  import mermaid from "mermaid";
+
+  function getI18n(id: string) {
+    return document.getElementById(id)?.dataset.label ?? "";
+  }
+
+  const mermaidSources: { el: HTMLElement; source: string }[] = [];
+
+  function stripTheme(source: string) {
+    return source.replace(/^---\n[\s\S]*?^---\n/m, frontmatter => {
+      const cleaned = frontmatter.replace(/  theme:.*\n?/g, "");
+      const inner = cleaned
+        .replace(/^---\n?/, "")
+        .replace(/\n?---\n?$/, "")
+        .trim();
+      if (!inner) return "";
+      return `---\n${inner}\n---\n`;
+    });
+  }
+
+  function initMermaidConfig() {
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? "dark" : "default",
+      themeVariables: isDark
+        ? {
+            primaryColor: "#c678dd",
+            primaryTextColor: "#eaedf3",
+            primaryBorderColor: "#3e4451",
+            lineColor: "#abb2bf",
+            secondaryColor: "#353c4d",
+            tertiaryColor: "#2c313a",
+            noteBkgColor: "#353c4d",
+            noteTextColor: "#eaedf3",
+            actorTextColor: "#eaedf3",
+            actorBkgColor: "#353c4d",
+            actorBorder: "#3e4451",
+            labelTextColor: "#eaedf3",
+            loopTextColor: "#eaedf3",
+            sectionBkgColor: "#353c4d",
+            altSectionBkgColor: "#2c313a",
+            taskTextColor: "#eaedf3",
+            taskBkgColor: "#c678dd",
+            gridColor: "#3e4451",
+            todayLineColor: "#e5c07b",
+          }
+        : {},
+    });
+  }
+
+  const expandSvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 10v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 6V2h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14l4.5-4.5M14 2L9.5 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  const copySvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.18563 1.02148H6.27219C7.2371 1.02147 8.02186 1.02145 8.64056 1.10464C9.28576 1.19138 9.83952 1.37836 10.2808 1.81962C10.722 2.26088 10.909 2.81464 10.9958 3.45984C11.013 3.58781 11.0266 3.72289 11.0374 3.8652C11.4689 3.87473 11.8501 3.8954 12.1831 3.94018C12.8283 4.02693 13.3821 4.21391 13.8234 4.65517C14.2646 5.09643 14.4516 5.65018 14.5383 6.29538C14.6215 6.9141 14.6215 7.69882 14.6215 8.66375V10.167C14.6215 11.1319 14.6215 11.9166 14.5383 12.5354C14.4516 13.1806 14.2646 13.7343 13.8234 14.1756C13.3821 14.6168 12.8283 14.8038 12.1831 14.8906C11.5644 14.9737 10.7797 14.9737 9.81476 14.9737H9.72821C8.76328 14.9737 7.97855 14.9737 7.35983 14.8906C6.71463 14.8038 6.16088 14.6168 5.71962 14.1756C5.27836 13.7343 5.09138 13.1806 5.00464 12.5354C4.98743 12.4074 4.97379 12.2723 4.96296 12.13C4.53148 12.1205 4.15032 12.0998 3.81726 12.055C3.17206 11.9683 2.6183 11.7813 2.17704 11.34C1.73578 10.8988 1.5488 10.345 1.46206 9.69981C1.37888 9.0811 1.37889 8.29639 1.37891 7.33148V5.82821C1.37889 4.8633 1.37888 4.07854 1.46206 3.45984C1.5488 2.81464 1.73578 2.26088 2.17704 1.81962C2.6183 1.37836 3.17206 1.19138 3.81726 1.10464C4.43596 1.02145 5.22072 1.02147 6.18563 1.02148ZM4.92325 10.9287C4.92148 10.6885 4.92148 10.4347 4.92148 10.167V8.66375C4.92147 7.69882 4.92145 6.9141 5.00464 6.29538C5.09138 5.65018 5.27836 5.09643 5.71962 4.65517C6.16088 4.21391 6.71463 4.02693 7.35983 3.94018C7.97855 3.857 8.76327 3.85701 9.7282 3.85703H9.81477C9.82079 3.85703 9.82681 3.85703 9.83282 3.85703C9.82532 3.77412 9.8166 3.69516 9.80646 3.61973C9.73761 3.1076 9.61339 2.84929 9.43225 2.66815C9.25111 2.48701 8.9928 2.36279 8.48066 2.29394C7.95127 2.22276 7.24761 2.22149 6.22891 2.22149C5.21021 2.22149 4.50655 2.22276 3.97716 2.29394C3.46502 2.36279 3.20671 2.48701 3.02557 2.66815C2.84443 2.84929 2.72021 3.1076 2.65136 3.61973C2.58018 4.14913 2.57891 4.85279 2.57891 5.87149V7.28816C2.57891 8.30685 2.58018 9.01052 2.65136 9.53991C2.72021 10.052 2.84443 10.3104 3.02557 10.4915C3.20671 10.6726 3.46502 10.7969 3.97716 10.8657C4.24274 10.9014 4.55218 10.9195 4.92325 10.9287ZM6.19393 6.45528C6.26279 5.94314 6.38701 5.68483 6.56815 5.5037C6.74928 5.32256 7.0076 5.19834 7.51973 5.12948C8.04913 5.05831 8.75279 5.05703 9.77149 5.05703C10.7902 5.05703 11.4938 5.05831 12.0232 5.12948C12.5354 5.19834 12.7937 5.32256 12.9748 5.50369C13.156 5.68483 13.2802 5.94314 13.349 6.45528C13.4202 6.98467 13.4215 7.68834 13.4215 8.70703V10.1237C13.4215 11.1424 13.4202 11.8461 13.349 12.3755C13.2802 12.8876 13.156 13.1459 12.9748 13.327C12.7937 13.5082 12.5354 13.6324 12.0232 13.7013C11.4938 13.7724 10.7902 13.7737 9.77149 13.7737C8.75279 13.7737 8.04913 13.7724 7.51973 13.7013C7.0076 13.6324 6.74929 13.5082 6.56815 13.327C6.38701 13.1459 6.26279 12.8876 6.19393 12.3755C6.12276 11.8461 6.12149 11.1424 6.12149 10.1237V8.70704C6.12149 7.68834 6.12276 6.98467 6.19393 6.45528Z" fill="currentColor"></path></svg>`;
+
+  function createFullscreen(svgHtml: string) {
+    const overlay = document.createElement("div");
+    overlay.className = "mermaid-fullscreen";
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "mermaid-fs-toolbar";
+
+    const canvas = document.createElement("div");
+    canvas.className = "mermaid-fs-canvas";
+    canvas.innerHTML = svgHtml;
+
+    const svgEl = canvas.querySelector("svg");
+    if (!svgEl) return;
+
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    function applyTransform() {
+      if (svgEl)
+        svgEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    function resetView() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      if (svgEl) svgEl.style.transform = "";
+      updateLabel();
+    }
+
+    function fitView() {
+      const vb = svgEl?.viewBox?.baseVal;
+      if (!vb || vb.width === 0) return;
+      const cw = canvas.clientWidth;
+      const ch = canvas.clientHeight;
+      const padding = 40;
+      scale = Math.min((cw - padding) / vb.width, (ch - padding) / vb.height);
+      translateX = (cw - vb.width * scale) / 2;
+      translateY = (ch - vb.height * scale) / 2;
+      applyTransform();
+      updateLabel();
+    }
+
+    const label = document.createElement("span");
+    label.className = "zoom-label";
+    function updateLabel() {
+      label.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    const zoomOut = document.createElement("button");
+    zoomOut.textContent = "\u2212";
+    zoomOut.addEventListener("click", () => {
+      scale = Math.max(0.1, scale / 1.3);
+      applyTransform();
+      updateLabel();
+    });
+
+    const zoomIn = document.createElement("button");
+    zoomIn.textContent = "+";
+    zoomIn.addEventListener("click", () => {
+      scale = Math.min(10, scale * 1.3);
+      applyTransform();
+      updateLabel();
+    });
+
+    const fitBtn = document.createElement("button");
+    fitBtn.textContent = "Fit";
+    fitBtn.addEventListener("click", fitView);
+
+    const resetBtn = document.createElement("button");
+    resetBtn.textContent = "1:1";
+    resetBtn.addEventListener("click", resetView);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = `\u2715 ${getI18n("i18n-mermaid-close")}`;
+    closeBtn.addEventListener("click", () => {
+      document.body.style.overflow = "";
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+    });
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeBtn.click();
+    }
+
+    toolbar.append(zoomOut, label, zoomIn, fitBtn, resetBtn, closeBtn);
+    overlay.append(toolbar, canvas);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+
+    canvas.addEventListener(
+      "wheel",
+      e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const prev = scale;
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        scale = Math.min(10, Math.max(0.1, scale * factor));
+        translateX = mx - (mx - translateX) * (scale / prev);
+        translateY = my - (my - translateY) * (scale / prev);
+        applyTransform();
+        updateLabel();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener("mousedown", e => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      startX = e.clientX - translateX;
+      startY = e.clientY - translateY;
+    });
+
+    window.addEventListener("mousemove", e => {
+      if (!isDragging) return;
+      translateX = e.clientX - startX;
+      translateY = e.clientY - startY;
+      applyTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let pinchStartTX = 0;
+    let pinchStartTY = 0;
+    let pinchStartCX = 0;
+    let pinchStartCY = 0;
+
+    canvas.addEventListener(
+      "touchstart",
+      e => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          pinchStartDist = Math.hypot(
+            e.touches[1].clientX - e.touches[0].clientX,
+            e.touches[1].clientY - e.touches[0].clientY
+          );
+          pinchStartScale = scale;
+          pinchStartTX = translateX;
+          pinchStartTY = translateY;
+          const rect = canvas.getBoundingClientRect();
+          pinchStartCX =
+            (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          pinchStartCY =
+            (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+        } else if (e.touches.length === 1) {
+          pinchStartTX = translateX;
+          pinchStartTY = translateY;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "touchmove",
+      e => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dist = Math.hypot(
+            e.touches[1].clientX - e.touches[0].clientX,
+            e.touches[1].clientY - e.touches[0].clientY
+          );
+          const prev = scale;
+          scale = Math.min(
+            10,
+            Math.max(0.1, pinchStartScale * (dist / pinchStartDist))
+          );
+          const rect = canvas.getBoundingClientRect();
+          const cx =
+            (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          const cy =
+            (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+          translateX = cx - (pinchStartCX - pinchStartTX) * (scale / prev);
+          translateY = cy - (pinchStartCY - pinchStartTY) * (scale / prev);
+          applyTransform();
+          updateLabel();
+        } else if (e.touches.length === 1) {
+          translateX = pinchStartTX + (e.touches[0].clientX - startX);
+          translateY = pinchStartTY + (e.touches[0].clientY - startY);
+          applyTransform();
+        }
+      },
+      { passive: false }
+    );
+
+    requestAnimationFrame(fitView);
+  }
+
+  async function renderMermaid() {
+    mermaidSources.length = 0;
+    const mermaidBlocks = document.querySelectorAll(
+      'pre[data-language="mermaid"]'
+    );
+    if (mermaidBlocks.length === 0) return;
+
+    initMermaidConfig();
+
+    for (const pre of mermaidBlocks) {
+      const code = pre.querySelector("code");
+      const source = stripTheme(code?.textContent || "");
+      const el = pre as HTMLElement;
+
+      mermaidSources.push({ el, source });
+
+      const id = "mermaid-" + Math.random().toString(36).slice(2);
+      try {
+        const { svg } = await mermaid.render(id, source);
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "mermaid-wrapper";
+        wrapper.dataset.mode = "preview";
+
+        const header = document.createElement("div");
+        header.className = "mermaid-header";
+
+        const tabGroup = document.createElement("div");
+        tabGroup.className = "mermaid-tab-group";
+
+        const previewTab = document.createElement("button");
+        previewTab.className = "mermaid-tab active";
+        previewTab.textContent = getI18n("i18n-mermaid-preview");
+        previewTab.dataset.tab = "preview";
+
+        const sourceTab = document.createElement("button");
+        sourceTab.className = "mermaid-tab";
+        sourceTab.textContent = getI18n("i18n-mermaid-source");
+        sourceTab.dataset.tab = "source";
+
+        tabGroup.append(previewTab, sourceTab);
+
+        const actions = document.createElement("div");
+        actions.className = "mermaid-actions";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "mermaid-action-btn";
+        copyBtn.innerHTML = copySvg;
+        copyBtn.title = getI18n("i18n-mermaid-copy");
+        copyBtn.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(source);
+          copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5L6.5 11.5L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+          setTimeout(() => {
+            copyBtn.innerHTML = copySvg;
+          }, 1500);
+        });
+
+        const expandBtn = document.createElement("button");
+        expandBtn.className = "mermaid-action-btn";
+        expandBtn.innerHTML = expandSvg;
+        expandBtn.title = getI18n("i18n-mermaid-fullscreen");
+        expandBtn.addEventListener("click", () => {
+          createFullscreen(previewEl.innerHTML);
+        });
+
+        actions.append(copyBtn, expandBtn);
+        header.append(tabGroup, actions);
+
+        const body = document.createElement("div");
+        body.className = "mermaid-body";
+
+        const previewEl = document.createElement("div");
+        previewEl.className = "mermaid-preview";
+        previewEl.dataset.mermaidSource = source;
+        previewEl.innerHTML = svg;
+
+        const sourceEl = document.createElement("pre");
+        sourceEl.className = "mermaid-source";
+        sourceEl.textContent = source;
+
+        body.append(previewEl, sourceEl);
+        wrapper.append(header, body);
+        el.replaceWith(wrapper);
+
+        tabGroup.addEventListener("click", e => {
+          const tab = (e.target as HTMLElement).closest(".mermaid-tab");
+          if (!tab) return;
+          const mode = (tab as HTMLElement).dataset.tab;
+          wrapper.dataset.mode = mode;
+          tabGroup
+            .querySelectorAll(".mermaid-tab")
+            .forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+        });
+      } catch {
+        el.setAttribute("style", "color: red");
+      } finally {
+        document.getElementById("d" + id)?.remove();
+      }
+    }
+  }
+
+  async function rerenderMermaid() {
+    const containers = document.querySelectorAll(
+      ".mermaid-preview[data-mermaid-source]"
+    );
+    if (containers.length === 0) return;
+
+    initMermaidConfig();
+
+    for (const container of containers) {
+      const source = (container as HTMLElement).dataset.mermaidSource || "";
+      const id = "mermaid-" + Math.random().toString(36).slice(2);
+      try {
+        const { svg } = await mermaid.render(id, source);
+        container.innerHTML = svg;
+      } catch {
+        // keep existing svg on errors
+      } finally {
+        document.getElementById("d" + id)?.remove();
+      }
+    }
+  }
+
+  renderMermaid();
+  document.addEventListener("astro:after-swap", renderMermaid);
+
+  new MutationObserver(() => {
+    rerenderMermaid();
+  }).observe(document.documentElement, {
+    attributeFilter: ["data-theme"],
+  });
+</script>

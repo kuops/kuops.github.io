@@ -1,0 +1,35 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Main from "@/layouts/Main.astro";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Card from "@/components/Card.astro";
+import Pagination from "@/components/Pagination.astro";
+import getSortedPosts from "@/utils/getSortedPosts";
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  return paginate(getSortedPosts(posts), { pageSize: config.posts.perPage });
+}) satisfies GetStaticPaths;
+
+const { page } = Astro.props;
+
+const t = useTranslations(config.site.lang);
+---
+
+<Layout title={`${t.pages.postsTitle} | ${config.site.title}`}>
+  <Header />
+  <Main pageTitle={t.pages.postsTitle} pageDesc={t.pages.postsDesc}>
+    <ul>
+      {page.data.map(data => <Card {...data} />)}
+    </ul>
+  </Main>
+
+  <Pagination {page} />
+
+  <Footer noMarginTop={page.lastPage > 1} />
+</Layout>

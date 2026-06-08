@@ -1,0 +1,122 @@
+---
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(config.site.lang);
+
+const navLabels: Record<string, string> = {
+  posts: t.nav.posts,
+  tags: t.nav.tags,
+  about: t.nav.about,
+  archives: t.nav.archives,
+  search: t.nav.search,
+  books: t.nav.books,
+};
+
+const decodeSegment = (value: string) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const resolveLabel = (segment: string) =>
+  navLabels[segment] ?? decodeSegment(segment);
+
+const currentUrlPath = Astro.url.pathname.replace(/\/+$/, "");
+const segments = currentUrlPath.split("/").slice(1);
+const breadcrumbList: { label: string; href: string }[] = [];
+
+if (segments[0] === "posts") {
+  const pageNum = Number(segments[1]) || 1;
+  if (pageNum === 1) {
+    breadcrumbList.push({ label: t.nav.posts, href: "/posts/" });
+  } else {
+    breadcrumbList.push({
+      label: `${t.nav.posts} (${t.pagination.page.toLowerCase()} ${pageNum})`,
+      href: `/posts/${pageNum}/`,
+    });
+  }
+} else if (segments[0] === "books" && segments.length > 1) {
+  breadcrumbList.push({ label: t.nav.books, href: "/books/" });
+  if (segments.length > 2) {
+    breadcrumbList.push({
+      label: resolveLabel(segments[1]),
+      href: `/books/${segments[1]}/`,
+    });
+    if (segments.length > 3) {
+      breadcrumbList.push({
+        label: resolveLabel(segments[2]),
+        href: `/books/${segments[1]}/${segments[2]}/`,
+      });
+      if (segments.length > 4) {
+        breadcrumbList.push({
+          label: decodeSegment(segments[3]),
+          href: `/books/${segments[1]}/${segments[2]}/${segments[3]}/`,
+        });
+      }
+    } else {
+      breadcrumbList.push({
+        label: decodeSegment(segments[2]),
+        href: `/books/${segments[1]}/${segments[2]}/`,
+      });
+    }
+  } else {
+    breadcrumbList.push({
+      label: resolveLabel(segments[1]),
+      href: `/books/${segments[1]}/`,
+    });
+  }
+} else if (segments[0] === "tags" && !isNaN(Number(segments[2]))) {
+  const pageNum = Number(segments[2]);
+  if (pageNum === 1) {
+    breadcrumbList.push({
+      label: decodeSegment(segments[1]),
+      href: `/tags/${segments[1]}/`,
+    });
+  } else {
+    breadcrumbList.push({
+      label: `${decodeSegment(segments[1])} (${t.pagination.page.toLowerCase()} ${pageNum})`,
+      href: `/tags/${segments[1]}/${pageNum}/`,
+    });
+  }
+} else {
+  for (let i = 0; i < segments.length; i++) {
+    const href = "/" + segments.slice(0, i + 1).join("/") + "/";
+    breadcrumbList.push({ label: resolveLabel(segments[i]), href });
+  }
+}
+---
+
+<nav class="app-layout mt-8 mb-1" aria-label="breadcrumb">
+  <ul
+    class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"
+  >
+    <li>
+      <a href="/" class="opacity-80">{t.nav.home}</a>
+      <span aria-hidden="true" class="opacity-80">&raquo;</span>
+    </li>
+    {
+      breadcrumbList.map((item, index) =>
+        index + 1 === breadcrumbList.length ? (
+          <li>
+            <span
+              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
+              aria-current="page"
+            >
+              {item.label}
+            </span>
+          </li>
+        ) : (
+          <li>
+            <a href={item.href} class="capitalize opacity-70">
+              {item.label}
+            </a>
+            <span aria-hidden="true">&raquo;</span>
+          </li>
+        )
+      )
+    }
+  </ul>
+</nav>

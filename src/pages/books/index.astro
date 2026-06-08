@@ -1,0 +1,32 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import BookCard from "@/components/BookCard.astro";
+import { getAllBooks } from "@/utils/books";
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+
+const t = useTranslations(config.site.lang);
+
+const books = await getAllBooks();
+---
+
+<Layout title={`${t.booksPage.title} | ${config.site.title}`}>
+  <Header />
+  <Main pageTitle={t.booksPage.title} pageDesc={t.booksPage.description}>
+    <div class="grid gap-6 sm:grid-cols-2">
+      {
+        books.map(book => (
+          <BookCard
+            slug={book.slug}
+            title={book.title}
+            description={book.description}
+          />
+        ))
+      }
+    </div>
+  </Main>
+  <Footer />
+</Layout>

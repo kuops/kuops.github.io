@@ -1,0 +1,732 @@
+---
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+import { getAllBooks } from "@/utils/books";
+
+const t = useTranslations(config.site.lang);
+const books = await getAllBooks();
+const bookMap = Object.fromEntries(books.map(b => [b.slug, b.title]));
+---
+
+<span
+  class="hidden"
+  id="i18n-pagefind"
+  data-placeholder={t.a11y.searchPlaceholder}
+  data-zero-results={t.a11y.noResults}
+  data-unavailable={t.a11y.searchUnavailable}
+  data-hint-navigate={t.a11y.searchHintNavigate}
+  data-hint-open={t.a11y.searchHintOpen}
+  data-hint-close={t.a11y.searchHintClose}
+  data-articles={t.nav.posts}
+  data-books={t.nav.books}></span>
+<span class="hidden" id="book-titles" data-map={JSON.stringify(bookMap)}></span>
+
+<dialog id="search-modal" aria-label={t.a11y.searchPlaceholder}>
+  <div class="search-modal-inner">
+    <div class="search-header">
+      <svg
+        class="search-icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.3-4.3"></path>
+      </svg>
+      <input
+        id="search-input"
+        type="text"
+        placeholder={t.a11y.searchPlaceholder}
+        autocomplete="off"
+      />
+      <button
+        id="search-clear"
+        class="search-clear"
+        type="button"
+        aria-label="Clear"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 6 6 18"></path>
+          <path d="m6 6 12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div id="search-body" class="search-body">
+      <div id="search-results"></div>
+      <div id="search-empty" class="search-empty" hidden>
+        <p id="search-empty-text"></p>
+      </div>
+      <div id="search-loading" class="search-loading" hidden>
+        <div class="search-skeleton"></div>
+        <div class="search-skeleton"></div>
+        <div class="search-skeleton"></div>
+      </div>
+    </div>
+
+    <div class="search-footer">
+      <span class="search-hint">
+        <kbd>↑↓</kbd>
+        <span id="search-hint-navigate"></span>
+      </span>
+      <span class="search-hint">
+        <kbd>↵</kbd>
+        <span id="search-hint-open"></span>
+      </span>
+      <span class="search-hint">
+        <kbd>esc</kbd>
+        <span id="search-hint-close"></span>
+      </span>
+    </div>
+  </div>
+</dialog>
+
+<script is:inline data-astro-rerun>
+  function initPagefind() {
+    const DEBOUNCE_MS = 300;
+    const MAX_RESULTS = 7;
+
+    const i18nEl = document.getElementById("i18n-pagefind");
+    const zeroResults = i18nEl
+      ? i18nEl.dataset.zeroResults
+      : "No results found";
+    const unavailable = i18nEl
+      ? i18nEl.dataset.unavailable
+      : "Search index not available. Run build first.";
+
+    const hintNav = document.getElementById("search-hint-navigate");
+    const hintOpen = document.getElementById("search-hint-open");
+    const hintClose = document.getElementById("search-hint-close");
+    if (hintNav)
+      hintNav.textContent = i18nEl
+        ? i18nEl.dataset.hintNavigate || "navigate"
+        : "navigate";
+    if (hintOpen)
+      hintOpen.textContent = i18nEl
+        ? i18nEl.dataset.hintOpen || "open"
+        : "open";
+    if (hintClose)
+      hintClose.textContent = i18nEl
+        ? i18nEl.dataset.hintClose || "close"
+        : "close";
+
+    const dialog = document.getElementById("search-modal");
+    const input = document.getElementById("search-input");
+    const resultsContainer = document.getElementById("search-results");
+    const emptyEl = document.getElementById("search-empty");
+    const emptyText = document.getElementById("search-empty-text");
+    const loadingEl = document.getElementById("search-loading");
+    const clearBtn = document.getElementById("search-clear");
+
+    if (
+      !dialog ||
+      !input ||
+      !resultsContainer ||
+      !emptyEl ||
+      !emptyText ||
+      !loadingEl
+    )
+      return;
+
+    let pagefind = null;
+    let loadAttempted = false;
+    let selectedIndex = -1;
+    let debounceTimer;
+
+    async function loadPagefind() {
+      if (pagefind) return true;
+      if (loadAttempted) return false;
+      loadAttempted = true;
+      return new Promise(function (resolve) {
+        const s = document.createElement("script");
+        s.type = "module";
+        s.textContent =
+          'import { search } from "/pagefind/pagefind.js"; window.__pagefind_search = search;';
+        document.head.appendChild(s);
+        let tries = 0;
+        const poll = setInterval(function () {
+          tries++;
+          if (window.__pagefind_search) {
+            clearInterval(poll);
+            pagefind = { search: window.__pagefind_search };
+            resolve(true);
+            s.remove();
+          } else if (tries > 50) {
+            clearInterval(poll);
+            resolve(false);
+            s.remove();
+          }
+        }, 100);
+      });
+    }
+
+    function openModal() {
+      dialog.showModal();
+      requestAnimationFrame(() => input.focus());
+    }
+
+    function closeModal() {
+      dialog.close();
+      input.value = "";
+      clearState();
+    }
+
+    function clearState() {
+      resultsContainer.innerHTML = "";
+      emptyEl.hidden = true;
+      loadingEl.hidden = true;
+      selectedIndex = -1;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function performSearch(query) {
+      clearState();
+      if (!query.trim()) return;
+
+      loadingEl.hidden = false;
+      const loaded = await loadPagefind();
+      if (!loaded) {
+        loadingEl.hidden = true;
+        emptyText.textContent = unavailable;
+        emptyEl.hidden = false;
+        return;
+      }
+
+      const bookMap = JSON.parse(
+        document.getElementById("book-titles")?.dataset.map || "{}"
+      );
+      const tArticles =
+        document.getElementById("i18n-pagefind")?.dataset.articles || "";
+      const tBooks =
+        document.getElementById("i18n-pagefind")?.dataset.books || "";
+
+      const search = await pagefind.search(query);
+      loadingEl.hidden = true;
+
+      if (search.results.length === 0) {
+        emptyText.textContent = zeroResults.replace("[SEARCH_TERM]", query);
+        emptyEl.hidden = false;
+        return;
+      }
+
+      const limit = Math.min(search.results.length, MAX_RESULTS);
+      const fragment = document.createDocumentFragment();
+
+      for (let i = 0; i < limit; i++) {
+        const result = search.results[i];
+        const data = await result.data();
+        const pageTitle = data.meta?.title || data.title || "";
+        const bookMatch = data.url?.match(/^\/books\/([^/]+)\//);
+        const prefix = bookMatch
+          ? tBooks + " › " + (bookMap[bookMatch[1]] || "")
+          : tArticles;
+
+        const group = document.createElement("div");
+        group.className = "search-result-group";
+
+        const mainItem = document.createElement("a");
+        mainItem.href = data.url;
+        mainItem.className = "search-result";
+        mainItem.setAttribute("data-index", String(fragment.children.length));
+        mainItem.innerHTML =
+          '<span class="search-result-title">' +
+          '<span class="search-result-prefix">' +
+          prefix +
+          " › </span>" +
+          escapeHtml(pageTitle) +
+          "</span>";
+        group.appendChild(mainItem);
+
+        const subs = data.sub_results || [];
+        const subLimit = Math.min(subs.length, 4);
+        for (let j = 0; j < subLimit; j++) {
+          const sub = subs[j];
+          if (!sub.title || sub.url === data.url) continue;
+          const isSubLast = j === subLimit - 1;
+
+          const item = document.createElement("a");
+          item.href = sub.url;
+          item.className =
+            "search-result search-result-sub" +
+            (isSubLast ? " search-result-sub-last" : "");
+          item.setAttribute("data-index", String(fragment.children.length));
+          item.innerHTML =
+            '<span class="search-result-title">' +
+            escapeHtml(sub.title) +
+            "</span>" +
+            (sub.excerpt
+              ? '<span class="search-result-excerpt">' + sub.excerpt + "</span>"
+              : "");
+          group.appendChild(item);
+        }
+
+        fragment.appendChild(group);
+      }
+
+      resultsContainer.appendChild(fragment);
+      selectedIndex = -1;
+    }
+
+    function updateSelection(delta) {
+      const items = resultsContainer.querySelectorAll(".search-result");
+      if (items.length === 0) return;
+      const prev = selectedIndex;
+      selectedIndex = Math.min(
+        Math.max(selectedIndex + delta, 0),
+        items.length - 1
+      );
+      if (prev >= 0 && prev < items.length)
+        items[prev].classList.remove("selected");
+      items[selectedIndex].classList.add("selected");
+      items[selectedIndex].scrollIntoView({ block: "nearest" });
+    }
+
+    function openSelected() {
+      const items = resultsContainer.querySelectorAll(".search-result");
+      if (selectedIndex >= 0 && selectedIndex < items.length) {
+        items[selectedIndex].click();
+      }
+    }
+
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const query = input.value;
+      clearBtn.classList.toggle("visible", query.length > 0);
+      debounceTimer = setTimeout(() => performSearch(query), DEBOUNCE_MS);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      clearBtn.classList.remove("visible");
+      clearState();
+      input.focus();
+    });
+
+    dialog.addEventListener("click", e => {
+      if (e.target === dialog) closeModal();
+    });
+
+    input.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        updateSelection(1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        updateSelection(-1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        openSelected();
+      } else if (e.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        if (dialog.open) {
+          closeModal();
+        } else {
+          openModal();
+        }
+      }
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+      loadAttempted = false;
+      pagefind = null;
+    });
+  }
+
+  initPagefind();
+  document.addEventListener("astro:after-swap", initPagefind);
+</script>
+
+<style is:global>
+  #search-modal {
+    border: none;
+    padding: 0;
+    background: color-mix(in srgb, var(--background) 85%, transparent);
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+    border-radius: var(--pf-border-radius);
+    box-shadow: var(--pf-shadow-lg);
+    max-width: var(--pf-modal-max-width);
+    max-height: var(--pf-modal-max-height);
+    width: calc(100% - 2rem);
+    color: var(--foreground);
+    font-family: var(--pf-font);
+    overflow: hidden;
+    margin: var(--pf-modal-top) auto auto;
+  }
+
+  #search-modal::backdrop {
+    background: var(--pf-modal-backdrop);
+    backdrop-filter: blur(8px) saturate(1.8);
+    -webkit-backdrop-filter: blur(8px) saturate(1.8);
+  }
+
+  #search-modal[open] {
+    animation: search-modal-in 0.15s ease-out;
+  }
+
+  @keyframes search-modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .search-modal-inner {
+    display: flex;
+    flex-direction: column;
+    max-height: var(--pf-modal-max-height);
+    background: var(--background);
+    border-radius: var(--pf-border-radius);
+    overflow: hidden;
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    height: var(--pf-input-height);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .search-icon {
+    flex-shrink: 0;
+    opacity: 0.35;
+  }
+
+  #search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--foreground);
+    caret-color: var(--accent);
+    font-size: var(--pf-input-font-size);
+    font-family: var(--pf-font);
+    height: var(--pf-input-height);
+  }
+
+  #search-input::placeholder {
+    color: var(--foreground);
+    opacity: 0.4;
+  }
+
+  .search-clear {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: var(--foreground);
+    opacity: 0.5;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .search-clear:hover {
+    background: var(--muted);
+    opacity: 1;
+  }
+
+  .search-clear.visible {
+    display: flex;
+  }
+
+  .search-body {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .search-body:empty {
+    display: none;
+  }
+
+  .search-body:not(
+    :has(.search-result, .search-skeleton, .search-empty:not([hidden]))
+  ) {
+    display: none;
+  }
+
+  #search-results {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    background: color-mix(in srgb, var(--muted) 40%, transparent);
+    min-height: 60px;
+  }
+
+  #search-results:empty {
+    background: transparent;
+    padding: 0;
+    min-height: 0;
+  }
+
+  .search-result-group {
+    background: var(--background);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .search-result-group + .search-result-group {
+    margin-top: 8px;
+  }
+
+  .search-result {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: var(--foreground);
+    background: var(--background);
+    transition: background 0.15s ease;
+  }
+
+  .search-result:not(.search-result-sub) {
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  }
+
+  .search-result-group:last-child .search-result:not(.search-result-sub) {
+    border-bottom: none;
+  }
+
+  .search-result:not(.search-result-sub):hover,
+  .search-result:not(.search-result-sub).selected {
+    background: color-mix(in srgb, var(--accent) 6%, var(--background));
+  }
+
+  .search-result:not(.search-result-sub):focus-visible {
+    outline: none;
+    background: color-mix(in srgb, var(--accent) 8%, var(--background));
+  }
+
+  .search-result-sub:hover,
+  .search-result-sub.selected {
+    background: color-mix(in srgb, var(--accent) 6%, var(--background));
+  }
+
+  .search-result-sub:focus-visible {
+    outline: none;
+    background: color-mix(in srgb, var(--accent) 8%, var(--background));
+  }
+
+  .search-result-title {
+    font-size: var(--pf-result-title-font-size);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .search-result-title::before {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    background: var(--foreground);
+    opacity: 0.4;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100%;
+    mask-size: 100%;
+  }
+
+  .search-result-sub {
+    padding: 6px 12px 6px 28px;
+    position: relative;
+    background: var(--background);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .search-result-sub:last-child {
+    border-bottom: none;
+  }
+
+  .search-result-sub::before {
+    content: "├";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--foreground);
+    opacity: 0.25;
+    font-size: 12px;
+    font-family: monospace;
+    line-height: 1;
+  }
+
+  .search-result-sub-last::before {
+    content: "└";
+  }
+
+  .search-result-sub .search-result-title {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.75;
+  }
+
+  .search-result-sub .search-result-title::before {
+    content: "#";
+    background: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+    width: auto;
+    height: auto;
+    opacity: 0.25;
+    font-size: inherit;
+    font-weight: 400;
+    margin-inline-end: 4px;
+  }
+
+  .search-result-excerpt {
+    font-size: 12px;
+    opacity: 0.5;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result-prefix {
+    opacity: 0.5;
+    font-weight: 400;
+    font-size: 0.85em;
+  }
+
+  .search-result mark {
+    color: var(--accent);
+    background: transparent;
+    font-weight: 700;
+  }
+
+  .search-empty {
+    padding: 24px 16px;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  .search-loading {
+    padding: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .search-skeleton {
+    height: 14px;
+    border-radius: 4px;
+    background: var(--muted);
+    opacity: 0.4;
+    animation: search-pulse 1.5s ease-in-out infinite;
+  }
+
+  .search-skeleton:nth-child(2) {
+    width: 75%;
+  }
+
+  .search-skeleton:nth-child(3) {
+    width: 50%;
+  }
+
+  @keyframes search-pulse {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .search-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    opacity: 0.65;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .search-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .search-hint kbd {
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: inherit;
+    opacity: 0.7;
+  }
+
+  :root {
+    --pf-font: var(--font-app);
+    --pf-text: var(--foreground);
+    --pf-background: var(--background);
+    --pf-border: var(--border);
+    --pf-mark: var(--accent);
+
+    --pf-modal-backdrop: rgba(0, 0, 0, 0.4);
+    --pf-modal-max-width: 560px;
+    --pf-modal-max-height: min(80dvh, 720px);
+    --pf-modal-top: 12dvh;
+
+    --pf-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --pf-border-radius: 12px;
+
+    --pf-input-height: 44px;
+    --pf-input-font-size: 16px;
+    --pf-result-title-font-size: 14px;
+    --pf-result-excerpt-font-size: 13px;
+  }
+
+  html[data-theme="dark"] {
+    --pf-modal-backdrop: rgba(0, 0, 0, 0.6);
+    --pf-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+</style>

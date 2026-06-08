@@ -1,0 +1,46 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import { useTranslations } from "@/i18n";
+const t = useTranslations(config.site.lang);
+
+if (config.features.search !== "pagefind") {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout title={`${t.pages.searchTitle} | ${config.site.title}`}>
+  <Header />
+  <main class="app-layout py-8">
+    <p class="text-center text-foreground/60">
+      {t.pages.searchHintBefore}
+      <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-sm"
+        >Ctrl+K</kbd
+      >
+      {t.pages.searchHintAfter}
+    </p>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  const modal = document.querySelector(
+    "#search-modal"
+  ) as HTMLDialogElement | null;
+  if (modal) {
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("q");
+    if (query) {
+      modal.showModal();
+      const input = modal.querySelector(
+        "#search-input"
+      ) as HTMLInputElement | null;
+      if (input) {
+        input.value = query;
+        input.dispatchEvent(new Event("input"));
+      }
+    }
+  }
+</script>

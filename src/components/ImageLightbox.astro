@@ -1,0 +1,90 @@
+---
+import "photoswipe/style.css";
+---
+
+<style is:inline>
+  .pswp__img {
+    background: var(--background);
+  }
+
+  .pswp__img--placeholder {
+    background: var(--background) !important;
+  }
+</style>
+
+<script>
+  import PhotoSwipeLightbox from "photoswipe/lightbox";
+
+  let cleanupController: AbortController | undefined;
+  let lightbox: PhotoSwipeLightbox | undefined;
+
+  function initLightbox() {
+    cleanupController?.abort();
+    cleanupController = new AbortController();
+    lightbox?.destroy();
+
+    const containers = document.querySelectorAll("#article");
+    if (!containers.length) return;
+
+    const allImages: HTMLImageElement[] = [];
+    containers.forEach(container => {
+      container.querySelectorAll("img").forEach(img => {
+        if (!img.closest("a")) {
+          allImages.push(img);
+        }
+      });
+    });
+
+    if (!allImages.length) return;
+
+    const dataSource = allImages.map(im => {
+      const url = new URL(im.src, window.location.origin);
+      const w =
+        parseInt(url.searchParams.get("w") || "") || im.naturalWidth || 800;
+      const h =
+        parseInt(url.searchParams.get("h") || "") || im.naturalHeight || 600;
+      return {
+        src: im.src,
+        msrc: im.currentSrc || im.src,
+        width: w,
+        height: h,
+        alt: im.alt || "",
+        element: im,
+      };
+    });
+
+    lightbox = new PhotoSwipeLightbox({
+      dataSource,
+      pswpModule: () => import("photoswipe"),
+      preloadFirstSlide: true,
+      bgOpacity: 0.75,
+      padding: { top: 40, bottom: 40, left: 40, right: 40 },
+      showHideAnimationType: "zoom",
+      bgClickAction: "close",
+      imageClickAction: "zoom-or-close",
+      tapAction: "close",
+      doubleTapAction: "zoom",
+    });
+
+    allImages.forEach((img, index) => {
+      img.style.cursor = "zoom-in";
+      img.addEventListener(
+        "click",
+        e => {
+          e.preventDefault();
+          e.stopPropagation();
+          lightbox?.loadAndOpen(index, dataSource, {
+            x: e.clientX,
+            y: e.clientY,
+          });
+        },
+        { signal: cleanupController?.signal }
+      );
+    });
+  }
+
+  initLightbox();
+  document.addEventListener("astro:after-swap", () => {
+    initLightbox();
+  });
+</script>
