@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <defs>
+    <linearGradient id="greyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="roseGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(40, 35)">
+    <rect x="0" y="-18" width="120" height="26" rx="4" fill="#1e293b"/>
+    <text x="12" y="0" fill="#38bdf8" font-size="14" font-weight="bold">add eax, 1</text>
+    <text x="135" y="0" fill="#94a3b8" font-size="13" font-weight="600">32 位寄存器全字长溢出、CF 与 ZF 标志位联动</text>
+  </g>
+
+  <g font-size="11" fill="#94a3b8" text-anchor="middle">
+    <text x="385" y="55">EAX (32 位全字长计算区)</text>
+    <text x="660" y="55">ZF (零标志)</text>
+    <text x="770" y="55">CF (进位池)</text>
+  </g>
+
+  <g transform="translate(0, 70)">
+    <text x="40" y="32" fill="#94a3b8" font-size="13" font-weight="bold">1. 执行前</text>
+    <rect x="180" y="12" width="410" height="32" rx="4" fill="url(#blueGrad)" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="385" y="33" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="bold">0xFFFFFFFF (32 位全 1)</text>
+    <rect x="630" y="12" width="60" height="32" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.2"/>
+    <text x="660" y="33" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="bold">0</text>
+    <rect x="740" y="12" width="60" height="32" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.2"/>
+    <text x="770" y="33" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="bold">0</text>
+  </g>
+
+  <g transform="translate(0, 150)">
+    <text x="25" y="55" fill="#fbbf24" font-size="13" font-weight="bold">2. 运算中</text>
+
+    <line x1="180" y1="15" x2="180" y2="95" stroke="#ef4444" stroke-width="4"/>
+    <rect x="100" y="43" width="70" height="22" rx="3" fill="#ef4444" fill-opacity="0.15"/>
+    <text x="135" y="58" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="bold">寄存器边界</text>
+
+    <text x="195" y="5" fill="#94a3b8" font-size="11" font-weight="bold">EAX 32 位硬件最高物理边界</text>
+    <rect x="180" y="15" width="410" height="80" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.4" stroke-dasharray="4,3"/>
+
+    <g font-size="13" text-anchor="middle">
+      <rect x="195" y="25" width="380" height="24" rx="3" fill="#94a3b8" fill-opacity="0.06" stroke="#94a3b8" stroke-opacity="0.2"/>
+      <text x="385" y="41" fill="#94a3b8">11111111 ... 11111111 (EAX)</text>
+
+      <text x="210" y="65" fill="#60a5fa" font-weight="bold">+</text>
+      <text x="560" y="65" fill="#60a5fa" font-weight="bold">1</text>
+      <line x1="195" y1="72" x2="575" y2="72" stroke="#94a3b8" stroke-opacity="0.4" stroke-width="1"/>
+
+      <circle cx="135" cy="80" r="11" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="135" y="84" fill="#60a5fa" font-size="12" font-weight="bold">1</text>
+
+      <text x="385" y="88" fill="#ef4444" font-weight="bold">00000000 00000000 00000000 00000000</text>
+    </g>
+
+    <path d="M135 91 L135 120 L520 120" fill="none" stroke="#60a5fa" stroke-width="2"/>
+    <rect x="520" y="108" width="180" height="24" rx="4" fill="#60a5fa" fill-opacity="0.1" stroke="#60a5fa" stroke-opacity="0.3"/>
+    <text x="610" y="124" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">第33位溢出 CF</text>
+    <path d="M700 120 L770 120 L770 130" fill="none" stroke="#60a5fa" stroke-width="2"/>
+    <polygon points="770,130 764,130 770,140 776,130" fill="#60a5fa"/>
+  </g>
+
+  <g transform="translate(0, 310)">
+    <text x="40" y="32" fill="#60a5fa" font-size="13" font-weight="bold">3. 执行后</text>
+    <rect x="180" y="12" width="410" height="32" rx="4" fill="url(#roseGrad)" stroke="#ef4444" stroke-width="2"/>
+    <text x="385" y="33" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="bold">0x00000000 (32 位全部归零)</text>
+    <rect x="630" y="12" width="60" height="32" rx="4" fill="#34d399" fill-opacity="0.15" stroke="#34d399" stroke-width="2"/>
+    <text x="660" y="33" text-anchor="middle" fill="#34d399" font-size="15" font-weight="bold">1</text>
+    <rect x="740" y="12" width="60" height="32" rx="4" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-width="2"/>
+    <text x="770" y="33" text-anchor="middle" fill="#60a5fa" font-size="15" font-weight="bold">1</text>
+  </g>
+
+  <g transform="translate(180, 405)">
+    <rect x="0" y="0" width="620" height="36" rx="6" fill="#34d399" fill-opacity="0.1" stroke="#34d399" stroke-opacity="0.4" stroke-width="1"/>
+    <text x="15" y="22" fill="#34d399" font-size="12" font-weight="600">EAX = 0x00000000 | 结果为零触发 ZF=1，最高位溢出触发 CF=1</text>
+  </g>
+</svg>

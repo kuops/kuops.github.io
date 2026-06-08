@@ -2,11 +2,11 @@ import { defineAstroPaperConfig } from "./src/types/config";
 
 export default defineAstroPaperConfig({
   site: {
-    url: "https://blog.example.com/",
-    title: "My Blog",
-    description: "一个基于 Astro 的个人博客。",
+    url: "https://kuops.github.io/",
+    title: "Shiny's Blog",
+    description: "记录一下个人笔记",
     author: "Blog Author",
-    profile: "https://blog.example.com/",
+    profile: "https://kuops.github.io/",
     ogImage: "astropaper-og.jpg",
     lang: "zh",
     timezone: "Asia/Shanghai",
