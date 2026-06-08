@@ -5,8 +5,6 @@ description: switch 在汇编里不只有一个样子。少几个 case 是连续
 order: 14
 ---
 
-# switch 与跳转表
-
 ## 动手目标
 
 今天结束你会：

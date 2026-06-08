@@ -5,8 +5,6 @@ description: 学会 add/sub/inc/dec/imul/mul/idiv 七条算术指令，搞懂每
 order: 5
 ---
 
-# 算术指令与标志位
-
 ## 本章目标
 
 上一章学了 `mov`、`lea`、`nop`——它们只搬运数据、算地址，不做任何计算。真正的计算由**算术指令**完成。

@@ -5,8 +5,6 @@ description: 学会 and/or/xor/not 四条逻辑指令和 shl/shr/rol/ror 四条�
 order: 6
 ---
 
-# 逻辑与移位指令
-
 ## 本章目标
 
 上一章学了算术指令——它们做"数学运算"。这一章学**逻辑指令**和**移位指令**——它们做"位运算"。
@@ -59,13 +57,13 @@ and dword ptr [ebp-4], 0   ; 内存 & 立即数
 
 假设 EAX = `0x12345678`，EIP = `00401000`：
 
-![and 掩码运算追踪与二进制拆解](asm-logic-images/and-mask-trace.svg)
+![and 掩码运算追踪与二进制拆解](asm-logic-images/and-mask-trace.png)
 
 **影响标志位**：ZF/SF/PF 根据结果更新，**CF=0，OF=0**（逻辑指令永远清零这两个）。
 
 再来一个——假设 EAX = `0x00000000`：
 
-![and 全零运算追踪与 ZF 触发](asm-logic-images/and-zero-trace.svg)
+![and 全零运算追踪与 ZF 触发](asm-logic-images/and-zero-trace.png)
 
 ### or：按位或
 
@@ -79,7 +77,7 @@ or dword ptr [ebp-4], 1    ; 内存 | 立即数
 
 假设 EAX = `0x00000041`（ASCII 字符 'A'），EIP = `00401000`：
 
-![or 大小写转换追踪与二进制拆解](asm-logic-images/or-case-trace.svg)
+![or 大小写转换追踪与二进制拆解](asm-logic-images/or-case-trace.png)
 
 这是一个经典用法：`or` 第 5 位（0x20）可以把大写字母转成小写字母。
 
@@ -96,7 +94,7 @@ xor eax, 0x55              ; 寄存器 ^ 立即数（翻转特定位）
 
 假设 EAX = `0xDEADBEEF`，EIP = `00401000`：
 
-![xor 清零追踪与二进制拆解](asm-logic-images/xor-zero-trace.svg)
+![xor 清零追踪与二进制拆解](asm-logic-images/xor-zero-trace.png)
 
 **为什么不用 `mov eax, 0`？** 机器码长度不同：
 
@@ -111,7 +109,7 @@ xor eax, 0x55              ; 寄存器 ^ 立即数（翻转特定位）
 
 假设 EAX = `0x00000055`，EIP = `00401000`：
 
-![xor 按位取反追踪与二进制拆解](asm-logic-images/xor-flip-trace.svg)
+![xor 按位取反追踪与二进制拆解](asm-logic-images/xor-flip-trace.png)
 
 `xor` 一个全 1 的掩码，效果相当于 `not`，但 `xor` 会更新标志位而 `not` 不会。
 
@@ -128,7 +126,7 @@ not dword ptr [ebp-4]       ; 内存取反
 
 假设 EAX = `0x0000000F`，EIP = `00401000`：
 
-![not 按位取反追踪与二进制拆解](asm-logic-images/not-trace.svg)
+![not 按位取反追踪与二进制拆解](asm-logic-images/not-trace.png)
 
 **not 不影响任何标志位**——ZF、SF、CF、OF 全部保持原值。偶尔在加密算法或求补码时出现（`not` + `add 1` = 取负数）。
 
@@ -161,13 +159,13 @@ shr dword ptr [ebp-4], 3    ; 内存右移 3 位 = 除以 8
 
 假设 EAX = `0x00000003`，EIP = `00401000`：
 
-![shl/shr 移位追踪与二进制演化](asm-logic-images/shl-shr-trace.svg)
+![shl/shr 移位追踪与二进制演化](asm-logic-images/shl-shr-trace.png)
 
 **影响标志位**：ZF/SF/PF 根据结果更新。**CF = 最后移出的那一位**。OF 只在移 1 位时有意义（符号位是否变化）。
 
 来看一个 CF 和 OF 都有变化的例子。假设 EAX = `0xC0000003`（二进制最高两位为 11），EIP = `00401000`：
 
-![shl CF/OF 追踪与 32 位流向](asm-logic-images/shl-cf-of-trace.svg)
+![shl CF/OF 追踪与 32 位流向](asm-logic-images/shl-cf-of-trace.png)
 
 逐行解释：
 
@@ -194,13 +192,13 @@ sar eax, 3                   ; 算术右移 3 位（高位补符号位）
 
 先用 `shr` 右移 4 位：
 
-![shr 逻辑右移追踪](asm-logic-images/shr-trace.svg)
+![shr 逻辑右移追踪](asm-logic-images/shr-trace.png)
 
 `shr` 不管符号位，高位一律补 0。结果从负数变成了正数（`0x0F000001`），对于有符号数来说除法结果就错了。
 
 再用 `sar` 右移同样的 4 位：
 
-![sar 算术右移追踪](asm-logic-images/sar-trace.svg)
+![sar 算术右移追踪](asm-logic-images/sar-trace.png)
 
 `sar` 发现最高位是 1（负数），所以高位补 1。结果仍然是负数（`0xFFF00001`），这才是正确的 `-268435440 / 16 = -16777216`。
 

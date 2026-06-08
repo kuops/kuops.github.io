@@ -5,8 +5,6 @@ description: for、while、do-while 在汇编里都是"检查→执行→跳回"
 order: 15
 ---
 
-# 循环
-
 ## 动手目标
 
 今天结束你会：

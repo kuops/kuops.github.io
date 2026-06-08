@@ -1,5 +1,7 @@
 # 写作指南
 
+> 教程章节和博客排版规范见 `agents-md/tutorial-markdown.md`。
+
 ## 篇幅指南（Content length guidelines）
 
 ### 博客文章（Blog posts）
@@ -68,6 +70,8 @@ description: string
 order: number       # 组内排序
 draft: boolean      # 可选，排除生产构建
 ```
+
+章节正文不要再写 `#` 一级标题；页面会用 frontmatter 的 `title` 自动生成标题，正文从 `##` 开始。
 
 **关键：** Astro glob loader 把 `index.md` 的 id 解析为父目录名（如 `getting-started/index.md` → id `getting-started`），不是 `getting-started/index`。所以 `src/utils/books.ts` 用 `filePath` 而不是 `id` 来检测 `index.md` 和 `_index.md`。
 

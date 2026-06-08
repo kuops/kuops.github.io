@@ -5,8 +5,6 @@ description: 认识 x64dbg 里看到的每一项——地址、机器码、寄�
 order: 3
 ---
 
-# x64dbg 导航与寄存器
-
 上一章搞懂了十六进制和补码，现在打开 x64dbg 看看这些数字在调试器里到底长什么样。
 
 ## 汇编长什么样
@@ -222,7 +220,7 @@ LastStatus : 00000000
 
 每个 32 位寄存器可以按需访问更小的部分。以 EAX 为例：
 
-![EAX 子寄存器布局：EAX 32位包含 AX 16位，AX 又分为 AH 高8位和 AL 低8位](asm-navigation-images/sub-register-eax.svg)
+![EAX 子寄存器布局：EAX 32位包含 AX 16位，AX 又分为 AH 高8位和 AL 低8位](asm-navigation-images/sub-register-eax.png)
 
 - **EAX** — 完整的 32 位
 - **AX** — 低 16 位
@@ -252,19 +250,19 @@ LastStatus : 00000000
 
 **AL 溢出（8 位，最大 0xFF）：**
 
-![AL 溢出示意图：0xFF + 1 = 0x00，进位进入 CF，高位不受影响](asm-navigation-images/al-overflow.svg)
+![AL 溢出示意图：0xFF + 1 = 0x00，进位进入 CF，高位不受影响](asm-navigation-images/al-overflow.png)
 
 比如 EAX = `0x123456FF`，`add al, 1` 之后 EAX = `0x12345600`（AL 从 FF 变成 00，高 24 位不变）。
 
 **AX 溢出（16 位，最大 0xFFFF）：**
 
-![AX 溢出示意图：0xFFFF + 1 = 0x0000，进位进入 CF，高位不受影响](asm-navigation-images/ax-overflow.svg)
+![AX 溢出示意图：0xFFFF + 1 = 0x0000，进位进入 CF，高位不受影响](asm-navigation-images/ax-overflow.png)
 
 比如 EAX = `0x1234FFFF`，`add ax, 1` 之后 EAX = `0x12340000`（AX 从 FFFF 变成 0000，高 16 位不变）。
 
 **EAX 溢出（32 位，最大 0xFFFFFFFF）：**
 
-![EAX 溢出示意图](asm-navigation-images/eax-overflow.svg)
+![EAX 溢出示意图](asm-navigation-images/eax-overflow.png)
 
 32 位全字长溢出时，CF 和 ZF 同时被触发——结果为零所以 ZF=1，加法最高位产生进位所以 CF=1。
 

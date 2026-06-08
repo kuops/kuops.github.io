@@ -5,8 +5,6 @@ description: if/else 在汇编里就是 CMP + 条件跳转。搞懂条件标志�
 order: 13
 ---
 
-# if/else 分支
-
 ## 动手目标
 
 今天结束你会：

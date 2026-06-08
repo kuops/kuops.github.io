@@ -5,8 +5,6 @@ description: 学会汇编里怎么读写内存——大小前缀、寻址方式�
 order: 4
 ---
 
-# 内存与数据操作
-
 上一章我们认识了寄存器和 x64dbg 窗口。但寄存器只有 8 个，存不了多少东西。程序的大部分数据存在**内存**里，通过**地址**来访问。这章讲汇编怎么读写内存，以及三条最基础的指令：`mov`、`lea`、`nop`。
 
 ## 内存怎么表示
@@ -157,7 +155,7 @@ mov dword ptr [ebp-4], eax    ; 寄存器 → 内存
 
 假设初始状态：EAX = `0`，EBX = `0x0000000A`，EBP = `0x012FF310`，内存 `[0x012FF30C]` = `0x00000014`
 
-![mov 指令逐行执行追踪](asm-memory-access-images/mov-trace.svg)
+![mov 指令逐行执行追踪](asm-memory-access-images/mov-trace.png)
 
 注意几个要点：
 

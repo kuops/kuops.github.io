@@ -48,7 +48,7 @@
     }
 
     img {
-      @apply mx-auto border border-border;
+      @apply mx-auto rounded-lg border border-border;
     }
 
     img[role="button"] {
