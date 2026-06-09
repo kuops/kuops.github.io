@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 170" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">imul 指令执行状态变化</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" opacity="0.6">初始：EAX=0x00000006，EBX=0x00000007，EIP=00401000</text>
+
+  <g transform="translate(20, 80)">
+    <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="150"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">机器码</text>
+    <text x="250"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
+    <text x="350"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">CF</text>
+    <text x="390"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">OF</text>
+    <text x="430"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
+    <text x="530"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <rect x="0" y="12" width="880" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+  </g>
+
+  <g transform="translate(20, 110)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8">初始状态</text>
+    <text x="150"  y="0" font-family="monospace" font-size="14" fill="#94a3b8">—</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" fill="#3b82f6">00000006</text>
+    <text x="350"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="390"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="430"  y="0" font-family="monospace" font-size="14" fill="#60a5fa">00401000</text>
+  </g>
+
+  <g transform="translate(20, 140)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">imul eax, ebx</text>
+    <text x="150"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">0F AF C3</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">0000002A</text>
+    <text x="350"  y="0" font-size="14" fill="#10b981">0</text>
+    <text x="390"  y="0" font-size="14" fill="#10b981">0</text>
+    <text x="430"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">00401003</text>
+    <text x="530"  y="0" font-size="13" fill="#94a3b8">6*7=42(0x2A)，未溢出</text>
+  </g>
+</svg>
