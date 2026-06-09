@@ -319,14 +319,14 @@ movsx eax, al
 
 4. EAX = `0x12345678`，执行 `mov al, 0xFF` 后 EAX 变成什么？EBX 会变吗？
 
-> [!NOTE]- 参考答案
-> EAX = `0x123456FF`。`al` 是 EAX 的最低字节，修改它只影响最低字节，高 24 位不变。EBX 完全不受影响，`mov al, 0xFF` 根本没碰 EBX。
+   > [!NOTE]- 参考答案
+   > EAX = `0x123456FF`。`al` 是 EAX 的最低字节，修改它只影响最低字节，高 24 位不变。EBX 完全不受影响，`mov al, 0xFF` 根本没碰 EBX。
 
-5.  `mov eax, [ebp-4]` 和 `lea eax, [ebp-4]` 有什么区别？假设 EBP = `0x012FF300`，内存地址 `0x012FF2FC` 里存着 `0xDEADBEEF`。
+5. `mov eax, [ebp-4]` 和 `lea eax, [ebp-4]` 有什么区别？假设 EBP = `0x012FF300`，内存地址 `0x012FF2FC` 里存着 `0xDEADBEEF`。
 
-> [!NOTE]- 参考答案
->
-> - `mov eax, [ebp-4]` — EAX = `0xDEADBEEF`（读内存里的值）
-> - `lea eax, [ebp-4]` — EAX = `0x012FF2FC`（算地址本身）
->
-> `mov` 去 `0x012FF2FC` 取了值回来，`lea` 只算了 `0x012FF300 - 4 = 0x012FF2FC` 这个地址。
+   > [!NOTE]- 参考答案
+   >
+   > - `mov eax, [ebp-4]` — EAX = `0xDEADBEEF`（读内存里的值）
+   > - `lea eax, [ebp-4]` — EAX = `0x012FF2FC`（算地址本身）
+   >
+   > `mov` 去 `0x012FF2FC` 取了值回来，`lea` 只算了 `0x012FF300 - 4 = 0x012FF2FC` 这个地址。
