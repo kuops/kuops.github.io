@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 170" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">mul 指令执行状态变化（无符号乘法）</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" opacity="0.6">初始：EAX=0xFFFFFFFF（无符号 4294967295），EBX=0x00000002，EDX=0x00000000</text>
+
+  <g transform="translate(20, 80)">
+    <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="150"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
+    <text x="250"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EDX</text>
+    <text x="350"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">CF</text>
+    <text x="390"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">OF</text>
+    <text x="440"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
+    <text x="530"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <rect x="0" y="12" width="880" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+  </g>
+
+  <g transform="translate(20, 110)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8">初始状态</text>
+    <text x="150"  y="0" font-family="monospace" font-size="14" fill="#3b82f6">FFFFFFFF</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" fill="#94a3b8">00000000</text>
+    <text x="350"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="390"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="440"  y="0" font-family="monospace" font-size="14" fill="#60a5fa">00401000</text>
+  </g>
+
+  <g transform="translate(20, 140)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">mul ebx</text>
+    <text x="150"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">FFFFFFFE</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">00000001</text>
+    <text x="350"  y="0" font-size="14" font-weight="bold" fill="#fbbf24">1</text>
+    <text x="390"  y="0" font-size="14" font-weight="bold" fill="#fbbf24">1</text>
+    <text x="440"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">00401003</text>
+    <text x="530"  y="0" font-size="13" fill="#94a3b8">FFFFFFFF*2=1FFFFFFFE</text>
+  </g>
+</svg>

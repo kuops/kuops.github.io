@@ -235,22 +235,15 @@ mul ebx                     ; EDX:EAX = EAX * ebx（无符号）
 
 为什么单独讲？因为逆向中 `imul` 远比 `mul` 常见（编译器默认生成有符号运算），但偶尔会在大小计算、长度计算、哈希算法中碰到 `mul`。看到它要知道怎么回事。
 
-### 跟踪示例
-
 假设 EAX = `0xFFFFFFFF`（无符号 4294967295），EBX = `0x00000002`，EDX = `0x00000000`：
 
-```text
-指令         EAX         EDX         CF  OF  说明
-──────────────────────────────────────────────────────────
-初始状态     FFFFFFFF    00000000    0   0
-mul ebx      FFFFFFFE    00000001    1   1   FFFFFFFF * 2 = 1FFFFFFFE
-```
+![mul 指令执行状态变化（无符号乘法）](asm-arithmetic-images/mul-trace.png)
 
 计算过程：`0xFFFFFFFF × 2 = 0x1FFFFFFFE`。低 32 位 `0xFFFFFFFE` 存入 EAX，高 32 位 `0x00000001` 存入 EDX。
 
 **标志位**：乘法后如果高位部分（EDX）非零，CF=1、OF=1，表示结果超出了单个寄存器的范围。其他标志位（ZF/SF/PF/AF）**未定义**，不要依赖。
 
-### MUL vs IMUL 对比
+## MUL vs IMUL 对比
 
 |          | MUL                   | IMUL                         |
 | -------- | --------------------- | ---------------------------- |
