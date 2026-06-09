@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 170" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <!-- 标题 -->
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">add 指令执行状态变化</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" opacity="0.6">初始：EAX=0x00000003，EIP=00401000</text>
+
+  <!-- 表头 -->
+  <g transform="translate(20, 80)">
+    <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="130"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">机器码</text>
+    <text x="230"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
+    <text x="330"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">ZF</text>
+    <text x="370"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">SF</text>
+    <text x="410"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">CF</text>
+    <text x="450"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
+    <text x="550"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+
+    <!-- 分割线 -->
+    <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+  </g>
+
+  <!-- 初始状态行 -->
+  <g transform="translate(20, 110)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8">初始状态</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#94a3b8">—</text>
+    <text x="230"  y="0" font-family="monospace" font-size="14" fill="#3b82f6">00000003</text>
+    <text x="330"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="370"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="410"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="450"  y="0" font-family="monospace" font-size="14" fill="#60a5fa">00401000</text>
+  </g>
+
+  <!-- add 指令行 -->
+  <g transform="translate(20, 140)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">add eax, 5</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">83 C0 05</text>
+    <text x="230"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">00000008</text>
+    <text x="330"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="370"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="410"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="450"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">00401003</text>
+    <text x="550"  y="0" font-size="13" fill="#94a3b8">3+5=8，非零正数，无溢出</text>
+  </g>
+</svg>
