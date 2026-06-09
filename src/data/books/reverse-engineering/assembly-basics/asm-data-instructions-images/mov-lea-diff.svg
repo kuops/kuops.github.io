@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <!-- 标题 -->
+  <text x="20" y="32" font-size="16" font-weight="bold" fill="#94a3b8">mov 与 lea 指令区别</text>
+  <text x="20" y="55" font-size="12" fill="#94a3b8" opacity="0.6">EBP = 0x012FF310</text>
+  <text x="20" y="75" font-size="12" fill="#94a3b8" opacity="0.6">[ebp-4] = 0x00000014</text>
+
+  <g transform="translate(20, 100)">
+    <!-- 左侧：寄存器 + 内存 -->
+    <g transform="translate(0, 0)">
+      <!-- EBP 寄存器 -->
+      <rect x="0" y="0" width="340" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="15" y="26" font-size="14" fill="#94a3b8">EBP 寄存器</text>
+      <text x="200" y="26" font-family="monospace" font-weight="bold" fill="#94a3b8">0x012FF310</text>
+
+      <!-- 内存标签 + 框 -->
+      <text x="0" y="75" font-size="13" font-weight="bold" fill="#94a3b8">[ebp-4] 内存单元</text>
+      <rect x="0" y="85" width="340" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+      
+      <!-- 分割线 -->
+      <line x1="170" y1="85" x2="170" y2="125" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1"/>
+      
+      <!-- 左：地址 -->
+      <text x="25" y="112" font-family="monospace" font-size="14" font-weight="bold" fill="#60a5fa">地址：0x012FF30C</text>
+      
+      <!-- 右：数据 -->
+      <text x="195" y="112" font-family="monospace" font-size="14" font-weight="bold" fill="#3b82f6">数据：0x00000014</text>
+    </g>
+
+    <!-- 右侧：指令（与左侧完全对齐） -->
+    <g transform="translate(400, 0)">
+      <!-- mov 指令 -->
+      <text x="0" y="-8" font-size="13" font-weight="bold" fill="#10b981">指令 1：mov</text>
+      <rect x="0" y="0" width="420" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="15" y="26" font-size="14" fill="#94a3b8">读取内存 → EAX = </text>
+      <text x="200" y="26" font-family="monospace" font-weight="bold" fill="#10b981">0x00000014</text>
+
+      <!-- lea 指令 -->
+      <text x="0" y="75" font-size="13" font-weight="bold" fill="#fbbf24">指令 2：lea</text>
+      <rect x="0" y="85" width="420" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="15" y="112" font-size="14" fill="#94a3b8">计算地址 → EAX = </text>
+      <text x="200" y="112" font-family="monospace" font-weight="bold" fill="#fbbf24">0x012FF30C</text>
+    </g>
+  </g>
+</svg>

@@ -232,7 +232,7 @@ ret
 2. `shl ecx, 2` — `j × 4`，一个 int 占 4 字节
 3. 两个偏移相加，再加基址取值
 
-**逆向技巧**：看到两个 `shl` 分别计算行偏移和列偏移，再加起来访问内存，就是二维数组。`shl` 的移位数告诉你列数：`shl eax, N` 意味着每行 `2^N / sizeof(element)` 个元素。上面 `shl 4` → `16 / 4 = 4` 列。
+**逆向技巧**：看到两个 `shl` 分别计算行偏移和列偏移，再加起来访问内存，就是二维数组。`shl` 的移位数告诉你列数：`shl eax, N` 意味着每行 `2^N / sizeof(element)` 个元素。上面 `shl 4` -> `16 / 4 = 4` 列。
 
 ### 遍历二维数组
 
@@ -303,7 +303,7 @@ mov  ebp, esp
 sub  esp, 8
 mov  eax, dword ptr [ebp-8]
 ; 或者直接把立即数写入栈：
-mov  dword ptr [ebp-8], 00686568h  ; "hell"（小端：68 65 6c 6c → "hell" 反过来存不对...）
+mov  dword ptr [ebp-8], 00686568h  ; "hell"（小端：68 65 6c 6c -> "hell" 反过来存不对...）
 ; 实际 MSVC 可能这样：
 mov  dword ptr [ebp-8], 6C6C6548h  ; "Hell" 的小端存储不太对...
 ```
@@ -404,7 +404,7 @@ void my_copy(char *dst, const char *src, int n) {
 mov  ecx, dword ptr [n]      ; ecx = 字节数
 mov  esi, dword ptr [src]     ; esi = 源地址
 mov  edi, dword ptr [dst]     ; edi = 目标地址
-rep movsb                      ; 逐字节复制 esi → edi，ecx 次
+rep movsb                      ; 逐字节复制 esi -> edi，ecx 次
 ```
 
 或者按 4 字节一次（dword）复制，更快：
@@ -459,8 +459,8 @@ mov  eax, ecx                  ; 返回值
 1. `al = 0`（要搜索的目标字节）
 2. `ecx = -1`（最大搜索次数）
 3. 每次执行：`edi` 指向的字节与 `al` 比较
-4. 不相等 → `edi++`，`ecx--`，继续
-5. 相等 → 停止
+4. 不相等 -> `edi++`，`ecx--`，继续
+5. 相等 -> 停止
 6. `not ecx; dec ecx` 反算出长度
 
 **看到 `xor eax, eax` + `repne scasb` + `not ecx`，就是 strlen。**

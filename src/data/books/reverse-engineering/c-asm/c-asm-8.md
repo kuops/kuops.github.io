@@ -1,7 +1,7 @@
 ---
 title: 函数调用
 draft: true
-description: 函数调用在汇编里是一套固定流程：push 参数→call→push ebp→执行→eax 返回→ret。搞懂这套流程，就能追踪任何函数。
+description: 函数调用在汇编里是一套固定流程：push 参数->call->push ebp->执行->eax 返回->ret。搞懂这套流程，就能追踪任何函数。
 order: 18
 ---
 
@@ -9,12 +9,12 @@ order: 18
 
 今天结束你会：
 
-1. 完整走一遍函数调用的汇编流程：参数传递 → call → 栈帧建立 → 执行 → 返回值 → 栈帧销毁 → ret
+1. 完整走一遍函数调用的汇编流程：参数传递 -> call -> 栈帧建立 -> 执行 -> 返回值 -> 栈帧销毁 -> ret
 2. 说出 prologue 和 epilogue 各做了什么
 3. 区分 cdecl、stdcall、fastcall 三种调用约定
 4. 看到一段函数调用的汇编，能在脑子里画出栈的变化
 
-<!-- 🎨 画图：函数调用的完整生命周期——调用者视角（push 参数、call）→ 被调者视角（prologue、执行、epilogue、ret）→ 调用者视角（清理栈） -->
+<!-- 🎨 画图：函数调用的完整生命周期——调用者视角（push 参数、call）-> 被调者视角（prologue、执行、epilogue、ret）-> 调用者视角（清理栈） -->
 
 ## 调用流程详解
 
@@ -159,7 +159,7 @@ MSVC 有时用一条 `leave` 指令替代 `mov esp, ebp` + `pop ebp`，效果完
 
 回到 main 后，`add esp, 8` 把栈指针加 8（两个 int 参数的大小），栈恢复到调用 add 之前的状态。
 
-**整个调用流程一句话：** push 参数 → call（压返回地址）→ push ebp → mov ebp, esp → sub esp, N → 执行 → mov eax, 返回值 → mov esp, ebp → pop ebp → ret → add esp, N。
+**整个调用流程一句话：** push 参数 -> call（压返回地址）-> push ebp -> mov ebp, esp -> sub esp, N -> 执行 -> mov eax, 返回值 -> mov esp, ebp -> pop ebp -> ret -> add esp, N。
 
 ## 调用约定
 
@@ -224,8 +224,8 @@ add_stdcall ENDP
 
 ```asm
 ; 调用者
-mov     ecx, 3                          ; 第一个参数 → ecx
-mov     edx, 5                          ; 第二个参数 → edx
+mov     ecx, 3                          ; 第一个参数 -> ecx
+mov     edx, 5                          ; 第二个参数 -> edx
 call    add_fastcall
 ; 栈上没有参数，不需要清理
 
@@ -245,9 +245,9 @@ add_fastcall ENDP
 
 ```asm
 ; add3_fast(a, b, c)
-mov     ecx, 1                          ; a → ecx
-mov     edx, 2                          ; b → edx
-push    3                               ; c → 栈
+mov     ecx, 1                          ; a -> ecx
+mov     edx, 2                          ; b -> edx
+push    3                               ; c -> 栈
 call    add3_fastcall
 ; 被调者 ret 4（清理栈上的 1 个参数）
 ```
@@ -256,16 +256,16 @@ call    add3_fastcall
 
 ### 对比表
 
-| 特性       | cdecl             | stdcall      | fastcall                   |
-| ---------- | ----------------- | ------------ | -------------------------- |
-| 参数入栈   | 右→左             | 右→左        | 前 2 个走寄存器，其余右→左 |
-| 栈清理     | 调用者            | 被调者       | 被调者                     |
-| 栈清理指令 | `add esp, N`      | `ret N`      | `ret N`                    |
-| 可变参数   | 支持              | 不支持       | 不支持                     |
-| 典型用途   | C/C++ 函数        | Windows API  | 性能敏感函数、COM          |
-| 识别特征   | call 后有 add esp | ret 后带数字 | 函数开头 mov ecx/edx       |
+| 特性       | cdecl             | stdcall      | fastcall                    |
+| ---------- | ----------------- | ------------ | --------------------------- |
+| 参数入栈   | 右->左            | 右->左       | 前 2 个走寄存器，其余右->左 |
+| 栈清理     | 调用者            | 被调者       | 被调者                      |
+| 栈清理指令 | `add esp, N`      | `ret N`      | `ret N`                     |
+| 可变参数   | 支持              | 不支持       | 不支持                      |
+| 典型用途   | C/C++ 函数        | Windows API  | 性能敏感函数、COM           |
+| 识别特征   | call 后有 add esp | ret 后带数字 | 函数开头 mov ecx/edx        |
 
-逆向时看到 `ret` 不带数字 → cdecl（调用者清理）；`ret N` → stdcall 或 fastcall。再检查调用前有没有 `mov ecx` / `mov edx` 来区分后两者。
+逆向时看到 `ret` 不带数字 -> cdecl（调用者清理）；`ret N` -> stdcall 或 fastcall。再检查调用前有没有 `mov ecx` / `mov edx` 来区分后两者。
 
 ## 返回值
 
@@ -329,7 +329,7 @@ square PROC
 square ENDP
 ```
 
-<!-- 🎨 画图：返回值寄存器速查——int→EAX，long long→EDX:EAX，float/double→ST(0) 或 XMM0 -->
+<!-- 🎨 画图：返回值寄存器速查——int->EAX，long long->EDX:EAX，float/double->ST(0) 或 XMM0 -->
 
 | 返回类型       | 寄存器        | 说明                           |
 | -------------- | ------------- | ------------------------------ |
@@ -619,10 +619,10 @@ int factorial(int n) {
 
 关键识别点：
 
-1. 函数内部 `call factorial`（调用自身）→ 递归
-2. `cmp [ebp+8], 1` + `jle base_case` → 基准条件 n <= 1
-3. `sub eax, 1` + `push eax` + `call factorial` → 递归调用 factorial(n-1)
-4. `imul eax, [ebp+8]` → 结果 × n
-5. `add esp, 4` + `ret` 不带参数 → cdecl 约定
+1. 函数内部 `call factorial`（调用自身）-> 递归
+2. `cmp [ebp+8], 1` + `jle base_case` -> 基准条件 n <= 1
+3. `sub eax, 1` + `push eax` + `call factorial` -> 递归调用 factorial(n-1)
+4. `imul eax, [ebp+8]` -> 结果 × n
+5. `add esp, 4` + `ret` 不带参数 -> cdecl 约定
 
 </details>

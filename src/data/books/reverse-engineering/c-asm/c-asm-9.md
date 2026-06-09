@@ -67,10 +67,10 @@ ret
 
 三句话：
 
-1. `struct Player p;` → 在栈上分配 12 字节（3 个 int × 4 字节）
-2. `p.hp = 100;` → 写入 `[ebp-4]`
-3. `p.mp = 50;` → 写入 `[ebp-8]`
-4. `p.level = 1;` → 写入 `[ebp-0Ch]`
+1. `struct Player p;` -> 在栈上分配 12 字节（3 个 int × 4 字节）
+2. `p.hp = 100;` -> 写入 `[ebp-4]`
+3. `p.mp = 50;` -> 写入 `[ebp-8]`
+4. `p.level = 1;` -> 写入 `[ebp-0Ch]`
 
 结构体在内存里就是一段**连续的字节序列**，字段按声明顺序依次排列：
 
@@ -272,7 +272,7 @@ take_damage PROC
     mov     ecx, dword ptr [esp+8]     ; 参数 damage
     mov     edx, dword ptr [eax+8]     ; m->defense（偏移 8）
     sub     ecx, edx                    ; reduced = damage - defense
-    jle     short skip                  ; reduced <= 0 → 不扣血
+    jle     short skip                  ; reduced <= 0 -> 不扣血
     sub     dword ptr [eax], ecx       ; m->hp -= reduced（偏移 0）
 skip:
     ret
@@ -409,11 +409,11 @@ int __cdecl sub_401000(int a1, int a2)
 
 ### 第二步：创建新结构体
 
-在结构体窗口里右键 → **Add struct type**（或按 Insert 键）→ 输入名字 `Monster` → OK。
+在结构体窗口里右键 -> **Add struct type**（或按 Insert 键）-> 输入名字 `Monster` -> OK。
 
 ### 第三步：添加字段
 
-在新建的 Monster 结构体上右键 → **Add field**（或选中后按 D 键）。
+在新建的 Monster 结构体上右键 -> **Add field**（或选中后按 D 键）。
 
 根据反编译结果分析偏移：
 
@@ -433,7 +433,7 @@ int __cdecl sub_401000(int a1, int a2)
 
 ### 第四步：应用到反编译
 
-回到 Hex-Rays 窗口，右键点击变量 `a1` → **Retype** → 选择 `Monster *`。
+回到 Hex-Rays 窗口，右键点击变量 `a1` -> **Retype** -> 选择 `Monster *`。
 
 应用后，伪代码立刻变化：
 
@@ -458,7 +458,7 @@ int __cdecl sub_401000(Monster *a1, int a2)
 
 **逐步完善：** 不必一次把所有字段都填对。先标已知的，后续分析其他函数时再补充。IDA 支持随时修改结构体定义。
 
-**导出复用：** 创建好的结构体可以通过 Edit → Export data header 导出到 .h 文件，在多个 IDB 之间复用。
+**导出复用：** 创建好的结构体可以通过 Edit -> Export data header 导出到 .h 文件，在多个 IDB 之间复用。
 
 **快捷键总结：**
 

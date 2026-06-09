@@ -49,16 +49,16 @@ sub eax, 5                       ; eax = c - 5
 mov dword ptr [ebp-10], eax      ; d = eax
 ```
 
-<!-- 🎨 画图：C 变量到汇编指令的映射关系，标注 a→[ebp-4]，b→[ebp-8]，c→[ebp-C]，d→[ebp-10] -->
+<!-- 🎨 画图：C 变量到汇编指令的映射关系，标注 a->[ebp-4]，b->[ebp-8]，c->[ebp-C]，d->[ebp-10] -->
 
 规律很清楚：
 
-| C 代码      | 汇编指令                                   |
-| ----------- | ------------------------------------------ |
-| `c = a + b` | `mov eax, a` → `add eax, b` → `mov c, eax` |
-| `d = c - 5` | `mov eax, c` → `sub eax, 5` → `mov d, eax` |
-| `a += 5`    | `add dword ptr [ebp-4], 5`                 |
-| `b -= 3`    | `sub dword ptr [ebp-8], 3`                 |
+| C 代码      | 汇编指令                                     |
+| ----------- | -------------------------------------------- |
+| `c = a + b` | `mov eax, a` -> `add eax, b` -> `mov c, eax` |
+| `d = c - 5` | `mov eax, c` -> `sub eax, 5` -> `mov d, eax` |
+| `a += 5`    | `add dword ptr [ebp-4], 5`                   |
+| `b -= 3`    | `sub dword ptr [ebp-8], 3`                   |
 
 加减法会设置 CPU 标志位，其中最重要的是 **OF（溢出标志）**。有符号数溢出时 OF=1，逆向分析加密算法时经常用到。
 
@@ -201,9 +201,9 @@ int main() {
 
 ```asm
 mov dword ptr [ebp-4], 0         ; i = 0
-inc dword ptr [ebp-4]            ; i++ → i = 1
-inc dword ptr [ebp-4]            ; i++ → i = 2
-dec dword ptr [ebp-4]            ; i-- → i = 1
+inc dword ptr [ebp-4]            ; i++ -> i = 1
+inc dword ptr [ebp-4]            ; i++ -> i = 2
+dec dword ptr [ebp-4]            ; i-- -> i = 1
 ```
 
 `inc` 和 `dec` 比等价的 `add ..., 1` 和 `sub ..., 1` 编码更短（少一个立即数字节），所以编译器优先使用。

@@ -109,7 +109,7 @@ pop  ebp
 ret
 ```
 
-<!-- 🎨 画图：基本 if 的流程图 — ① CMP 比较 → ② JLE 跳过 if 体 → ③ 执行 result=1 → ④ 返回 -->
+<!-- 🎨 画图：基本 if 的流程图 — ① CMP 比较 -> ② JLE 跳过 if 体 -> ③ 执行 result=1 -> ④ 返回 -->
 
 注意看 JLE 的逻辑：**条件成立时跳过 if 体**，而不是进入 if 体。C 代码是"满足条件就执行"，汇编是"不满足条件就跳走"。这是逆向时的思维转换。
 
@@ -150,7 +150,7 @@ pop  ebp
 ret
 ```
 
-<!-- 🎨 画图：if/else 流程图 — ① CMP → ② JLE 跳到 else → ③ if 体 → ④ JMP 跳过 else → ⑤ else 体 → ⑥ 汇合 -->
+<!-- 🎨 画图：if/else 流程图 — ① CMP -> ② JLE 跳到 else -> ③ if 体 -> ④ JMP 跳过 else -> ⑤ else 体 -> ⑥ 汇合 -->
 
 关键点：**if 体末尾有一条 JMP**。它跳过整个 else 体，直接到汇合点。这是识别 if/else 的核心特征：
 
@@ -189,11 +189,11 @@ sub  esp, 4                       ; 局部变量 result
 mov  dword ptr [ebp-4], 0        ; result = 0
 mov  eax, dword ptr [ebp+8]      ; eax = a
 cmp  eax, 0
-jle  outer_else                   ; a <= 0 → 外层 else
+jle  outer_else                   ; a <= 0 -> 外层 else
 ; ---- 外层 if 体 ----
 mov  eax, dword ptr [ebp+0Ch]    ; eax = b
 cmp  eax, 0
-jle  inner_else                   ; b <= 0 → 内层 else
+jle  inner_else                   ; b <= 0 -> 内层 else
 ; ---- 内层 if 体 ----
 mov  dword ptr [ebp-4], 3        ; result = 3
 jmp  inner_end                    ; 跳过内层 else

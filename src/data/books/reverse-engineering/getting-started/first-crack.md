@@ -14,9 +14,7 @@ order: 1
 
 你需要两样东西：
 
-1. **Visual Studio** — 微软的 IDE，免费社区版就够。安装时勾选"使用 C++ 的桌面开发"
-
-安装器里你只需要确认这一项：**勾选“使用 C++ 的桌面开发”**。
+1. **Visual Studio** — 微软的 IDE，免费社区版就够。安装时确认勾选了 **“使用 C++ 的桌面开发”**
 
 ![VS Installer 勾选"使用 C++ 的桌面开发"](first-crack-images/vs-installer-cpp.png)
 
@@ -27,6 +25,9 @@ order: 1
 ![x64dbg 官网下载页面](first-crack-images/x64dbg-website.png)
 
 解压后先认两个文件名：`x32dbg.exe` 和 `x64dbg.exe`。这一章只用前者。
+
+> [!NOTE]
+> x64dbg 是一个调试器套件，同时支持 32 位和 64 位程序。打开 32 位 exe 时自动以 x32dbg 模式运行，打开 64 位 exe 时才是 x64dbg 模式。我们的 CrackMe 是 32 位程序，所以需要用 x32dbg。
 
 ![x64dbg 解压后目录，x32dbg.exe 和 x64dbg.exe](first-crack-images/x64dbg-directory.png)
 
@@ -80,33 +81,40 @@ int main() {
 ![VS 工具栏选择 Debug | x86](first-crack-images/vs-debug-x86.png)
 
 2. 按 <kbd>Ctrl</kbd>+<kbd>B</kbd> 生成解决方案
-3. 编译好后，在项目目录的 `Debug/` 文件夹里找到 `.exe` 文件
+3. 编译好后，在项目目录的 `Debug/` 文件夹里找到 `.exe` 文件, 在代码下方的输出框中有 exe 的路径：
 
 ![VS 编译成功输出](first-crack-images/vs-build-success.png)
 
 这里故意用 32 位程序：寄存器更少，指令更短，第一次上手更容易。
 
+> [!TIP]
+> 如果你想把编译好的 exe 分享给别人直接运行（对方电脑没装 VS），需要改一下运行库：右键项目 -> 属性 -> 配置属性 -> C/C++ -> 代码生成 -> 运行库改为多线程调试 (/MTd)。这样 exe 会把运行库静态链接进去，不依赖目标机器上的 DLL。改完后重新编译即可。自己练习时不用改，默认的 /MDd 就行。
+
+![VS 运行库设置改为多线程调试](first-crack-images/vs-runtime-library.png)
+
 ## 用 x64dbg 打开程序
 
-按这两步把程序丢进调试器：
-
-1. 打开 x64dbg 解压目录下的 **x32dbg.exe**（32 位版本，不是 `x64dbg.exe`）
-
-下面这张图只帮你认位置：这一章要点开的是 `x32dbg.exe`。
-
-![x32dbg.exe 在解压目录中](first-crack-images/x32dbg-location.png)
+1. 找到安装 x64dbg 的目录，找到 `x64dbg\release\x32` 目录，找到 `x32dbg.exe`，打开
 
 2. 把刚编译好的 exe 直接**拖到 x32dbg 窗口上**
 
-程序加载后会**自动暂停**。停下来的位置通常在 `ntdll.dll` 的系统代码里，不是你的程序——这是正常的；Windows 在启动程序之前要先执行一些系统初始化。现在你先不用展开这些启动细节，只要继续走到程序代码区域就行。
+程序加载后会**自动暂停**，停下来的位置通常在 `jmp ntdll.xxxxxxxx` 的系统代码里，这段其实不是你的程序，这是正常的；Windows 在启动程序之前要先执行一些系统初始化。现在你先不用展开这些启动细节，只要继续走到程序代码区域就行。
 
 ![刚加载时停在 ntdll 的状态](first-crack-images/x64dbg-ntdll-pause.png)
 
-按 <kbd>Alt</kbd>+<kbd>F9</kbd>（执行到用户代码），让 CPU 继续跑到你的程序代码区域。你可能会看到类似 `jmp _mainCRTStartup` 的指令，这是 C 运行时（CRT）的启动代码。不用现在就读懂它；这一步的目标只有一个：**让暂停点进入你自己的程序区域**。
+> 如果没在 `jmp ntdll.xxxxxxxx` 停下，查看一下是不是修改了 `选项` -> `选项` -> `事件` -> `系统断点` 的设置
+
+![系统断点](first-crack-images/x64dbg-options-system-breakpoint.png)
+
+按 <kbd>Alt</kbd>+<kbd>F9</kbd>（执行到用户代码），让 CPU 继续跑到你的程序代码区域。
+
+![按 Alt+F9 后停在 CRT 启动代码](first-crack-images/x64dbg-alt-f9-crt.png)
+
+之后，你可能会看到类似 `jmp <consoleapplication1._mainCRTStartup>` 的指令，这是 C 运行时（CRT）的启动代码。不用现在就读懂它；这一步的目标只有一个：**让暂停点进入你自己的程序区域**。
 
 下面这张图只看一件事：按 <kbd>Alt</kbd>+<kbd>F9</kbd> 之后，暂停点已经从系统代码进入你的程序启动代码。
 
-![按 Alt+F9 后停在 CRT 启动代码](first-crack-images/x64dbg-alt-f9-crt.png)
+![按 Alt+F9 后停在 mainCRTStartup 的状态](first-crack-images/x64dbg-jump-mainCRTStartup.png)
 
 接下来这张图只帮你先认四个主要区域，不要求你现在就看懂每个窗口的细节。
 
@@ -114,26 +122,26 @@ int main() {
 
 你先只记住下面这张对照表：
 
-|序号| 区域       | 内容                                       | 你需要关注的 |
-|---| ---------- | ------------------------------------------ | ------------ |
-|1| CPU 窗口   | 反汇编代码（左边地址，中间指令，右边注释） | 这里是核心   |
-|2| 寄存器窗口 | CPU 的"变量"（EAX、EBX、ECX 等）           | 观察值的变化 |
-|3| 内存窗口   | 程序的内存数据                             | 偶尔用       |
-|4| 堆栈窗口   | 函数调用栈                                 | 后面章节讲   |
+| 序号 | 区域       | 内容                                       | 你需要关注的 |
+| ---- | ---------- | ------------------------------------------ | ------------ |
+| 1    | CPU 窗口   | 反汇编代码（左边地址，中间指令，右边注释） | 这里是核心   |
+| 2    | 寄存器窗口 | CPU 的"变量"（EAX、EBX、ECX 等）           | 观察值的变化 |
+| 3    | 内存窗口   | 程序的内存数据                             | 偶尔用       |
+| 4    | 堆栈窗口   | 函数调用栈                                 | 后面章节讲   |
 
 这一章后面主要盯左边的 CPU 窗口；其他窗口现在只要先知道名字就够了。
 
 ## 找到关键跳转
 
-大多数验证程序的逻辑都是：**比较输入和正确密码 → 相等就成功，不等就失败**。这个"相等/不等"在汇编里就是一条跳转指令。
+大多数验证程序的逻辑都是：**比较输入和正确密码 -> 相等就成功，不等就失败**。这个"相等/不等"在汇编里就是一条跳转指令。
 
 操作步骤：
 
 1. 在 CPU 窗口的反汇编代码区域里**右键**
 
-![右键菜单 → Search for](first-crack-images/x64dbg-right-click-search.png)
+![右键菜单 -> Search for](first-crack-images/x64dbg-right-click-search.png)
 
-2. 弹出菜单中选择 **搜索** → **当前模块** → **字符串**
+2. 弹出菜单中选择 **搜索** -> **当前模块** -> **字符串**
 
 ![字符串列表窗口，找到 "Correct!" 或 "Wrong!"](first-crack-images/x64dbg-string-list.png)
 
@@ -143,20 +151,23 @@ int main() {
 
 双击后，x64dbg 会跳到引用 "Correct!" 的那行代码（通常是 `push <..."Correct!"...>`），**高亮的那行就是跳转目标。你要往上看**（往上滚几行），找验证逻辑。
 
+> [!NOTE] 为什么需要往上滚几行？
+> 因为这里已经判断完了，准备开始打印了
+
 **你不需要读懂所有代码**，只需要在 "Correct!" 和 "Wrong!" 附近找这个固定模式：
 
-```text {1,3,4}
-push    <..."reverse2026"...>         ← 正确密码明文写死在这里！
+```asm {1,3,4}
+push    <..."reverse2026"...>         # 正确密码明文写死在这里！
 ...（几行 push 和 call）...
-test    eax,eax                       ← 检查比较结果
-jne     <某个地址>                     ← 紧接着一条 jne（关键！）
-push    <..."Correct!\n"...>          ← 你双击跳转到的那行
+test    eax,eax                       # 检查比较结果
+jne     <某个地址>                     # 紧接着一条 jne（关键！）
+push    <..."Correct!\n"...>          # 你双击跳转到的那行
 ...（几行 push 和 call）...
-jmp     <某个地址>                     ← 一条 jmp 跳过下面
-push    <..."Wrong!\n"...>            ← Wrong 分支
+jmp     <某个地址>                     # 一条 jmp 跳过下面
+push    <..."Wrong!\n"...>            # Wrong 分支
 ```
 
-看不懂中间的 push 和 call 没关系，只要在 "Correct!" 和 "Wrong!" 附近找到 **`test eax,eax` + `jne`** 这两行就够了。
+看不懂中间的 push 和 call 没关系，只要在 "Correct!" 和 "Wrong!" 往上找，找到 **`test eax,eax` + `jne`** 这两行就够了。
 
 ![代码结构标注，test eax,eax + jne 是关键](first-crack-images/x64dbg-code-structure.png)
 
@@ -191,9 +202,9 @@ push    <..."Wrong!\n"...>            ← Wrong 分支
 
 ![修改前的 jne 指令](first-crack-images/x64dbg-jne-before.png)
 
-2. 按 <kbd>Ctrl</kbd>+<kbd>9</kbd>（或右键 → 二进制 → 用 NOP 填充）
+2. 按 <kbd>Ctrl</kbd>+<kbd>9</kbd>（或右键 -> 二进制 -> 用 NOP 填充）
 
-![Ctrl+9 或右键 → Binary → Fill with NOPs](first-crack-images/x64dbg-fill-nop.png)
+![Ctrl+9 或右键 -> Binary -> Fill with NOPs](first-crack-images/x64dbg-fill-nop.png)
 
 这样 x64dbg 会自动把 `jne` 的所有字节都填充为 `NOP`，一步到位。
 
@@ -240,6 +251,8 @@ push    <..."Wrong!\n"...>            ← Wrong 分支
 你可能会问：如果程序不是我自己写的，我不知道逻辑怎么办？答案是一样的——搜索字符串、找条件跳转、NOP 掉。**不管程序多复杂，验证逻辑最终都会走到一个条件跳转。** 找到它，你就赢了。
 
 后面所有章节都是在这个基础上展开的。
+
+你可能还一头雾水：`jne` 是什么？`test eax,eax` 在干嘛？`eax` 又是什么？别急——接下来两章会逐一解释你刚才看到的这些术语。到第二章结束时，你就能完全理解那个 `jne` 背后的原理了。
 
 ## 练习
 

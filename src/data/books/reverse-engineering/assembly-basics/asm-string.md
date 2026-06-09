@@ -2,7 +2,7 @@
 title: 字符串指令与 REP 前缀
 draft: true
 description: 搞懂 MOVS/STOS/SCAS 三条字符串指令和 REP 前缀，认出 memcpy、memset、strlen 的汇编形态。
-order: 9
+order: 10
 ---
 
 前 8 章学了数据搬运、算术逻辑、比较跳转、栈和函数调用——直线代码、if/else、循环、函数这些结构你都能看懂了。但还有一类高频指令我们一直没讲：**字符串指令**。
@@ -213,7 +213,7 @@ scasb                   ; AL - [EDI]（隐式 cmp），EDI+1，更新 EFLAGS
 1. 计算 `AL - [EDI]`（不存结果，和 `cmp` 一样只更新标志位）
 2. EDI 自动 +1（DF=0 时）
 
-**如果 AL == [EDI]**，差值为 0 → ZF=1。否则 ZF=0。
+**如果 AL == [EDI]**，差值为 0 -> ZF=1。否则 ZF=0。
 
 单独的 `scasb` 没什么用，它真正的威力在于配合 `repne` 前缀——"一直扫描，直到找到匹配的"。
 
@@ -327,7 +327,7 @@ mov  ecx, dword ptr [ebp+10h]
 rep  movsb
 ```
 
-看到 ESI/EDI/ECX 三件套 + `rep movs` → "这是一次内存复制"。
+看到 ESI/EDI/ECX 三件套 + `rep movs` -> "这是一次内存复制"。
 
 **模式 2：memset（清零）**
 
@@ -338,7 +338,7 @@ mov  ecx, dword ptr [ebp+0Ch]
 rep  stosb
 ```
 
-看到 `xor eax, eax` + `rep stosb` → "这是在清零一块内存"。
+看到 `xor eax, eax` + `rep stosb` -> "这是在清零一块内存"。
 
 **模式 3：memset（非零值）**
 
@@ -348,7 +348,7 @@ mov  ecx, 0x40
 rep  stosd
 ```
 
-看到 EAX 非零 + `rep stosd` → "这是在用固定值填充内存"。
+看到 EAX 非零 + `rep stosd` -> "这是在用固定值填充内存"。
 
 <!-- 📸 截图：x64dbg 中 rep movsd 或 rep stosb 的实际代码，标注三个寄存器的值 -->
 
@@ -368,8 +368,8 @@ rep  stosd
 
 `rep movsd`，ECX=2，每次复制 4 字节：
 
-- 第 1 次：复制 `0x0040A000` 的 4 字节 `01 02 03 04` 到 `0x0040B000`。ESI→`0040A004`，EDI→`0040B004`
-- 第 2 次：复制 `0x0040A004` 的 4 字节 `05 06 07 08` 到 `0x0040B004`。ESI→`0040A008`，EDI→`0040B008`
+- 第 1 次：复制 `0x0040A000` 的 4 字节 `01 02 03 04` 到 `0x0040B000`。ESI->`0040A004`，EDI->`0040B004`
+- 第 2 次：复制 `0x0040A004` 的 4 字节 `05 06 07 08` 到 `0x0040B004`。ESI->`0040A008`，EDI->`0040B008`
 
 2. ESI = `0x0040A008`，EDI = `0x0040B008`。各前进了 8（2 次 × 4 字节）。
 
@@ -403,7 +403,7 @@ memset(p, 0, count);
 
 x64dbg 实操。加载第一章的 CrackMe 程序（或任意 32 位程序），完成以下操作：
 
-1. 在反汇编窗口右键 → 搜索 → 当前模块 → 搜索指令，输入 `rep`，看看能不能找到 `rep movs`、`rep stos` 或 `repne scas`
+1. 在反汇编窗口右键 -> 搜索 -> 当前模块 -> 搜索指令，输入 `rep`，看看能不能找到 `rep movs`、`rep stos` 或 `repne scas`
 2. 如果找到了，在 `rep` 那行设断点（F2），F9 运行到断点
 3. 查看寄存器窗口中 ESI、EDI、ECX 的值
 4. 按 F8 单步执行，观察：ESI/EDI 怎么变化的？ECX 怎么变化的？内存窗口中目标地址的内容怎么变化的？
@@ -420,6 +420,6 @@ x64dbg 实操。加载第一章的 CrackMe 程序（或任意 32 位程序），
 4. F8 单步时：
    - `rep stosd`：EDI 每次加 4，ECX 每次减 1，EAX 的值被写入 [EDI]
    - `rep movsd`：ESI 每次加 4，EDI 每次加 4，ECX 每次减 1，[ESI] 被复制到 [EDI]
-5. 如果前面有 `xor eax, eax` → memset 清零；如果有 ESI/EDI 两个源 → memcpy
+5. 如果前面有 `xor eax, eax` -> memset 清零；如果有 ESI/EDI 两个源 -> memcpy
 
 </details>

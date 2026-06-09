@@ -14,7 +14,7 @@ order: 14
 3. 看到一段汇编就能判断它是 if/else 还是 switch
 4. 把汇编逆向还原出原始的 switch 代码
 
-<!-- 🎨 画图：switch 语句 → 编译器选择 → cmp+je 链 vs 跳转表，两条路径 -->
+<!-- 🎨 画图：switch 语句 -> 编译器选择 -> cmp+je 链 vs 跳转表，两条路径 -->
 
 ## 小型 switch：cmp+je 链
 
@@ -53,9 +53,9 @@ int main(void) {
 classify PROC
     mov     eax, dword ptr [esp+4]     ; 参数 x
     sub     eax, 1                      ; x - 1
-    je      case_1                      ; 等于 0 → x == 1
+    je      case_1                      ; 等于 0 -> x == 1
     dec     eax                         ; x - 2（再减 1）
-    je      case_2                      ; 等于 0 → x == 2
+    je      case_2                      ; 等于 0 -> x == 2
     mov     eax, -1                     ; default
     ret
 case_1:
@@ -108,7 +108,7 @@ day_name PROC
     mov     eax, dword ptr [esp+4]     ; 参数 n
     dec     eax                         ; n - 1（0-indexed）
     cmp     eax, 4                      ; 比较 n-1 和 4
-    ja      default_case                ; > 4 → 超出范围，走 default
+    ja      default_case                ; > 4 -> 超出范围，走 default
     jmp     dword ptr [eax*4 + jmp_table] ; 跳转到跳转表中的地址
 case_1:
     mov     eax, offset "Monday"
@@ -131,11 +131,11 @@ default_case:
 day_name ENDP
 
 jmp_table LABEL DWORD
-    dd offset case_1                    ; 索引 0 → n=1
-    dd offset case_2                    ; 索引 1 → n=2
-    dd offset case_3                    ; 索引 2 → n=3
-    dd offset case_4                    ; 索引 3 → n=4
-    dd offset case_5                    ; 索引 4 → n=5
+    dd offset case_1                    ; 索引 0 -> n=1
+    dd offset case_2                    ; 索引 1 -> n=2
+    dd offset case_3                    ; 索引 2 -> n=3
+    dd offset case_4                    ; 索引 3 -> n=4
+    dd offset case_5                    ; 索引 4 -> n=5
 ```
 
 <!-- 📸 截图：x64dbg 中 day_name 的跳转表，内存窗口显示连续的地址 -->
@@ -153,11 +153,11 @@ jmp_table LABEL DWORD
 
 ```
 地址          内容（指向的地址）
-0x00402000    0x00401030    → case_1 "Monday"
-0x00402004    0x00401040    → case_2 "Tuesday"
-0x00402008    0x00401050    → case_3 "Wednesday"
-0x0040200C    0x00401060    → case_4 "Thursday"
-0x00402010    0x00401070    → case_5 "Friday"
+0x00402000    0x00401030    -> case_1 "Monday"
+0x00402004    0x00401040    -> case_2 "Tuesday"
+0x00402008    0x00401050    -> case_3 "Wednesday"
+0x0040200C    0x00401060    -> case_4 "Thursday"
+0x00402010    0x00401070    -> case_5 "Friday"
 ```
 
 <!-- 🎨 画图：内存布局图——左侧跳转表（5个 DWORD 地址），右侧对应 case 代码块，用箭头连接 -->
@@ -197,7 +197,7 @@ color_name PROC
     mov     eax, dword ptr [esp+4]     ; 参数 code
     sub     eax, 0xA                     ; code - 10
     cmp     eax, 0x28                     ; 比较 (code-10) 和 40
-    ja      default_case                ; > 40 → 不在范围
+    ja      default_case                ; > 40 -> 不在范围
     ; 但 10~50 之间有大量空洞（11~19, 21~29...）
     ; 编译器可能选择混合策略或直接 cmp 链
     ...
@@ -211,7 +211,7 @@ MSVC 对这种间距太大的 case 可能放弃跳转表，退回到 cmp+je 链�
 
 更复杂的情况（比如 case 1,2,3,100,200），GCC/Clang 可能这样处理：
 
-1. 先判断是否属于 1-3 这个连续段 → 跳转表
+1. 先判断是否属于 1-3 这个连续段 -> 跳转表
 2. 再分别用 cmp 判断 100 和 200
 
 ```asm
@@ -251,14 +251,14 @@ int sparse(int x) {
 
 ```
 跳转表（5 个条目，覆盖 case 1~5）：
-索引 0 (case 1): → case_1 代码
-索引 1 (case 2): → case_2 代码
-索引 2 (case 3): → default 代码    ← 没有 case 3，填 default
-索引 3 (case 4): → case_4 代码
-索引 4 (case 5): → case_5 代码
+索引 0 (case 1): -> case_1 代码
+索引 1 (case 2): -> case_2 代码
+索引 2 (case 3): -> default 代码    ← 没有 case 3，填 default
+索引 3 (case 4): -> case_4 代码
+索引 4 (case 5): -> case_5 代码
 ```
 
-<!-- 🎨 画图：跳转表与 default——5 个格子的表格，第 3 格标注 "空洞→default" -->
+<!-- 🎨 画图：跳转表与 default——5 个格子的表格，第 3 格标注 "空洞->default" -->
 
 还有两个地方会指向 default：
 
@@ -306,11 +306,11 @@ loc_401080:
 **第三步：读跳转表内容。** 去内存地址 0x00402000，读 5 个 DWORD：
 
 ```
-[0x00402000] = 0x00401010    → loc_401010
-[0x00402004] = 0x00401020    → loc_401020
-[0x00402008] = 0x00401040    → loc_401040
-[0x0040200C] = 0x00401010    → loc_401010（和 case 100 一样）
-[0x00402010] = 0x00401060    → loc_401060
+[0x00402000] = 0x00401010    -> loc_401010
+[0x00402004] = 0x00401020    -> loc_401020
+[0x00402008] = 0x00401040    -> loc_401040
+[0x0040200C] = 0x00401010    -> loc_401010（和 case 100 一样）
+[0x00402010] = 0x00401060    -> loc_401060
 ```
 
 **第四步：还原。**
@@ -343,7 +343,7 @@ int func(int x) {
 }
 ```
 
-<!-- 🎨 画图：还原流程图——汇编 → 读跳转表 → 对应 case → 还原代码 -->
+<!-- 🎨 画图：还原流程图——汇编 -> 读跳转表 -> 对应 case -> 还原代码 -->
 
 **快速识别清单：**
 

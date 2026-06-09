@@ -71,6 +71,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
+      include: ["photoswipe", "photoswipe/lightbox"],
       exclude: ["@resvg/resvg-js"],
     },
   },

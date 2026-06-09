@@ -1,7 +1,7 @@
 ---
 title: 循环
 draft: true
-description: for、while、do-while 在汇编里都是"检查→执行→跳回"的结构。搞懂这个固定模式，所有循环都能认。
+description: for、while、do-while 在汇编里都是"检查->执行->跳回"的结构。搞懂这个固定模式，所有循环都能认。
 order: 15
 ---
 
@@ -58,7 +58,7 @@ loop_body:
 check:
     mov     edx, dword ptr [ebp-8]     ; edx = i
     cmp     edx, dword ptr [ebp+8]     ; i <= n ?
-    jle     loop_body                  ; 小于等于 → 继续循环
+    jle     loop_body                  ; 小于等于 -> 继续循环
     mov     eax, dword ptr [ebp-4]     ; 返回值 = total
     mov     esp, ebp
     pop     ebp
@@ -80,7 +80,7 @@ check:     cmp i, n
            (循环结束后的代码)
 ```
 
-<!-- 🎨 画图：for 循环汇编流程图——初始化→jmp check→cmp+jle→循环体→递增→jmp check（环形结构） -->
+<!-- 🎨 画图：for 循环汇编流程图——初始化->jmp check->cmp+jle->循环体->递增->jmp check（环形结构） -->
 
 注意这个特征：**初始化之后有一条无条件跳转 jmp 跳过循环体直达条件检查**。这是 for 循环最明显的标志——因为 for 的语义是"先检查条件，再决定是否执行循环体"。
 
@@ -102,7 +102,7 @@ done:
 sum_to ENDP
 ```
 
-编译器把局部变量分配到了寄存器（`eax` = total，`ecx` = i），循环体精简到 3 条指令。但结构没变——初始化→检查→循环体→递增→跳回检查。
+编译器把局部变量分配到了寄存器（`eax` = total，`ecx` = i），循环体精简到 3 条指令。但结构没变——初始化->检查->循环体->递增->跳回检查。
 
 ## while 循环
 
@@ -147,7 +147,7 @@ loop_body:
     mov     dword ptr [ebp-8], edx     ; 存回 n
 check:
     cmp     dword ptr [ebp-8], 0       ; n != 0 ?
-    jne     loop_body                  ; 不等于 0 → 继续
+    jne     loop_body                  ; 不等于 0 -> 继续
     mov     eax, dword ptr [ebp-4]     ; 返回 count
     mov     esp, ebp
     pop     ebp
@@ -183,7 +183,7 @@ loop_body:
     and     edx, 1                      ; 取最低位
     add     eax, edx                    ; count += bit
     sar     ecx, 1                      ; n >>= 1
-    jne     loop_body                   ; n != 0 → 继续
+    jne     loop_body                   ; n != 0 -> 继续
 done:
     ret
 count_bits ENDP
@@ -236,7 +236,7 @@ loop_body:
     mov     edx, dword ptr [ebp-0Ch]   ; edx = temp
     mov     dword ptr [ebp-8], edx     ; b = temp
     cmp     dword ptr [ebp-8], 0       ; b != 0 ?
-    jne     loop_body                  ; 不等于 0 → 继续
+    jne     loop_body                  ; 不等于 0 -> 继续
     mov     eax, dword ptr [ebp-4]     ; 返回 a
     mov     esp, ebp
     pop     ebp
@@ -256,7 +256,7 @@ loop_body:
     (结束)
 ```
 
-<!-- 🎨 画图：do-while 流程图——直接进入循环体→cmp+jne→跳回循环体（没有 jmp check 的前置跳转） -->
+<!-- 🎨 画图：do-while 流程图——直接进入循环体->cmp+jne->跳回循环体（没有 jmp check 的前置跳转） -->
 
 **do-while 最显著的特征：没有初始化之后的 jmp check。** 循环代码从 loop_body 标签开始直接执行，条件检查在末尾。这是和 for/while 的关键区别。
 
@@ -342,7 +342,7 @@ done:
 
 <!-- 🎨 画图：三种循环的 Release 汇编并列对比，用虚线框标注它们生成的代码完全相同 -->
 
-**三个函数的 Release 汇编完全一样。** 编译器不在乎你写的是 for、while 还是 do-while，它只在乎逻辑。三种循环生成的都是同样的"检查→循环体→递增→跳回"结构。
+**三个函数的 Release 汇编完全一样。** 编译器不在乎你写的是 for、while 还是 do-while，它只在乎逻辑。三种循环生成的都是同样的"检查->循环体->递增->跳回"结构。
 
 **逆向结论：** 在 Release 版本中，你无法区分原始代码用的是 for、while 还是 do-while。你只能还原出"这是一个循环，循环条件是什么，循环体做了什么"。具体是哪种循环语法，取决于你对语义的理解——有递增变量的多半是 for，没有的多半是 while。
 
@@ -394,7 +394,7 @@ loop_body:
     mov     ecx, dword ptr [ebp+8]     ; ecx = arr
     mov     edx, dword ptr [ecx+eax*4] ; edx = arr[i]
     cmp     edx, 0                     ; arr[i] < 0 ?
-    jge     skip_break                 ; 大于等于 0 → 不 break
+    jge     skip_break                 ; 大于等于 0 -> 不 break
     jmp     after_loop                 ; break！跳到循环之后
 skip_break:
     mov     eax, dword ptr [ebp-4]     ; i++
@@ -429,7 +429,7 @@ loop_body:
     mov     ecx, dword ptr [ebp+8]     ; ecx = arr
     mov     edx, dword ptr [ecx+eax*4] ; edx = arr[i]
     cmp     edx, 0                     ; arr[i] < 0 ?
-    jge     skip_continue              ; 大于等于 0 → 不 continue
+    jge     skip_continue              ; 大于等于 0 -> 不 continue
     jmp     increment                  ; continue！跳到递增部分
 skip_continue:
     mov     eax, dword ptr [ebp-8]
@@ -460,8 +460,8 @@ sum_positive ENDP
 
 逆向时怎么区分？看 jmp 的目标地址：
 
-- 跳到循环结束之后 → break
-- 跳到循环体的递增/检查部分 → continue
+- 跳到循环结束之后 -> break
+- 跳到循环体的递增/检查部分 -> continue
 
 ## 嵌套循环
 
@@ -587,7 +587,7 @@ bubble_sort PROC
     mov     ecx, dword ptr [esp+4]     ; ecx = arr
     mov     edx, dword ptr [esp+8]     ; edx = n
     dec     edx                         ; n - 1
-    jle     done                        ; n <= 1 → 无需排序
+    jle     done                        ; n <= 1 -> 无需排序
     xor     esi, esi                    ; i = 0
 outer_loop:
     mov     edi, edx                    ; 内层上界 = n - 1 - i
@@ -774,7 +774,7 @@ int func(int n) {
 }
 ```
 
-识别线索：有两对 `jmp check → ... → inc → cmp → jl` 结构，内层的 check 在外层的 inc 之前。
+识别线索：有两对 `jmp check -> ... -> inc -> cmp -> jl` 结构，内层的 check 在外层的 inc 之前。
 
 </details>
 
