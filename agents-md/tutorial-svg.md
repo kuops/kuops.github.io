@@ -1,6 +1,6 @@
 # 教程 SVG 插图规范
 
-> 适用范围：`src/data/books/**/*.svg`（SVG -> PNG 工作流的源文件）。
+> 适用范围：`src/data/books/**/*.svg`（SVG → PNG 工作流的源文件）。
 > 配套文档：frontmatter、书籍目录、图片引用规则见 `agents-md/writing.md`；Markdown 排版见 `agents-md/tutorial-markdown.md`。
 
 ## 核心原则

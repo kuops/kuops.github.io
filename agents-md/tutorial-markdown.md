@@ -1,7 +1,7 @@
 # 教程 Markdown 规范
 
 > 适用范围：`src/data/books/**` 教学章节；`src/data/blog/**` 可复用。
-> 配套文档：frontmatter、书籍目录、`SVG -> PNG` 图片规则见 `agents-md/writing.md`。
+> 配套文档：frontmatter、书籍目录、`SVG → PNG` 图片规则见 `agents-md/writing.md`。
 
 ## 核心原则
 
@@ -143,7 +143,7 @@ mov ecx, 10
 - 图片前先告诉读者“看图要看什么”，图片后马上点出结论。
 - `alt` 文本写成“这张图解释了什么”，不要只写“截图”或“示意图”。
 - 同一节连续放多张大图时，确认每张图的职责不同；否则合并或删掉。
-- 章节插图遵循现有 `SVG -> PNG` 工作流，不直接在章节 Markdown 里引用 `svg`。
+- 章节插图遵循现有 `SVG → PNG` 工作流，不直接在章节 Markdown 里引用 `SVG`。
 
 **推荐：**
 
