@@ -3,7 +3,7 @@
 ## 命令（Commands）
 
 - `npm run dev` — 在 `localhost:4321` 启动开发服务器
-- `npm run build` — 运行 `astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/`
+- `npm run build` — 运行 `astro build && pagefind --site dist && cp -r dist/pagefind public/`
 - `npm run lint` — 运行 ESLint
 - `npm run format:check` — 检查 Prettier 格式
 - `npm run format` — 用 Prettier 自动格式化
@@ -14,7 +14,7 @@
 
 1. `npm run lint` — eslint 检查
 2. `npm run format:check` — prettier 格式检查
-3. `npm run build` — astro check + build + pagefind 搜索索引
+3. `npm run build` — build + pagefind 搜索索引
 
 以上三项全部通过才算完成。如果 `format:check` 不通过，先运行 `npm run format` 自动修复再重新检查。
 
@@ -50,9 +50,7 @@
 
 ## Git
 
-- **禁止 push**——只有用户明确说"推送"时才执行 `git push`
-- commit 后也不要 push，等用户自己操作
-- commit 风格：`type: short description`（如 `feat: add xxx`、`fix: correct xxx`）
+> 规则见根 `AGENTS.md`。
 
 ## 代码风格（Code style）
 

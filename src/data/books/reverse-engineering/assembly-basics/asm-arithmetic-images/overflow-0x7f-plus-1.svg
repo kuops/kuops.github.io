@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">8 位加法溢出 (0x7F + 1)</text>
+
+  <g transform="translate(40, 70)" font-family="monospace" font-size="14">
+    <text x="0" y="0" fill="#10b981" font-weight="bold">0x7F</text>
+    <text x="60" y="0" fill="#94a3b8">=</text>
+    <text x="85" y="0" fill="#94a3b8" font-weight="bold">0111 1111</text>
+    <text x="250" y="0" fill="#94a3b8" font-size="13" font-family="sans-serif">(无符号 127，有符号 +127)</text>
+
+    <text x="0" y="30" fill="#60a5fa" font-weight="bold">+    1</text>
+    <text x="60" y="30" fill="#94a3b8">=</text>
+    <text x="85" y="30" fill="#60a5fa" font-weight="bold">0000 0001</text>
+
+    <line x1="0" y1="40" x2="220" y2="40" stroke="#94a3b8" stroke-opacity="0.4" stroke-width="1.5"/>
+
+    <text x="0" y="60" fill="#ef4444" font-weight="bold">0x80</text>
+    <text x="60" y="60" fill="#94a3b8">=</text>
+    <text x="85" y="60" fill="#ef4444" font-weight="bold">1000 0000</text>
+    <text x="250" y="60" fill="#94a3b8" font-size="13" font-family="sans-serif">(无符号 128，有符号 -128)</text>
+  </g>
+</svg>

@@ -10,6 +10,7 @@
 **必须遵守的规则（无论任务类型）：**
 
 - 修改代码后必须按 CI 步逐一验证：`npm run lint` → `npm run format:check` → `npm run build`，全部通过才算完成（CI 顺序即如此；format:check 不通过时先 `npm run format` 修复）
+- **仅修改 markdown/svg 内容**时可跳过 `npm run build`，只跑 `lint` → `format:check`
 - 禁止 push —— 只有用户明确说"推送"时才执行 `git push`
 - commit 风格：`type: short description`
 

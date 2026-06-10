@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
@@ -7,8 +9,48 @@ export const BLOG_PATH = "src/data/blog";
 export const BOOKS_PATH = "src/data/books";
 export const PAGES_PATH = "src/data/pages";
 
+function hasMarkdownEntries(dir: string): boolean {
+  if (!fs.existsSync(dir)) {
+    return false;
+  }
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith("_")) {
+      continue;
+    }
+
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory() && hasMarkdownEntries(fullPath)) {
+      return true;
+    }
+
+    if (entry.isFile() && /\.mdx?$/.test(entry.name)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+const blogLoader = glob({
+  pattern: "**/[^_]*.{md,mdx}",
+  base: `./${BLOG_PATH}`,
+});
+
 const blog = defineCollection({
-  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
+  loader: {
+    ...blogLoader,
+    name: "blog-glob-loader",
+    async load(context) {
+      if (!hasMarkdownEntries(path.resolve(BLOG_PATH))) {
+        context.store.clear();
+        return;
+      }
+
+      return blogLoader.load(context);
+    },
+  },
   schema: ({ image }) =>
     z.object({
       author: z.string().default(config.site.author),

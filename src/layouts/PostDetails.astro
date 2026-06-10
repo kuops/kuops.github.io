@@ -12,11 +12,11 @@ import BackToTopButton from "@/components/BackToTopButton.astro";
 import TableOfContents from "@/components/TableOfContents.astro";
 import MobileToc from "@/components/MobileToc.astro";
 import { getPath } from "@/utils/getPath";
+import { hasMermaidCodeBlock } from "@/utils/hasMermaidCodeBlock";
 import { slugifyStr } from "@/utils/slugify";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
-import MermaidRenderer from "@/components/MermaidRenderer.astro";
 import ImageLightbox from "@/components/ImageLightbox.astro";
 import config from "@/config";
 import { useTranslations } from "@/i18n";
@@ -46,6 +46,10 @@ const {
 const { Content, headings: allHeadings } = await render(post);
 
 const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
+const hasMermaid = hasMermaidCodeBlock(post.body);
+const MermaidRenderer = hasMermaid
+  ? (await import("@/components/MermaidRenderer.astro")).default
+  : null;
 
 let ogImageUrl: string | undefined;
 
@@ -179,6 +183,6 @@ const layoutProps = {
 
 <ArticleEnhancements />
 
-<MermaidRenderer />
+{hasMermaid && <MermaidRenderer />}
 
 <ImageLightbox />

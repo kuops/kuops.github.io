@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
 
   <g transform="translate(40, 35)">
-    <rect x="0" y="-18" width="110" height="26" rx="4" fill="#1e293b"/>
-    <text x="12" y="0" fill="#38bdf8" font-size="14" font-weight="bold">add ax, 1</text>
+    <rect x="0" y="-18" width="110" height="26" rx="4" fill="#60a5fa" fill-opacity="0.08" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="55" y="0" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="bold">add ax, 1</text>
     <text x="125" y="0" fill="#94a3b8" font-size="13" font-weight="600">16 位寄存器边界溢出与 CF 标志位逻辑</text>
   </g>
 
@@ -26,14 +26,14 @@
     <text x="40" y="55" fill="#fbbf24" font-size="13" font-weight="bold">2. 运算中</text>
 
     <line x1="450" y1="15" x2="450" y2="95" stroke="#ef4444" stroke-width="4"/>
-    <rect x="380" y="43" width="60" height="22" rx="3" fill="#ef4444" fill-opacity="0.1"/>
+    <rect x="380" y="43" width="60" height="22" rx="4" fill="#ef4444" fill-opacity="0.1"/>
     <text x="410" y="58" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="bold">高位封闭</text>
 
     <text x="460" y="5" fill="#94a3b8" font-size="11" font-weight="bold">AX 16 位硬件容器边界</text>
     <rect x="460" y="15" width="260" height="80" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-dasharray="4,3"/>
 
     <g font-size="13" text-anchor="middle">
-      <rect x="480" y="25" width="220" height="24" rx="3" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1"/>
+      <rect x="480" y="25" width="220" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1"/>
       <text x="590" y="41" fill="#94a3b8">1111 1111 1111 1111 (AX)</text>
 
       <text x="495" y="65" fill="#60a5fa" font-weight="bold">+</text>

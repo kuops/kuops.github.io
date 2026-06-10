@@ -70,8 +70,10 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      chunkSizeWarningLimit: 650,
+    },
     optimizeDeps: {
-      include: ["photoswipe", "photoswipe/lightbox"],
       exclude: ["@resvg/resvg-js"],
     },
   },

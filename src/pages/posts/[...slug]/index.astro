@@ -1,6 +1,7 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
+import { type CollectionEntry } from "astro:content";
 import PostDetails from "@/layouts/PostDetails.astro";
+import { getBlogPosts } from "@/utils/getBlogPosts";
 import getSortedPosts from "@/utils/getSortedPosts";
 import { getPath } from "@/utils/getPath";
 
@@ -11,7 +12,7 @@ type Props = {
 };
 
 export async function getStaticPaths() {
-  const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+  const allPosts = await getBlogPosts(({ data }) => !data.draft);
   const sortedPosts = getSortedPosts(allPosts);
 
   return sortedPosts.map(post => {

@@ -71,8 +71,6 @@ order: number       # 组内排序
 draft: boolean      # 可选，排除生产构建
 ```
 
-章节正文不要再写 `#` 一级标题；页面会用 frontmatter 的 `title` 自动生成标题，正文从 `##` 开始。
-
 **关键：** Astro glob loader 把 `index.md` 的 id 解析为父目录名（如 `getting-started/index.md` → id `getting-started`），不是 `getting-started/index`。所以 `src/utils/books.ts` 用 `filePath` 而不是 `id` 来检测 `index.md` 和 `_index.md`。
 
 URL 反映完整目录路径：`/books/astro-guide/basics/intro`。
@@ -89,25 +87,9 @@ URL 反映完整目录路径：`/books/astro-guide/basics/intro`。
 - `public/` 目录的文件不被优化，但不想把内容图片放 `public/`
 - 内联 `<svg>` 在 `.md` 文件中会被 Markdown 解析器拆散子元素
 
-转换命令（WSL 环境，使用 Windows 微软雅黑字体渲染中文）：
+转换：`npm run svg2png -- path/to/foo.svg`（详见 `agents-md/tutorial-svg.md`）
 
-```bash
-node -e "
-const { Resvg } = require('@resvg/resvg-js');
-const fs = require('fs');
-const svg = fs.readFileSync('src/data/books/reverse-engineering/getting-started/asm-navigation-images/sub-register-eax.svg');
-const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1440 }, font: { fontFiles: ['/usr/share/fonts/truetype/windows/msyh.ttc'] } });
-fs.writeFileSync('src/data/books/reverse-engineering/getting-started/asm-navigation-images/sub-register-eax.png', resvg.render().asPng());
-console.log('done');
-"
-```
-
-SVG 规范：
-- 透明背景（不设背景矩形）
-- 中性色用 `#94a3b8`（slate-400），亮暗主题下都可见
-- 彩色用 Tailwind 400 级别（`#60a5fa`、`#fbbf24`、`#34d399`），暗色主题也清晰
-- 不要用 `currentColor`（PNG 转换后无法继承页面颜色）
-- 不要用 CSS `style` 属性和 `var()`（Markdown 解析会拆散）
+SVG 规范详见 `agents-md/tutorial-svg.md`。
 
 ## 写作质量检查清单（Writing quality checklist）
 

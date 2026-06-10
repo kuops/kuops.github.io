@@ -346,7 +346,7 @@ const msg = "hello"; // [!code word:hello]
 > [!NOTE] — 补充说明
 > [!TIP] — 小技巧
 > [!WARNING] — 踩坑提醒
-> [!CAUTION] — 严重警告
+> [!IMPORTANT] — 必须记住的规则或前提
 
 折叠 callout：`> [!NOTE]- 标题`
 

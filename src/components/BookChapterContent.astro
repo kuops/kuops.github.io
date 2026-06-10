@@ -5,6 +5,7 @@ import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import type { CollectionEntry } from "astro:content";
 import type { SidebarGroup } from "@/types/books";
+import { hasMermaidCodeBlock } from "@/utils/hasMermaidCodeBlock";
 import config from "@/config";
 import { useTranslations } from "@/i18n";
 const t = useTranslations(config.site.lang);
@@ -24,6 +25,10 @@ const { chapter, book, slug, sidebar, titleMap, prevSlug, nextSlug } =
 
 const { Content, headings: allHeadings } = await render(chapter);
 const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
+const hasMermaid = hasMermaidCodeBlock(chapter.body);
+const MermaidRenderer = hasMermaid
+  ? (await import("@/components/MermaidRenderer.astro")).default
+  : null;
 ---
 
 <BookLayout
@@ -78,3 +83,5 @@ const headings = allHeadings.filter(h => h.depth >= 2 && h.depth <= 4);
     }
   </div>
 </BookLayout>
+
+{hasMermaid && <MermaidRenderer />}

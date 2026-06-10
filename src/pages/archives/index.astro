@@ -1,10 +1,10 @@
 ---
-import { getCollection } from "astro:content";
 import Main from "@/layouts/Main.astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
+import { getBlogPosts } from "@/utils/getBlogPosts";
 import getPostsByGroupCondition from "@/utils/getPostsByGroupCondition";
 import config from "@/config";
 import { useTranslations } from "@/i18n";
@@ -15,7 +15,7 @@ if (!config.features.showArchives) {
 
 const t = useTranslations(config.site.lang);
 
-const posts = await getCollection("blog", ({ data }) => !data.draft);
+const posts = await getBlogPosts(({ data }) => !data.draft);
 
 const months = [
   "January",
