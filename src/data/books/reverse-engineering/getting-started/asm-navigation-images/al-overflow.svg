@@ -3,7 +3,7 @@
   <g transform="translate(40, 35)">
     <rect x="0" y="-18" width="110" height="26" rx="4" fill="#60a5fa" fill-opacity="0.08" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="1.5"/>
     <text x="55" y="0" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="bold">add al, 1</text>
-    <text x="125" y="0" fill="#94a3b8" font-size="13" font-weight="600">8 位寄存器边界溢出与 CF 标志位逻辑</text>
+    <text x="125" y="0" fill="#94a3b8" font-size="13" font-weight="bold">8 位寄存器边界溢出与 CF 标志位逻辑</text>
   </g>
 
   <g font-size="11" fill="#94a3b8" text-anchor="middle">
@@ -65,6 +65,6 @@
 
   <g transform="translate(180, 405)">
     <rect x="0" y="0" width="620" height="36" rx="6" fill="#34d399" fill-opacity="0.08" stroke="#34d399" stroke-opacity="0.4" stroke-width="1"/>
-    <text x="15" y="22" fill="#34d399" font-size="12" font-weight="600">EAX = 0x12345600 | 只有低 8 位清零，高 24 位完全没有接收到进位</text>
+    <text x="15" y="22" fill="#34d399" font-size="12" font-weight="bold">EAX = 0x12345600 | 只有低 8 位清零，高 24 位完全没有接收到进位</text>
   </g>
 </svg>

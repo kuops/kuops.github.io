@@ -2,10 +2,10 @@
   <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">补码还原为原值 (0xFE → -2)</text>
 
   <g transform="translate(0, 55)">
-    <rect x="180" y="0" width="175" height="35" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1"/>
+    <rect x="180" y="0" width="175" height="35" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
     <text x="267" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444" text-anchor="middle">1111 = 0xF</text>
     
-    <rect x="370" y="0" width="175" height="35" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1"/>
+    <rect x="370" y="0" width="175" height="35" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
     <text x="457" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8" text-anchor="middle">1110 = 0xE</text>
 
     <text x="25" y="15" font-size="13" font-weight="bold" fill="#94a3b8">已知补码：0xFE</text>
@@ -14,28 +14,28 @@
 
   <g transform="translate(0, 60)">
     <text x="25" y="85" font-size="14" font-weight="bold" fill="#10b981">第1步：按位取反</text>
-    <rect x="180" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="180" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="200" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="225" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="225" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="245" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="270" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="270" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="290" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="315" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="315" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="335" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="370" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="370" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="390" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="415" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="415" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="435" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="460" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/> 
+    <rect x="460" y="60" width="40" height="40" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/> 
     <text x="480" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#10b981" text-anchor="middle">0</text>
     
-    <rect x="505" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1"/> 
+    <rect x="505" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/> 
     <text x="525" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#fbbf24" text-anchor="middle">1</text>
     
     <text x="560" y="84" font-size="13" fill="#94a3b8">(取反后)</text>
@@ -43,35 +43,35 @@
 
   <g transform="translate(0, 125)">
     <text x="25" y="85" font-size="14" font-weight="bold" fill="#ef4444">第2步：末尾加一</text>
-    <rect x="180" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="180" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="200" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="225" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="225" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="245" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="270" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="270" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="290" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="315" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="315" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="335" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="370" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="370" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="390" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="415" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/> 
+    <rect x="415" y="60" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1.5"/> 
     <text x="435" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#ef4444" text-anchor="middle">0</text>
     
-    <rect x="460" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1"/> 
+    <rect x="460" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/> 
     <text x="480" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#fbbf24" text-anchor="middle">1</text>
     
-    <rect x="505" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1"/> 
+    <rect x="505" y="60" width="40" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/> 
     <text x="525" y="85" font-family="monospace" font-size="16" font-weight="bold" fill="#fbbf24" text-anchor="middle">0</text>
     
     <text x="560" y="84" font-size="13" fill="#94a3b8">(求得绝对值)</text>
   </g>
 
   <g transform="translate(0, 235)">
-    <text x="25" y="45" font-size="14" font-weight="bold" fill="#3b82f6">第3步 : 转为十进制</text>
+    <text x="25" y="45" font-size="14" font-weight="bold" fill="#3b82f6">第3步：转为十进制</text>
     <text x="362" y="45" font-family="monospace" font-size="15" font-weight="bold" fill="#94a3b8" text-anchor="middle">0000 0010 = 2</text>
   </g>
 

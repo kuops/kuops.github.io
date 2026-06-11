@@ -404,9 +404,9 @@ memset(p, 0, count);
 x64dbg 实操。加载第一章的 CrackMe 程序（或任意 32 位程序），完成以下操作：
 
 1. 在反汇编窗口右键 -> 搜索 -> 当前模块 -> 搜索指令，输入 `rep`，看看能不能找到 `rep movs`、`rep stos` 或 `repne scas`
-2. 如果找到了，在 `rep` 那行设断点（F2），F9 运行到断点
+2. 如果找到了，在 `rep` 那行设断点（<kbd>F2</kbd>），<kbd>F9</kbd> 运行到断点
 3. 查看寄存器窗口中 ESI、EDI、ECX 的值
-4. 按 F8 单步执行，观察：ESI/EDI 怎么变化的？ECX 怎么变化的？内存窗口中目标地址的内容怎么变化的？
+4. 按 <kbd>F8</kbd> 单步执行，观察：ESI/EDI 怎么变化的？ECX 怎么变化的？内存窗口中目标地址的内容怎么变化的？
 5. 判断这段代码在做什么（memcpy？memset？strlen？）
 
 <details>
@@ -417,7 +417,7 @@ x64dbg 实操。加载第一章的 CrackMe 程序（或任意 32 位程序），
 1. 大多数 32 位程序都能找到 `rep` 指令，尤其是 `rep stosd`（初始化局部变量）和 `rep movsd`（复制结构体/数组）
 2. 设断点后运行到断点
 3. 观察 ECX 的值——它告诉你操作多少个单元（字节/字/双字）
-4. F8 单步时：
+4. <kbd>F8</kbd> 单步时：
    - `rep stosd`：EDI 每次加 4，ECX 每次减 1，EAX 的值被写入 [EDI]
    - `rep movsd`：ESI 每次加 4，EDI 每次加 4，ECX 每次减 1，[ESI] 被复制到 [EDI]
 5. 如果前面有 `xor eax, eax` -> memset 清零；如果有 ESI/EDI 两个源 -> memcpy
