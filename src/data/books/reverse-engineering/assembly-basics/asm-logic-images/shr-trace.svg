@@ -1,66 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 460" width="920" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="13">
-  <defs>
-    <linearGradient id="eaxGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0.05"/>
-    </linearGradient>
-    <linearGradient id="eipGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.05"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
 
-  <g fill="#94a3b8" font-weight="600" font-size="12" text-anchor="middle">
-    <text x="105" y="35">指令</text>
-    <text x="310" y="35">EAX</text>
-    <text x="400" y="35">ZF</text>
-    <text x="440" y="35">SF</text>
-    <text x="480" y="35">CF</text>
-    <text x="560" y="35">EIP</text>
-    <text x="750" y="35">说明</text>
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">shr 逻辑右移追踪</text>
+  <text x="20" y="52" font-size="12" font-weight="bold" fill="#94a3b8">初始：EAX=0xF0000010(负数)，EIP=00401000</text>
+
+  <g transform="translate(20, 80)">
+    <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="130"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">机器码</text>
+    <text x="280"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
+    <text x="380"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">ZF</text>
+    <text x="420"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">SF</text>
+    <text x="460"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">OF</text>
+    <text x="500"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">CF</text>
+    <text x="540"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">PF</text>
+    <text x="580"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
+    <text x="680"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
   </g>
-  <line x1="30" y1="45" x2="890" y2="45" stroke="#94a3b8" stroke-opacity="0.4" stroke-width="1.5"/>
 
-  <g fill="#94a3b8">
-    <text x="40" y="72" font-size="12">初始状态</text>
-    <text x="290" y="72">F0000010</text>
-    <text x="396" y="72" text-anchor="middle">0</text>
-    <text x="436" y="72" text-anchor="middle" fill="#f87171">1</text>
-    <text x="476" y="72" text-anchor="middle">0</text>
-    <text x="530" y="72">00401000</text>
-    <text x="630" y="72" font-size="12">负数</text>
+  <g transform="translate(20, 110)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">初始状态</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">—</text>
+    <text x="280"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#3b82f6">F0000010</text>
+    <text x="380"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="420"  y="0" font-size="14" font-weight="bold" fill="#ef4444">1</text>
+    <text x="460"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="500"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="540"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">1</text>
+    <text x="580"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#60a5fa">00401000</text>
+    <text x="680"  y="0" font-size="13" font-weight="bold" fill="#94a3b8">负数</text>
   </g>
-  <line x1="30" y1="85" x2="890" y2="85" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1"/>
 
-  <g>
-    <text x="40" y="117" fill="#38bdf8" font-weight="600">shr eax, 4</text>
-    <rect x="282" y="102" width="80" height="20" rx="4" fill="url(#eaxGrad)" stroke="#10b981" stroke-width="1.2"/>
-    <text x="290" y="117" fill="#34d399" font-weight="600">0F000001</text>
-    <text x="396" y="117" fill="#94a3b8" fill-opacity="0.5" text-anchor="middle">0</text>
-    <text x="436" y="117" fill="#94a3b8" fill-opacity="0.5" text-anchor="middle">0</text>
-    <text x="476" y="117" fill="#94a3b8" fill-opacity="0.5" text-anchor="middle">0</text>
-    <rect x="522" y="102" width="78" height="20" rx="4" fill="url(#eipGrad)" stroke="#3b82f6" stroke-width="1.2"/>
-    <text x="530" y="117" fill="#60a5fa">00401003</text>
-    <text x="630" y="117" fill="#34d399" font-size="12">高位补 0，符号位变 0</text>
+  <g transform="translate(20, 140)">
+    <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">shr eax, 4</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#fbbf24">C1E8 04</text>
+    <text x="280"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">0F000001</text>
+    <text x="380"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="420"  y="0" font-size="14" font-weight="bold" fill="#10b981">0</text>
+    <text x="460"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="500"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">0</text>
+    <text x="540"  y="0" font-size="14" font-weight="bold" fill="#94a3b8">1</text>
+    <text x="580"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#fbbf24">00401003</text>
+    <text x="680"  y="0" font-size="13" font-weight="bold" fill="#34d399">高位补 0，符号位变 0</text>
   </g>
-  <line x1="30" y1="130" x2="890" y2="130" stroke="#94a3b8" stroke-opacity="0.4" stroke-width="1.5"/>
 
-  <g transform="translate(40, 150)">
-    <rect width="840" height="280" rx="6" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1"/>
+  <rect x="20" y="165" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
 
-    <text x="20" y="28" fill="#64748b" font-size="11" font-weight="500">SHR 逻辑右移：左侧腾出的高位无条件补 0</text>
+  <!-- 二进制拆解 -->
+  <g transform="translate(20, 190)">
+    <text x="0" y="0" font-size="13" fill="#94a3b8" font-weight="bold">二进制拆解</text>
 
-    <g transform="translate(20, 50)">
-      <text x="0" y="15" fill="#94a3b8" letter-spacing="1"><tspan fill="#f87171" font-weight="bold">1111</tspan>0000 00000000 00000000 0001<tspan fill="#475569">0000</tspan></text>
-      <text x="700" y="15" fill="#64748b" font-size="11">[F0000010]</text>
+    <g transform="translate(0, 25)" font-family="monospace" font-size="16">
+      <text x="0"   y="0"  font-size="12" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-weight="bold" fill="#94a3b8">初始</text>
+      <text x="180" y="0"  font-weight="bold" fill="#94a3b8">11110000 00000000 00000000 0001<tspan fill="#60a5fa">0000</tspan></text>
 
-      <text x="200" y="45" fill="#fbbf24" font-size="11">&gt;&gt;&gt; 向右整体平移 4 位 &gt;&gt;&gt;</text>
-
-      <text x="0" y="80" fill="#94a3b8" letter-spacing="1"><tspan fill="#38bdf8" font-weight="bold">0000</tspan> <tspan fill="#f87171">1111</tspan>0000 00000000 00000000 0001</text>
-      <text x="700" y="80" fill="#34d399" font-size="11">[0F000001]</text>
+      <text x="0"   y="30" font-size="12" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-weight="bold" fill="#10b981">SHR 4</text>
+      <text x="180" y="30" font-weight="bold" fill="#94a3b8"><tspan fill="#ef4444">0000</tspan> 11110000 00000000 00000000 0001</text>
+      <text x="600" y="30" font-size="12" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-weight="bold" fill="#fbbf24">&gt;&gt; 右移 4 位</text>
     </g>
-
-    <rect x="15" y="215" width="810" height="50" rx="4" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.2" stroke-width="1"/>
-    <text x="35" y="240" fill="#34d399" font-size="11">SHR 不管原符号位，高位一律补 0。负数右移后符号丢失，变成正数。</text>
   </g>
+
+  <!-- 总结提示 -->
+  <rect x="20" y="280" width="900" height="44" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="40" y="305" font-size="13" font-weight="bold" fill="#60a5fa">SHR 不管原符号位，高位一律补 0。负数右移后符号丢失，变成正数。</text>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 170" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
   <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">sub 指令执行状态变化（有符号溢出）</text>
-  <text x="20" y="52" font-size="12" fill="#94a3b8" opacity="0.6">初始：EAX=0x80000000（有符号最小负数），EIP=00401000</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">初始：EAX=0x80000000（有符号最小负数），EIP=00401000</text>
 
   <g transform="translate(20, 80)">
     <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
@@ -17,27 +17,27 @@
   </g>
 
   <g transform="translate(20, 110)">
-    <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8">初始状态</text>
-    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#94a3b8">—</text>
-    <text x="230"  y="0" font-family="monospace" font-size="14" fill="#3b82f6">80000000</text>
-    <text x="330"  y="0" font-size="14" fill="#94a3b8">0</text>
-    <text x="370"  y="0" font-size="14" fill="#94a3b8">1</text>
-    <text x="410"  y="0" font-size="14" fill="#94a3b8">0</text>
-    <text x="450"  y="0" font-size="14" fill="#94a3b8">0</text>
-    <text x="490"  y="0" font-size="14" fill="#94a3b8">1</text>
-    <text x="530"  y="0" font-family="monospace" font-size="14" fill="#60a5fa">00401000</text>
+    <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">初始状态</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">—</text>
+    <text x="230"  y="0" font-family="monospace" font-size="14" fill="#3b82f6" font-weight="bold">80000000</text>
+    <text x="330"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">0</text>
+    <text x="370"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">1</text>
+    <text x="410"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">0</text>
+    <text x="450"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">0</text>
+    <text x="490"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">1</text>
+    <text x="530"  y="0" font-family="monospace" font-size="14" fill="#60a5fa" font-weight="bold">00401000</text>
   </g>
 
   <g transform="translate(20, 140)">
     <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">sub eax, 1</text>
-    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">83 E8 01</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">83 E8 01</text>
     <text x="230"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">7FFFFFFF</text>
-    <text x="330"  y="0" font-size="14" fill="#94a3b8">0</text>
+    <text x="330"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">0</text>
     <text x="370"  y="0" font-size="14" font-weight="bold" fill="#10b981">0</text>
     <text x="410"  y="0" font-size="14" font-weight="bold" fill="#ef4444">1</text>
     <text x="450"  y="0" font-size="14" font-weight="bold" fill="#ef4444">1</text>
-    <text x="490"  y="0" font-size="14" fill="#94a3b8">1</text>
-    <text x="530"  y="0" font-family="monospace" font-size="14" fill="#fbbf24">00401003</text>
-    <text x="630"  y="0" font-size="13" fill="#94a3b8">负-1=正，OF=1；不够减借位 CF=1</text>
+    <text x="490"  y="0" font-size="14" fill="#94a3b8" font-weight="bold">1</text>
+    <text x="530"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">00401003</text>
+    <text x="630"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">负-1=正，OF=1；不够减借位 CF=1</text>
   </g>
 </svg>

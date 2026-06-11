@@ -62,13 +62,12 @@
 | -------------- | --------- | -------------------- | ---------------------------- |
 | fill-opacity   | 0.04–0.08 | `0.05`, `0.08`       | 色块背景填充，保持淡雅       |
 | stroke-opacity | 0.15–0.5  | `0.2`, `0.3`, `0.5`  | 边框、分割线、连接线         |
-| opacity        | 0.4–0.8   | `0.6`, `0.8`         | 次要文字、注释、辅助标记     |
 
 规则：
 
 - 高亮色块的 fill-opacity 用 `0.05` 或 `0.08`，stroke-opacity 用 `0.3` 或 `0.5`。
 - 未变化/未高亮的元素 stroke-opacity 用 `0.2` 或 `0.3`。
-- 注释性文字 opacity 用 `0.6`。
+- **文字不要加 `opacity`**。文字颜色本身就通过 `fill` 控制可读性，加 opacity 会降低对比度、影响阅读。次要说明用 `#94a3b8`，重要内容用对应高亮色即可。
 
 ## 圆角
 
@@ -97,6 +96,7 @@
 
 - SVG 根元素写 `font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif"`，这是 WSL 环境下确保中文正确渲染的字体回退列表。
 - 代码/地址/数值用 `font-family="monospace"`。
+- 所有文字统一用 `font-weight="bold"`，不要用 `600` 或其他值。
 - 字号从小到大：10（最小标记）→ 11（标签）→ 12（注释）→ 13（小标题）→ 14（正文）→ 15–16（标题）。
 - 中文使用微软雅黑（转换时通过 Resvg 的 `font.fontFiles` 指定 `/usr/share/fonts/truetype/windows/msyh.ttc`）。
 
@@ -178,11 +178,11 @@
     <!-- 非高亮色块 -->
     <rect x="150" y="0" width="130" height="32" rx="4"
           fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="215" y="22" font-family="monospace" font-size="14" font-weight="600"
-          text-anchor="middle" fill="#94a3b8" opacity="0.7">数值</text>
+    <text x="215" y="22" font-family="monospace" font-size="14" font-weight="bold"
+          text-anchor="middle" fill="#94a3b8">数值</text>
 
     <!-- 注释文字 -->
-    <text x="300" y="22" font-size="11" fill="#94a3b8" opacity="0.6">注释</text>
+    <text x="300" y="22" font-size="11" fill="#94a3b8">注释</text>
   </g>
 </svg>
 ```
@@ -206,6 +206,53 @@ npm run svg2png -- path/to/chapter-images/
 npm run svg2png -- a.svg b.svg some-dir/
 ```
 
+## Trace 追踪图规范
+
+用于展示指令执行过程的追踪图，包含寄存器变化和二进制拆解。
+
+### 表格列布局
+
+| 列   | x 坐标 | 说明           |
+| ---- | ------ | -------------- |
+| 指令 | 0      | 指令名称       |
+| 机器码 | 130  | 指令的机器码   |
+| EAX  | 280    | 寄存器值       |
+| ZF   | 380    | 零标志         |
+| SF   | 420    | 符号标志       |
+| OF   | 460    | 溢出标志       |
+| CF   | 500    | 进位标志       |
+| PF   | 540    | 奇偶标志       |
+| EIP  | 580    | 指令指针       |
+| 说明 | 680    | 操作说明       |
+
+### 二进制拆解布局
+
+- CF 标题：x=140, y=0
+- CF 值：x=140, 每行 y+30
+- 二进制：x=180, 每行 y+30
+- 注释：x=600, 每行 y+30
+- 32 位格式，每 8 位空格分隔
+
+### 颜色编码
+
+- 蓝色 `#60a5fa`：将被移出/绕回的位
+- 红色 `#ef4444`：移入/结果位
+- 绿色 `#10b981`：符号位变化
+- 灰色 `#94a3b8`：未变化的位
+
+### 机器码格式
+
+- opcode 和立即数之间空格：`C1E8 04`
+- 无空格的短指令：`D1C0`
+- 5 字节指令：`25 FF000000`
+
+### 提示框
+
+- 蓝色方案：`fill="#3b82f6"` `fill-opacity="0.08"` `stroke="#3b82f6"` `stroke-opacity="0.5"`
+- 文字颜色：`fill="#60a5fa"`
+- 单行高度：44，两行高度：64
+- 与二进制拆解间距：30-50px，不要留过多空白
+
 ## 检查清单
 
 画完 SVG 后，按以下标准检查：
@@ -220,7 +267,14 @@ npm run svg2png -- a.svg b.svg some-dir/
 - [ ] viewBox 高度 = 内容最低点 + 20px，没有多余底部空白
 - [ ] fill-opacity 在 0.04–0.08 范围
 - [ ] stroke-opacity 在 0.15–0.5 范围
+- [ ] 文字没有 `opacity` 属性（颜色靠 `fill` 控制，不加透明度）
+- [ ] 所有文字统一用 `font-weight="bold"`，没有 `600` 或其他值
 - [ ] 透明背景上的说明字优先用 `#94a3b8`，没有把 `#475569` 当成默认裸字色
 - [ ] 相关元素已用 `<g>` 分组，坐标不是散落一地
 - [ ] 文本仍是 `<text>`，不是转路径的死字
 - [ ] 同名 PNG 已重新生成
+- [ ] Trace 图：表格列位置对齐（EAX=280, ZF=380, SF=420, OF=460, CF=500, PF=540, EIP=580, 说明=680）
+- [ ] Trace 图：二进制拆解使用 32 位格式，每 8 位空格分隔
+- [ ] Trace 图：颜色编码正确（蓝=移出位，红=移入位，绿=符号位变化）
+- [ ] Trace 图：机器码格式正确（opcode 和立即数之间有空格）
+- [ ] Trace 图：提示框使用蓝色方案，间距合理
