@@ -4,7 +4,7 @@
   <g transform="translate(20, 55)">
     <text x="0" y="16" font-size="12" fill="#94a3b8">EFLAGS 低 16 位, 只标注 x64dbg 显示的 9 个标志位</text>
 
-    <g transform="translate(0, 30)">
+    <g transform="translate(0, 50)">
       <text x="25" y="0" font-size="11" fill="#94a3b8" text-anchor="middle">bit</text>
 
       <text x="25" y="14" font-size="13" font-family="monospace" fill="#94a3b8" text-anchor="middle">15</text>
@@ -82,7 +82,7 @@
       <line x1="0" y1="0" x2="650" y2="0" stroke="#94a3b8" stroke-opacity="0.15" stroke-width="1"/>
     </g>
 
-    <g transform="translate(0, 158)">
+    <g transform="translate(0, 170)">
       <text x="0" y="16" font-size="13" fill="#94a3b8">值为 1 的位加起来就是整体值：</text>
 
       <g transform="translate(0, 32)">
