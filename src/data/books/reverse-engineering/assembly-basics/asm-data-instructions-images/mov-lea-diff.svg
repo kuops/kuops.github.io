@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
   <!-- 标题 -->
   <text x="20" y="32" font-size="16" font-weight="bold" fill="#94a3b8">mov 与 lea 指令区别</text>
-  <text x="20" y="55" font-size="12" fill="#94a3b8" opacity="0.6">EBP = 0x012FF310</text>
-  <text x="20" y="75" font-size="12" fill="#94a3b8" opacity="0.6">[ebp-4] = 0x00000014</text>
+  <text x="20" y="55" font-size="12" fill="#94a3b8">EBP = 0x012FF310</text>
+  <text x="20" y="75" font-size="12" fill="#94a3b8">[ebp-4] = 0x00000014</text>
 
   <g transform="translate(20, 100)">
     <!-- 左侧：寄存器 + 内存 -->

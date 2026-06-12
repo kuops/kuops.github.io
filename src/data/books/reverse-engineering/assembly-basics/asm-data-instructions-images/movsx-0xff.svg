@@ -4,16 +4,16 @@
   <text x="20" y="60" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">初始 AL = 0xFF (-1)，执行 <tspan fill="#ef4444">movsx</tspan> eax, al </text>
 
   <g transform="translate(20, 50)">
-    <text x="10" y="65" font-size="12" fill="#94a3b8" opacity="0.8">输入源 (8位 AL):</text>
+    <text x="10" y="65" font-size="12" fill="#94a3b8">输入源 (8位 AL):</text>
     <g transform="translate(130, 48)">
       <rect x="0" y="0" width="35" height="26" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
       <text x="17.5" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">1</text>
-      <text x="17.5" y="-5" font-size="11" fill="#94a3b8" opacity="0.6" text-anchor="middle">B7(符号位)</text>
+      <text x="17.5" y="-5" font-size="11" fill="#94a3b8" text-anchor="middle">B7(符号位)</text>
       
       <rect x="35" y="0" width="105" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-      <text x="87.5" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8" opacity="0.8">111 1111</text>
-      <text x="87.5" y="-5" font-size="11" fill="#94a3b8" opacity="0.6" text-anchor="middle">低 7 位</text>
-      <text x="150" y="18" font-family="monospace" font-size="12" fill="#94a3b8" opacity="0.6">= 0xFF</text>
+      <text x="87.5" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">111 1111</text>
+      <text x="87.5" y="-5" font-size="11" fill="#94a3b8" text-anchor="middle">低 7 位</text>
+      <text x="150" y="18" font-family="monospace" font-size="12" fill="#94a3b8">= 0xFF</text>
     </g>
 
     <g stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5" fill="none">
@@ -22,7 +22,7 @@
       <path d="M 235 74 L 235 90 L 635 90 L 635 125" stroke="#94a3b8" stroke-opacity="0.3" stroke-dasharray="2,2"/>
     </g>
 
-    <text x="10" y="142" font-size="12" fill="#94a3b8" opacity="0.8">执行后 (32位 EAX):</text>
+    <text x="10" y="142" font-size="12" fill="#94a3b8">执行后 (32位 EAX):</text>
     <g transform="translate(130, 125)">
       <rect x="0" y="0" width="140" height="26" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
       <text x="70" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">11111111</text>
@@ -32,11 +32,11 @@
       
       <rect x="280" y="0" width="140" height="26" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
       <text x="350" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">11111111</text>
-      <text x="210" y="40" font-size="11" fill="#10b981" opacity="0.8" text-anchor="middle">高 24 位由符号位填充 (➔ 0xFFFFFF)</text>
+      <text x="210" y="40" font-size="11" fill="#10b981" text-anchor="middle">高 24 位由符号位填充 (➔ 0xFFFFFF)</text>
 
       <rect x="420" y="0" width="140" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-      <text x="490" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8" opacity="0.8">11111111</text>
-      <text x="490" y="40" font-size="11" fill="#94a3b8" opacity="0.6" text-anchor="middle">低 8 位承袭原值 (0xFF)</text>
+      <text x="490" y="18" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">11111111</text>
+      <text x="490" y="40" font-size="11" fill="#94a3b8" text-anchor="middle">低 8 位承袭原值 (0xFF)</text>
 
       <text x="575" y="18" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">= 0xFFFFFFFF</text>
     </g>

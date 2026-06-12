@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
   
   <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">MOV 指令执行流与状态变化表</text>
-  <text x="940" y="24" font-size="11" fill="#94a3b8" opacity="0.6" font-family="monospace" text-anchor="end">初始寄存器: EAX = 0x00000000 | EBX = 0x0000000A</text>
-  <text x="940" y="38" font-size="11" fill="#94a3b8" opacity="0.6" font-family="monospace" text-anchor="end">初始内存基址: EBP = 0x012FF310 ➔ [EBP-4] = [0x012FF30C] = 0x00000014</text>
+  <text x="940" y="24" font-size="11" fill="#94a3b8" font-family="monospace" text-anchor="end">初始寄存器: EAX = 0x00000000 | EBX = 0x0000000A</text>
+  <text x="940" y="38" font-size="11" fill="#94a3b8" font-family="monospace" text-anchor="end">初始内存基址: EBP = 0x012FF310 ➔ [EBP-4] = [0x012FF30C] = 0x00000014</text>
 
   <g transform="translate(20, 55)">
     <line x1="0" y1="35" x2="920" y2="35" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1"/>
@@ -17,67 +17,67 @@
     <line x1="0" y1="50" x2="920" y2="50" stroke="#94a3b8" stroke-opacity="0.15" stroke-dasharray="2,2" stroke-width="1"/>
     
     <text x="20" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">mov eax, 5</text>
-    <text x="20" y="40" font-size="12" fill="#94a3b8" opacity="0.6">; 立即数 5 写入 EAX</text>
-    <text x="340" y="28" font-size="13" fill="#fbbf24" font-weight="600">立即数 ➔ 寄存器</text>
+    <text x="20" y="40" font-size="12" fill="#94a3b8">; 立即数 5 写入 EAX</text>
+    <text x="340" y="28" font-size="13" fill="#fbbf24" font-weight="bold">立即数 ➔ 寄存器</text>
 
     <rect x="470" y="8" width="130" height="32" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#fbbf24">0x00000005</text>
+    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#fbbf24">0x00000005</text>
     
     <rect x="620" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x0000000A</text>
+    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x0000000A</text>
     
     <rect x="770" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000014</text>
+    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000014</text>
   </g>
 
   <g transform="translate(20, 180)">
     <line x1="0" y1="50" x2="920" y2="50" stroke="#94a3b8" stroke-opacity="0.15" stroke-dasharray="2,2" stroke-width="1"/>
     
     <text x="20" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">mov ebx, eax</text>
-    <text x="20" y="40" font-size="12" fill="#94a3b8" opacity="0.6">; 复制 EAX 的值(0x5) 到 EBX</text>
-    <text x="340" y="28" font-size="13" fill="#3b82f6" font-weight="600">寄存器 ➔ 寄存器</text>
+    <text x="20" y="40" font-size="12" fill="#94a3b8">; 复制 EAX 的值(0x5) 到 EBX</text>
+    <text x="340" y="28" font-size="13" fill="#3b82f6" font-weight="bold">寄存器 ➔ 寄存器</text>
 
     <rect x="470" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000005</text>
+    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000005</text>
     
     <rect x="620" y="8" width="130" height="32" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#3b82f6">0x00000005</text>
+    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#3b82f6">0x00000005</text>
     
     <rect x="770" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000014</text>
+    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000014</text>
   </g>
 
   <g transform="translate(20, 250)">
     <line x1="0" y1="50" x2="920" y2="50" stroke="#94a3b8" stroke-opacity="0.15" stroke-dasharray="2,2" stroke-width="1"/>
     
     <text x="20" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">mov eax, dword ptr [ebp-4]</text>
-    <text x="20" y="40" font-size="12" fill="#94a3b8" opacity="0.6">; 读取内存值(0x14) 到 EAX</text>
-    <text x="340" y="28" font-size="13" fill="#10b981" font-weight="600">内存 ➔ 寄存器</text>
+    <text x="20" y="40" font-size="12" fill="#94a3b8">; 读取内存值(0x14) 到 EAX</text>
+    <text x="340" y="28" font-size="13" fill="#10b981" font-weight="bold">内存 ➔ 寄存器</text>
 
     <rect x="470" y="8" width="130" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#10b981">0x00000014</text>
+    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#10b981">0x00000014</text>
     
     <rect x="620" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000005</text>
+    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000005</text>
     
     <rect x="770" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000014</text>
+    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000014</text>
   </g>
 
   <g transform="translate(20, 320)">
     <line x1="0" y1="50" x2="920" y2="50" stroke="#94a3b8" stroke-opacity="0.15" stroke-dasharray="2,2" stroke-width="1"/>
     
     <text x="20" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">mov dword ptr [ebp-4], eax</text>
-    <text x="20" y="40" font-size="12" fill="#94a3b8" opacity="0.6">; 将 EAX 的值写回内存</text>
-    <text x="340" y="28" font-size="13" fill="#ef4444" font-weight="600">寄存器 ➔ 内存</text>
+    <text x="20" y="40" font-size="12" fill="#94a3b8">; 将 EAX 的值写回内存</text>
+    <text x="340" y="28" font-size="13" fill="#ef4444" font-weight="bold">寄存器 ➔ 内存</text>
 
     <rect x="470" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000014</text>
+    <text x="535" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000014</text>
     
     <rect x="620" y="8" width="130" height="32" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#94a3b8" opacity="0.7">0x00000005</text>
+    <text x="685" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00000005</text>
     
     <rect x="770" y="8" width="130" height="32" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="600" text-anchor="middle" fill="#ef4444">0x00000014</text>
+    <text x="835" y="29" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#ef4444">0x00000014</text>
   </g>
 </svg>

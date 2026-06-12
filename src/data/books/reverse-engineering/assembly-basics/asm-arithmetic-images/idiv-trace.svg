@@ -1,36 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 200" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 200" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
   <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">idiv 指令执行状态变化</text>
   <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">初始：EAX=0x00000014（20），ECX=0x00000003（3），EDX=0x00000000</text>
 
   <g transform="translate(20, 80)">
     <text x="0"    y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
-    <text x="120"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
-    <text x="220"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EDX</text>
-    <text x="340"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
-    <text x="440"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
-    <rect x="0" y="12" width="780" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+    <text x="130"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">机器码</text>
+    <text x="250"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EAX</text>
+    <text x="380"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EDX</text>
+    <text x="510"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
+    <text x="620"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
   </g>
 
   <g transform="translate(20, 110)">
     <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">初始状态</text>
-    <text x="120"  y="0" font-family="monospace" font-size="14" fill="#3b82f6" font-weight="bold">00000014</text>
-    <text x="220"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000000</text>
-    <text x="340"  y="0" font-family="monospace" font-size="14" fill="#60a5fa" font-weight="bold">00401000</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">—</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" fill="#3b82f6" font-weight="bold">00000014</text>
+    <text x="380"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000000</text>
+    <text x="510"  y="0" font-family="monospace" font-size="14" fill="#60a5fa" font-weight="bold">00401000</text>
   </g>
 
   <g transform="translate(20, 140)">
     <text x="0"    y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">cdq</text>
-    <text x="120"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000014</text>
-    <text x="220"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000000</text>
-    <text x="340"  y="0" font-family="monospace" font-size="14" fill="#60a5fa" font-weight="bold">00401001</text>
-    <text x="440"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">正数，EDX 扩展为 0</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">99</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000014</text>
+    <text x="380"  y="0" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">00000000</text>
+    <text x="510"  y="0" font-family="monospace" font-size="14" fill="#60a5fa" font-weight="bold">00401001</text>
+    <text x="620"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">正数，EDX 扩展为 0</text>
   </g>
 
   <g transform="translate(20, 170)">
     <text x="0"    y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">idiv ecx</text>
-    <text x="120"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">00000006</text>
-    <text x="220"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">00000002</text>
-    <text x="340"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">00401003</text>
-    <text x="440"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">20/3=商6余2</text>
+    <text x="130"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">F7F9</text>
+    <text x="250"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">00000006</text>
+    <text x="380"  y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">00000002</text>
+    <text x="510"  y="0" font-family="monospace" font-size="14" fill="#fbbf24" font-weight="bold">00401003</text>
+    <text x="620"  y="0" font-size="13" fill="#94a3b8" font-weight="bold">20/3=商6余2</text>
   </g>
 </svg>

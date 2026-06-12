@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 320" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
   <!-- 主标题 & 初始条件 -->
   <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">lea 指令执行过程详解</text>
-  <text x="20" y="52" font-size="12" fill="#94a3b8" opacity="0.6">初始状态：ECX = 0x0040A000，EDX = 3</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8">初始状态：ECX = 0x0040A000，EDX = 3</text>
 
   <!-- 第一区块：指令 + 执行结果 横向并排 -->
   <g transform="translate(20, 80)">
@@ -9,7 +9,7 @@
     <text x="15" y="26" font-family="monospace" font-size="14" fill="#94a3b8">执行指令：</text>
     <text x="100" y="26" font-family="monospace" font-size="14" font-weight="bold" fill="#3b82f6">lea eax, dword ptr [ecx+edx*4]</text>
 
-    <rect x="460" y="0" width="240" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <rect x="460" y="0" width="340" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
     <text x="475" y="26" font-size="14" fill="#94a3b8">运行结果：</text>
     <text x="560" y="26" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">EAX = 0x0040A00C</text>
   </g>
@@ -45,5 +45,5 @@
   </g>
 
   <!-- 底部说明文字 -->
-  <text x="20" y="285" font-size="12" fill="#94a3b8" opacity="0.6">补充：lea 仅计算有效地址，不访问内存，ZF、SF、CF 等所有标志位保持不变</text>
+  <text x="20" y="285" font-size="12" fill="#94a3b8">补充：lea 仅计算有效地址，不访问内存，ZF、SF、CF 等所有标志位保持不变</text>
 </svg>
