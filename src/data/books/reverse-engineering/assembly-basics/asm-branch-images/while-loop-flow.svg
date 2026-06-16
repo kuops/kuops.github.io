@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">while 循环执行流程</text>
+  <text x="20" y="52" font-size="12" font-weight="bold" fill="#94a3b8">初始：EAX=0x50(80)，循环条件：EAX &lt; 0x64，每轮 +10</text>
+
+  <g transform="translate(70, 70)">
+
+    <rect x="0" y="0" width="350" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="21" font-family="monospace" font-size="11" fill="#64748b">00401000</text>
+    <text x="85" y="21" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">cmp eax, 0x64</text>
+    <text x="365" y="21" font-size="12" fill="#3b82f6">EAX vs 0x64</text>
+
+    <line x1="175" y1="30" x2="175" y2="44" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,38 175,44 179,38" fill="#10b981"/>
+
+    <rect x="0" y="44" width="350" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="65" font-family="monospace" font-size="11" fill="#64748b">00401004</text>
+    <text x="85" y="65" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jge 00401014</text>
+
+    <line x1="175" y1="74" x2="175" y2="108" stroke="#10b981" stroke-width="2"/>
+    <polygon points="171,102 175,108 179,102" fill="#10b981"/>
+    <text x="185" y="92" font-size="11" fill="#10b981" font-weight="bold">SF≠OF, 继续 ↓</text>
+
+    <path d="M 350 59 L 576 59 Q 580 59 580 63 L 580 231 Q 580 235 576 235 L 354 235" stroke="#fbbf24" stroke-width="2" fill="none"/>
+    <polygon points="354,231 350,235 354,239" fill="#fbbf24"/>
+    <text x="365" y="52" font-size="11" fill="#fbbf24" font-weight="bold">SF=OF, 跳出循环</text>
+
+    <rect x="0" y="108" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="129" font-family="monospace" font-size="11" fill="#64748b">00401006</text>
+    <text x="85" y="129" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">add eax, 0xA</text>
+    <text x="365" y="129" font-size="12" fill="#10b981">EAX += 10</text>
+
+    <line x1="175" y1="138" x2="175" y2="152" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,146 175,152 179,146" fill="#10b981"/>
+
+    <rect x="0" y="152" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="173" font-family="monospace" font-size="11" fill="#64748b">0040100C</text>
+    <text x="85" y="173" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">jmp 00401000</text>
+    <text x="365" y="173" font-size="12" fill="#10b981">EIP → 00401000</text>
+
+    <path d="M 175 182 L 175 196 Q 175 200 171 200 L -21 200 Q -25 200 -25 196 L -25 19 Q -25 15 -21 15 L -4 15 Q 0 15 0 15" stroke="#10b981" stroke-width="2" fill="none"/>
+    <polygon points="-4,11 0,15 -4,19" fill="#10b981"/>
+    <text x="75" y="195" text-anchor="middle" font-size="11" fill="#10b981" font-weight="bold">无条件回跳到 cmp</text>
+
+    <rect x="0" y="220" width="350" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="241" font-family="monospace" font-size="11" fill="#64748b">00401014</text>
+    <text x="85" y="241" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+
+  </g>
+</svg>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 260" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">test + jne 执行流程(密码错误, jne 跳转)</text>
+
+  <g transform="translate(60, 55)">
+
+    <rect x="0" y="0" width="350" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="21" font-family="monospace" font-size="11" fill="#64748b">00401020</text>
+    <text x="85" y="21" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">test eax, eax</text>
+    <text x="365" y="21" font-size="12" fill="#3b82f6">EAX=1, 1&amp;1=1, ZF=0</text>
+
+    <line x1="175" y1="30" x2="175" y2="44" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,38 175,44 179,38" fill="#10b981"/>
+
+    <rect x="0" y="44" width="350" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="65" font-family="monospace" font-size="11" fill="#64748b">00401022</text>
+    <text x="85" y="65" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jne 00401050</text>
+
+    <path d="M 350 59 L 576 59 Q 580 59 580 63 L 580 108" stroke="#10b981" stroke-width="2" fill="none"/>
+    <polygon points="576,102 580,108 584,102" fill="#10b981"/>
+    <text x="365" y="52" font-size="11" fill="#10b981" font-weight="bold">ZF=0, 跳转, EIP → 00401050</text>
+
+    <line x1="175" y1="74" x2="175" y2="108" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+    <polygon points="171,102 175,108 179,102" fill="#94a3b8" fill-opacity="0.3"/>
+    <text x="185" y="94" font-size="11" fill="#94a3b8" font-weight="bold">ZF=1 时往下走</text>
+
+    <rect x="0" y="108" width="350" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="129" font-family="monospace" font-size="11" fill="#64748b">00401028</text>
+    <text x="85" y="129" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+    <text x="365" y="129" font-size="12" fill="#94a3b8">Correct!</text>
+
+    <rect x="460" y="108" width="240" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="470" y="129" font-family="monospace" font-size="11" fill="#64748b">00401050</text>
+    <text x="545" y="129" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">...</text>
+    <text x="640" y="129" font-size="12" fill="#10b981" font-weight="bold">Wrong!</text>
+
+    <path d="M 175 138 L 175 152" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+    <polygon points="171,146 175,152 179,146" fill="#94a3b8" fill-opacity="0.3"/>
+
+    <path d="M 580 138 L 580 163 Q 580 167 576 167 L 350 167" stroke="#10b981" stroke-width="1.5" fill="none"/>
+    <polygon points="356,163 350,167 356,171" fill="#10b981"/>
+
+    <rect x="0" y="152" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="173" font-family="monospace" font-size="11" fill="#64748b">00401080</text>
+    <text x="85" y="173" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+
+  </g>
+</svg>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 390" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">x86 双操作数指令: 操作数组合规则</text>
+
+  <g transform="translate(20, 50)">
+    <rect x="0" y="0" width="430" height="36" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="215" y="24" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">允许的组合</text>
+
+    <g transform="translate(0, 48)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">寄存器</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">立即数</text>
+      <text x="200" y="22" font-family="monospace" font-size="12" fill="#94a3b8">mov eax, 5</text>
+    </g>
+
+    <g transform="translate(0, 96)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">寄存器</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">寄存器</text>
+      <text x="200" y="22" font-family="monospace" font-size="12" fill="#94a3b8">mov ebx, eax</text>
+    </g>
+
+    <g transform="translate(0, 144)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">寄存器</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">内存</text>
+      <text x="200" y="22" font-family="monospace" font-size="12" fill="#94a3b8">mov eax, [ebp-4]</text>
+    </g>
+
+    <g transform="translate(0, 192)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">内存</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">立即数</text>
+      <text x="200" y="22" font-family="monospace" font-size="12" fill="#94a3b8">mov [ebp-4], 5</text>
+    </g>
+
+    <g transform="translate(0, 240)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">内存</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">寄存器</text>
+      <text x="200" y="22" font-family="monospace" font-size="12" fill="#94a3b8">mov [ebp-4], eax</text>
+    </g>
+  </g>
+
+  <g transform="translate(500, 50)">
+    <rect x="0" y="0" width="430" height="36" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="215" y="24" font-size="15" font-weight="bold" text-anchor="middle" fill="#ef4444">禁止的组合</text>
+
+    <g transform="translate(0, 48)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">内存</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">内存</text>
+      <text x="200" y="15" font-size="11" fill="#94a3b8">指令编码只留了一个</text>
+      <text x="200" y="29" font-size="11" fill="#94a3b8">内存地址的位置</text>
+    </g>
+
+    <g transform="translate(0, 96)">
+      <rect x="0" y="0" width="75" height="32" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="37.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">立即数</text>
+      <text x="88" y="22" font-family="monospace" font-size="14" font-weight="bold" fill="#ef4444">&lt;-</text>
+      <rect x="108" y="0" width="75" height="32" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="145.5" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">???</text>
+      <text x="200" y="15" font-size="11" fill="#94a3b8">常数是只读的，</text>
+      <text x="200" y="29" font-size="11" fill="#94a3b8">不能往里面存东西</text>
+    </g>
+  </g>
+</svg>

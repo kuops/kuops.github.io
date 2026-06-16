@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 624" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">for 循环执行流程</text>
+  <text x="20" y="52" font-size="12" font-weight="bold" fill="#94a3b8">初始：i=3，循环条件：i &gt; 0，每轮 i--，循环体：eax += eax</text>
+
+  <g transform="translate(100, 70)">
+
+    <rect x="0" y="0" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="21" font-family="monospace" font-size="11" fill="#64748b">00401000</text>
+    <text x="85" y="21" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov dword ptr [ebp-8], 3</text>
+    <text x="365" y="21" font-size="12" fill="#10b981">i = 3</text>
+
+    <line x1="175" y1="30" x2="175" y2="44" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,38 175,44 179,38" fill="#10b981"/>
+
+    <rect x="0" y="44" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="65" font-family="monospace" font-size="11" fill="#64748b">00401007</text>
+    <text x="85" y="65" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">jmp 00401014</text>
+
+    <rect x="0" y="88" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="109" font-family="monospace" font-size="11" fill="#64748b">00401009</text>
+    <text x="85" y="109" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov eax, dword ptr [ebp-8]</text>
+    <text x="365" y="109" font-size="12" fill="#10b981">[ebp-8] → EAX</text>
+
+    <line x1="175" y1="118" x2="175" y2="132" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,126 175,132 179,126" fill="#10b981"/>
+
+    <rect x="0" y="132" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="153" font-family="monospace" font-size="11" fill="#64748b">0040100C</text>
+    <text x="85" y="153" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">sub eax, 1</text>
+    <text x="365" y="153" font-size="12" fill="#10b981">EAX - 1</text>
+
+    <line x1="175" y1="162" x2="175" y2="176" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,170 175,176 179,170" fill="#10b981"/>
+
+    <rect x="0" y="176" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="197" font-family="monospace" font-size="11" fill="#64748b">0040100F</text>
+    <text x="85" y="197" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov dword ptr [ebp-8], eax</text>
+    <text x="365" y="197" font-size="12" fill="#10b981">EAX → [ebp-8]</text>
+
+    <line x1="175" y1="206" x2="175" y2="220" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,214 175,220 179,214" fill="#10b981"/>
+
+    <rect x="0" y="220" width="350" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="241" font-family="monospace" font-size="11" fill="#64748b">00401014</text>
+    <text x="85" y="241" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">cmp dword ptr [ebp-8], 0</text>
+    <text x="365" y="248" font-size="12" fill="#3b82f6">i vs 0</text>
+
+    <line x1="175" y1="250" x2="175" y2="264" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,258 175,264 179,258" fill="#10b981"/>
+
+    <rect x="0" y="264" width="350" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="285" font-family="monospace" font-size="11" fill="#64748b">00401018</text>
+    <text x="85" y="285" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jle 00401028</text>
+
+    <line x1="175" y1="294" x2="175" y2="328" stroke="#10b981" stroke-width="2"/>
+    <polygon points="171,322 175,328 179,322" fill="#10b981"/>
+    <text x="185" y="312" font-size="11" fill="#10b981" font-weight="bold">i &gt; 0, 继续 ↓</text>
+
+    <path d="M 350 279 L 576 279 Q 580 279 580 283 L 580 515 Q 580 519 576 519 L 354 519" stroke="#fbbf24" stroke-width="2" fill="none"/>
+    <polygon points="354,515 350,519 354,523" fill="#fbbf24"/>
+    <text x="365" y="272" font-size="11" fill="#fbbf24" font-weight="bold">i ≤ 0, 跳出循环</text>
+
+    <rect x="0" y="328" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="349" font-family="monospace" font-size="11" fill="#64748b">0040101A</text>
+    <text x="85" y="349" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov eax, dword ptr [x]</text>
+    <text x="365" y="349" font-size="12" fill="#10b981">[x] → EAX</text>
+
+    <line x1="175" y1="358" x2="175" y2="372" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,366 175,372 179,366" fill="#10b981"/>
+
+    <rect x="0" y="372" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="393" font-family="monospace" font-size="11" fill="#64748b">0040101D</text>
+    <text x="85" y="393" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">add eax, eax</text>
+    <text x="365" y="393" font-size="12" fill="#10b981">EAX + EAX</text>
+
+    <line x1="175" y1="402" x2="175" y2="416" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,410 175,416 179,410" fill="#10b981"/>
+
+    <rect x="0" y="416" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="437" font-family="monospace" font-size="11" fill="#64748b">0040101F</text>
+    <text x="85" y="437" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov dword ptr [x], eax</text>
+    <text x="365" y="437" font-size="12" fill="#10b981">EAX → [x]</text>
+
+    <line x1="175" y1="446" x2="175" y2="460" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="171,454 175,460 179,454" fill="#10b981"/>
+
+    <rect x="0" y="460" width="350" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="481" font-family="monospace" font-size="11" fill="#64748b">00401022</text>
+    <text x="85" y="481" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">jmp 00401009</text>
+    <text x="365" y="481" font-size="12" fill="#10b981">EIP → 00401009</text>
+
+    <rect x="0" y="504" width="350" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="525" font-family="monospace" font-size="11" fill="#64748b">00401028</text>
+    <text x="85" y="525" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+
+    <path d="M 350 59 L 576 59 Q 580 59 580 63 L 580 231 Q 580 235 576 235 L 354 235" stroke="#10b981" stroke-width="2" fill="none"/>
+    <polygon points="354,231 350,235 354,239" fill="#10b981"/>
+    <text x="365" y="52" font-size="11" fill="#10b981" font-weight="bold">前跳到条件检查</text>
+
+    <path d="M 0 475 L -41 475 Q -45 475 -45 471 L -45 107 Q -45 103 -41 103 L -4 103" stroke="#10b981" stroke-width="2" fill="none"/>
+    <polygon points="-4,99 0,103 -4,107" fill="#10b981"/>
+    <text x="-38" y="314" font-size="11" fill="#10b981" font-weight="bold">回跳到 i--</text>
+
+  </g>
+</svg>
