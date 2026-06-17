@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 160" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">pushad / popad 执行状态变化</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">初始：ESP=0x012FF320</text>
+  <g transform="translate(20, 80)">
+    <text x="0" y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="150" y="0" font-size="13" fill="#94a3b8" font-weight="bold">ESP</text>
+    <text x="300" y="0" font-size="13" fill="#94a3b8" font-weight="bold">栈上新增(从低到高)</text>
+    <text x="680" y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+  </g>
+  <g transform="translate(20, 110)">
+    <text x="0" y="0"  font-size="14" font-weight="bold" fill="#10b981">pushad</text>
+    <text x="150" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#fbbf24">012FF300</text>
+    <text x="300" y="0"  font-size="14" font-weight="bold" fill="#94a3b8">EDI→ESI→EBP→ESP(320)→EBX→EDX→ECX→EAX</text>
+    <text x="680" y="0"  font-size="14" font-weight="bold" fill="#94a3b8">ESP-32，32 字节入栈</text>
+  </g>
+  <g transform="translate(20, 140)">
+    <text x="0" y="0"  font-size="14" font-weight="bold" fill="#10b981">popad</text>
+    <text x="150" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">012FF320</text>
+    <text x="300" y="0"  font-size="14" font-weight="bold" fill="#94a3b8">(全部弹出)</text>
+    <text x="680" y="0"  font-size="14" font-weight="bold" fill="#94a3b8">ESP+32，寄存器恢复</text>
+  </g>
+</svg>

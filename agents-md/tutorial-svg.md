@@ -159,6 +159,30 @@
 - **不要留过多底部空白。** 先确定内容最低点，再加 20px padding 作为 viewBox 高度。
 - 根元素写 `width="100%" height="100%"`。
 
+### 如何计算内容最低点
+
+常见错误是只看 `<text>` 的 `y` 值，忽略了以下情况导致 viewBox 高度偏小（内容溢出）或偏大（底部太空）：
+
+| 元素类型 | 底部计算方法 | 易错点 |
+| -------- | ------------ | ------ |
+| `<text>` 在 `translate(g, yy)` 内 | `yy + text.y + 4`（4px 是 font-size 14 的下沿估算） | 忘记加 translate 的偏移 |
+| `<text>` 直接写在根 `<svg>` 下 | `text.y + 4` | 直接用 `text.y` 当最低点，少了下沿 |
+| `<rect>` 在 `translate(g, yy)` 内 | `yy + rect.y + rect.height` | 忘记加 rect.height |
+| `<rect>` 直接写在根 `<svg>` 下 | `rect.y + rect.height` | 只看 `rect.y`，不看高度 |
+
+**快速检查法**：写完 SVG 后，用以下命令找出内容最低点：
+
+```bash
+# 找所有 translate 的 y 偏移 + 内部最大 y 值
+rg 'translate\([^,]+,\s*\K\d+' path/to/file.svg   # 所有 translate 组的 y
+rg 'y="\K\d+' path/to/file.svg                     # 所有元素的 y 值
+rg 'height="\K\d+' path/to/file.svg                # 所有 rect 高度
+```
+
+取最大值，加 20px，就是正确的 viewBox 高度。
+
+**示例**：一个 trace 图，最后一个 `<g transform="translate(20, 140)">` 里面有 `<text y="0">`，最低点 = 140 + 0 + 4 = 144，viewBox 高度应为 144 + 20 = **164**。
+
 ## SVG 结构模板
 
 ```xml
@@ -350,7 +374,7 @@ npm run svg2png -- a.svg b.svg some-dir/
 - [ ] 没有 `currentColor`、`var()`、`style` 属性
 - [ ] 没有动画和复杂 Web SVG 特性；若用了 `<defs>` / `linearGradient`，确认只是同色透明度渐变
 - [ ] 根元素 `font-family` 包含完整的中文回退列表
-- [ ] viewBox 高度 = 内容最低点 + 20px，没有多余底部空白
+- [ ] viewBox 高度 = 内容最低点 + 20px 底部留白；最低点要算上 translate 偏移 + rect height + text 下沿(约 4px)，没有多余底部空白也没有内容溢出
 - [ ] fill-opacity 在 0.04–0.08 范围
 - [ ] stroke-opacity 在 0.15–0.5 范围
 - [ ] 文字没有 `opacity` 属性（颜色靠 `fill` 控制，不加透明度）

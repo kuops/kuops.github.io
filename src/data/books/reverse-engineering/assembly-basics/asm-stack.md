@@ -5,27 +5,29 @@ description: 函数调用是汇编里最复杂也最重要的机制。搞懂栈�
 order: 9
 ---
 
-前七章学了数据搬运、算术逻辑、比较跳转——直线代码、if/else、循环你都能看懂了。但程序不只是直线执行——它有函数调用、参数传递、局部变量、返回值。这些全靠**栈**来支撑。
+前八章学了数据搬运、算术逻辑、比较跳转，直线代码、if/else、循环你都能看懂了。但程序不只是直线执行，它有函数调用、参数传递、局部变量、返回值。这些全靠**栈**来支撑。
 
 这一章搞懂栈，你就具备了追踪任何函数调用的能力。
 
+本章涉及的所有指令（`push`、`pop`、`pushad`/`popad`、`call`、`ret`）都**不影响任何标志位**，它们只操作 ESP、EIP 和内存。
+
 ## 栈是什么
 
-栈是一块 **后进先出（LIFO）** 的内存区域。你可以把它想象成一摞盘子——最后放上去的盘子最先拿走。
+栈是一块 **后进先出（LIFO）** 的内存区域。你可以把它想象成一摞盘子，最后放上去的盘子最先拿走。
 
 <!-- 🎨 画图：栈的生长方向（从高地址往低地址长） -->
 
 几个关键特点：
 
 - 栈在内存中是**从高地址往低地址增长**的。新数据放在更低的地址
-- **ESP（栈指针）** 始终指向栈顶（最低地址）
-- **EBP（基址指针）** 指向当前函数的栈帧底部，用来定位局部变量和参数
+- **`ESP`（栈指针）** 始终指向栈顶（最低地址）
+- **`EBP`（基址指针）** 指向当前函数的栈帧底部，用来定位局部变量和参数
 - 每次压入 4 字节（32 位程序），ESP 减 4
 - 每次弹出 4 字节，ESP 加 4
 
 ## push：压栈
 
-```
+```asm
 push eax                ; 把 eax 的值压入栈顶
 ```
 
@@ -36,50 +38,35 @@ push eax                ; 把 eax 的值压入栈顶
 
 等价于：
 
-```
+```asm
 sub esp, 4
 mov dword ptr [esp], eax
 ```
+
+> [!TIP] `ESP` 和 `[ESP]` 有什么区别？
+> `ESP` 是寄存器里的一个值（一个地址，比如 `0x012FF30C`）。`[ESP]` 是这个地址指向的**内存里的内容**。就像 C 语言里 `ptr` 是指针，`*ptr` 是指针指向的值。`mov dword ptr [esp], eax` 的意思是：把 EAX 的值写进 ESP 当前指向的那 4 字节内存。
 
 ### 跟踪示例
 
 假设初始 ESP = `0x012FF310`，EAX = `0x00000005`：
 
-```
-指令         ESP         栈顶[ESP]     EAX     说明
-──────────────────────────────────────────────────────────
-初始状态    012FF310    —             00000005
-push eax   012FF30C    00000005      00000005  ESP-4，值写到新栈顶
-```
+![push eax 执行状态变化：ESP 从 0x012FF310 减到 0x012FF30C，栈顶写入 00000005](asm-stack-images/push-single-trace.png)
 
 内存 `0x012FF30C` 现在存着 `0x00000005`。EAX 不变。
 
 连续 push 多个值：
 
-```
-指令          ESP         栈顶[ESP]     EAX     EBX
-──────────────────────────────────────────────────────────────
-初始状态     012FF310    —             00000005  0000000A
-push eax    012FF30C    00000005      00000005  0000000A
-push ebx    012FF308    0000000A      00000005  0000000A
-```
+![连续 push eax 和 ebx：ESP 依次递减 4，栈顶从 00000005 变为 0000000A](asm-stack-images/push-multi-trace.png)
 
 现在栈长这样（从低地址到高地址）：
 
-```
-地址         值
-012FF308    0000000A    ← ESP 指向这里（栈顶）
-012FF30C    00000005
-012FF310    （旧数据）
-```
+![push 后的栈内存布局：012FF308 存 EBX 值，012FF30C 存 EAX 值，ESP 指向最低地址](asm-stack-images/push-stack-layout.png)
 
-**后进先出**——最后 push 进去的 EBX 在栈顶。
-
-`push` **不影响任何标志位**。
+**后进先出**，最后 push 进去的 EBX 在栈顶。
 
 ## pop：弹栈
 
-```
+```asm
 pop eax                 ; 从栈顶弹出 4 字节到 eax
 ```
 
@@ -90,29 +77,22 @@ pop eax                 ; 从栈顶弹出 4 字节到 eax
 
 等价于：
 
-```
+```asm
 mov eax, dword ptr [esp]
 add esp, 4
 ```
 
 ### 跟踪示例
 
-接着上面的状态——ESP = `0x012FF308`，栈顶是 `0x0000000A`：
+接着上面的状态，ESP = `0x012FF308`，栈顶是 `0x0000000A`：
 
-```
-指令       ESP         EAX         说明
-──────────────────────────────────────────────────
-初始状态  012FF308    00000005
-pop eax   012FF30C    0000000A    从栈顶读出 0x0A，ESP+4
-```
+![pop eax 执行状态变化：从栈顶读出 0000000A 到 EAX，ESP 从 0x012FF308 加到 0x012FF30C](asm-stack-images/pop-trace.png)
 
 EAX 变成了 `0x0000000A`（之前栈顶的值）。ESP 回到了 `0x012FF30C`。
 
 **注意**：pop 之后，`0x012FF308` 里的数据 `0x0000000A` 并没有被清除，它还在内存里。只是 ESP 移走了，那块内存会被后续的 push 覆盖。所以"弹出"不是"删除"，而是"移动指针"。
 
-`pop` **不影响任何标志位**。
-
-### push 和 pop 的对称性
+## push 和 pop 的对称性
 
 `push` 和 `pop` 常常成对出现，用来**临时保存和恢复寄存器**：
 
@@ -124,7 +104,7 @@ pop  ebx                ; 恢复 ebx（后 push 的先 pop）
 pop  eax                ; 恢复 eax（先 push 的后 pop）
 ```
 
-注意 pop 的顺序必须和 push **相反**——最后 push 的最先 pop。
+注意 pop 的顺序必须和 push **相反**，最后 push 的最先 pop。
 
 ## PUSHA/POPA 和 PUSHAD/POPAD：批量保存寄存器
 
@@ -135,7 +115,7 @@ pop  eax                ; 恢复 eax（先 push 的后 pop）
 | `pusha` / `popa`   | 16 位      | AX, CX, DX, BX, SP, BP, SI, DI         | 16 字节  |
 | `pushad` / `popad` | 32 位      | EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI | 32 字节  |
 
-x64dbg 在 32 位程序里反汇编时通常显示 `pushad` / `popad`（因为操作数是 32 位寄存器）。有些反汇编器只显示 `pusha` / `popa`——实际上是同一条机器码 `60`/`61`，区别只是怎么看操作数大小。
+x64dbg 在 32 位程序里反汇编时通常显示 `pushad` / `popad`（因为操作数是 32 位寄存器）。有些反汇编器只显示 `pusha` / `popa`，实际上是同一条机器码 `60`/`61`，区别只是怎么看操作数大小。
 
 `pushad` 按固定顺序压栈：**EAX -> ECX -> EDX -> EBX -> 原始 ESP -> EBP -> ESI -> EDI**。注意它压入的是 `pushad` 执行**前**的 ESP 值，不是执行中变化的值。
 
@@ -158,34 +138,24 @@ push edi
 
 假设执行前 ESP = `0x012FF320`：
 
-```
-指令       ESP         栈上新增（从低到高）                        说明
-──────────────────────────────────────────────────────────────────────────
-pushad    012FF300     EDI->ESI->EBP->ESP(320)->EBX->EDX->ECX->EAX     ESP-32，32 字节入栈
-popad     012FF320     （全部弹出）                               ESP+32，寄存器恢复
-```
+![pushad/popad 执行状态变化：pushad 后 ESP 减 32，popad 后 ESP 恢复](asm-stack-images/pushad-trace.png)
 
 `pushad` 之后 ESP 减了 32（0x20），栈上连续 8 个 4 字节槽位保存了所有寄存器。`popad` 之后一切恢复原状。
 
-### 使用场景
+> [!NOTE] `pushad` / `popad` 常出现在哪里？
+>
+> - **函数序言/尾声**：老编译器在函数开头用 `pushad` 一把保存所有寄存器，结尾用 `popad` 恢复
+> - **中断处理程序**：中断发生时需要保存完整上下文，`pushad` 一步到位
+> - **32 位恶意代码**：shellcode 为了不破坏寄存器状态，经常用 `pushad` / `popad` 包裹核心逻辑
+>
+> 逆向时，看到 `pushad` 就知道"这里保存了完整现场"，看到 `popad` 就知道"这里恢复了现场"，和 `push` / `pop` 成对出现的逻辑一样，只是批量版本。
 
-`pushad` / `popad` 常出现在：
-
-- **函数序言/尾声**：老编译器在函数开头用 `pushad` 一把保存所有寄存器，结尾用 `popad` 恢复
-- **中断处理程序**：中断发生时需要保存完整上下文，`pushad` 一步到位
-- **32 位恶意代码**：shellcode 为了不破坏寄存器状态，经常用 `pushad` / `popad` 包裹核心逻辑
-
-逆向时，看到 `pushad` 就知道"这里保存了完整现场"，看到 `popad` 就知道"这里恢复了现场"——和 `push` / `pop` 成对出现的逻辑一样，只是批量版本。
-
-### 64 位已废弃
-
-x64 **没有**这些指令。64 位程序必须手动逐个 push/pop 需要保存的寄存器。所以在 64 位代码中你不会看到它们。
-
-`pushad` / `popad` **不影响任何标志位**。
+> [!WARNING] 64 位已废弃
+> x64 **没有**这些指令。64 位程序必须手动逐个 push/pop 需要保存的寄存器。所以在 64 位代码中你不会看到它们。
 
 ## call：调用函数
 
-```
+```asm
 call 0x00401100         ; 调用地址 0x00401100 处的函数
 ```
 
@@ -196,7 +166,7 @@ call 0x00401100         ; 调用地址 0x00401100 处的函数
 
 等价于：
 
-```
+```asm
 push (下一条指令的地址)
 jmp 目标地址
 ```
@@ -207,26 +177,17 @@ jmp 目标地址
 
 假设当前 EIP = `0x00401020`，ESP = `0x012FF310`：
 
-```
-地址          指令
-00401020     call 0x00401100
-00401025     mov ebx, eax          ← 这是 call 之后的下一条指令
-```
+![call 指令位置：00401020 处是 call 指令，00401025 是返回地址](asm-stack-images/call-instruction.png)
 
 执行 `call 0x00401100` 后：
 
-```
-ESP         EIP         栈顶[ESP]       说明
-012FF30C    00401100    00401025        返回地址 0x00401025 压栈，EIP 跳到函数入口
-```
+![call 执行后的状态：返回地址 00401025 压栈，EIP 跳到 00401100](asm-stack-images/call-after-trace.png)
 
-栈顶现在存着 `0x00401025`——这就是 `call` 之后那条指令的地址。函数结束后会用到它。
-
-`call` **不影响任何标志位**。
+栈顶现在存着 `0x00401025`，这就是 `call` 之后那条指令的地址。函数结束后会用到它。
 
 ## ret：从函数返回
 
-```
+```asm
 ret                     ; 从栈顶弹出返回地址，跳回去
 ```
 
@@ -237,7 +198,7 @@ ret                     ; 从栈顶弹出返回地址，跳回去
 
 等价于：
 
-```
+```text
 pop eip        （概念上，实际不能直接这么写）
 ```
 
@@ -245,14 +206,9 @@ pop eip        （概念上，实际不能直接这么写）
 
 函数执行到最后，ESP = `0x012FF30C`，栈顶是 `0x00401025`（之前 call 压入的返回地址）：
 
-```
-指令    ESP         EIP         说明
-ret     012FF310    00401025    弹出返回地址，EIP 跳回 call 的下一条
-```
+![ret 执行状态变化：弹出返回地址 00401025 到 EIP，ESP 从 012FF30C 加到 012FF310](asm-stack-images/ret-trace.png)
 
 现在 EIP 回到了 `0x00401025`（`mov ebx, eax`），函数调用完成。
-
-`ret` **不影响任何标志位**。
 
 ## 栈帧：函数的"工作台"
 
@@ -289,7 +245,7 @@ ESP 往低地址移 12 字节，腾出空间。这块空间用途很多：
 - **子函数参数**：调用其他函数前，先把参数放到栈上
 - **对齐填充**：编译器可能多分配几个字节来保持栈对齐
 
-所以 `sub esp, N` 分配的字节数经常比局部变量加起来还多——多出来的就是上面这些用途。你不需要精确计算每一字节归谁，只要知道 `[ebp-X]` 访问的是这块空间里的某个位置就行。
+所以 `sub esp, N` 分配的字节数经常比局部变量加起来还多，多出来的就是上面这些用途。你不需要精确计算每一字节归谁，只要知道 `[ebp-X]` 访问的是这块空间里的某个位置就行。
 
 ### 函数尾声（Epilogue）
 
@@ -301,7 +257,7 @@ pop ebp                 ; 恢复调用者的 EBP
 ret                     ; 返回到调用点
 ```
 
-有的编译器用 `leave` 指令代替 `mov esp, ebp` + `pop ebp`，效果一样——下一节详细讲。
+有的编译器用 `leave` 指令代替 `mov esp, ebp` + `pop ebp`，效果一样，下一节详细讲。
 
 ## 完整函数调用过程
 
@@ -331,7 +287,7 @@ MSVC Debug 模式编译后的真实输出：
 00501E32  mov         dword ptr [sum],eax  ; sum = 返回值
 ```
 
-注意 `call` 之后紧跟的地址是 `00501E2F`——这就是被压入栈的返回地址。
+注意 `call` 之后紧跟的地址是 `00501E2F`，这就是被压入栈的返回地址。
 
 ### 被调用方（add 函数）
 
@@ -341,7 +297,7 @@ call 实际跳到的是一个**跳板**（incremental linking thunk）：
 005013C5  jmp         add (05017A0h)       ; 跳转到 add 函数真正的入口
 ```
 
-这是 MSVC 增量链接（Incremental Linking）产生的中转指令——call 不直接跳到函数体，而是先跳到一个 jmp 跳板，再由跳板跳到真实地址。Release 模式关闭增量链接后不会有这个跳板。最终到达的函数体：
+这是 MSVC 增量链接（Incremental Linking）产生的中转指令，call 不直接跳到函数体，而是先跳到一个 jmp 跳板，再由跳板跳到真实地址。Release 模式关闭增量链接后不会有这个跳板。最终到达的函数体：
 
 ```asm
 005017A0  push        ebp                  ; 保存旧 EBP
@@ -379,7 +335,7 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 1. `push ebp` + `mov ebp, esp` — 标准栈帧建立，所有函数都这样开头
 2. `sub esp, 0xCC` — 分配 204 字节栈帧空间。明明只有 1 个 int 局部变量（4 字节），为什么分 204？Debug 模式宁可多分，方便调试时观察内存
 3. `push ebx/esi/edi` — 保存这三个寄存器（调用约定要求 callee-saved，后面讲）
-4. `lea edi, [ebp-0Ch]` + `rep stos` — 把 `[ebp-0Ch]` 到 `[ebp-1]` 填满 `0xCCCCCCCC`。这是 MSVC Debug 的安全措施——未初始化的局部变量会被读成 `0xCCCCCCCC`（而不是随机值），方便发现问题
+4. `lea edi, [ebp-0Ch]` + `rep stos` — 把 `[ebp-0Ch]` 到 `[ebp-1]` 填满 `0xCCCCCCCC`。为什么只填这 12 字节（而不是整块 204 字节）？因为编译器只为紧邻 EBP 的局部变量区做填充，这 12 字节正好覆盖了 `[ebp-4]`（result）、`[ebp-8]`、`[ebp-0Ch]` 这些可能被引用的位置；更低的地址段留给后续 push 的寄存器和临时空间，没必要全填。这是 MSVC Debug 的安全措施，未初始化的局部变量会被读成 `0xCCCCCCCC`（而不是随机值），方便发现问题
 5. `__CheckForDebuggerJustMyCode` — MSVC 的"Just My Code"调试辅助，Release 模式不会出现
 
 **函数体**：
@@ -396,21 +352,13 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 12. `mov esp, ebp` + `pop ebp` — 最终恢复 ESP 和 EBP
 13. `ret` — 弹出返回地址，EIP 跳回 main 的 `00501E2F`
 
-> **Debug 和 Release 差异极大**。Release 模式下，上面整个 `add` 函数可能被优化成一条 `lea eax, [ecx+edx]` 甚至直接内联到 main 里。但逆向入门先学 Debug 形态——结构清晰，Release 的优化以后会讲。
+> **Debug 和 Release 差异极大**。Release 模式下，上面整个 `add` 函数可能被优化成一条 `lea eax, [ecx+edx]` 甚至直接内联到 main 里。但逆向入门先学 Debug 形态，结构清晰，Release 的优化以后会讲。
 
 ### 栈帧布局图
 
-进入 `add` 函数体后（`mov ebp, esp` 之后），栈帧是这样的——低地址在上，高地址在下，和栈的生长方向一致：
+进入 `add` 函数体后（`mov ebp, esp` 之后），栈帧是这样的，低地址在上，高地址在下，和栈的生长方向一致：
 
-```
-地址         值               含义
-──────────────────────────────────────────────────
-ebp-4       00000008         局部变量 result        ← 低地址（栈顶）
-ebp         ???              旧 EBP（push ebp 压入）
-ebp+4       00501E2F         返回地址（call 自动压入）
-ebp+8       00000003         参数 a（第一个参数）
-ebp+0Ch     00000005         参数 b（第二个参数）    ← 高地址（栈底）
-```
+![add 函数栈帧布局：ebp-4 是局部变量 result，ebp 存旧 EBP，ebp+4 是返回地址，ebp+8 和 ebp+0Ch 是参数 a 和 b](asm-stack-images/stack-frame-layout.png)
 
 <!-- 🎨 画图：栈帧的完整变化过程（5 个阶段：调用前->压参数->call->进入函数->ret） -->
 
@@ -453,7 +401,7 @@ ebp+0Ch     00000005         参数 b（第二个参数）    ← 高地址（�
 cdecl 是 C/C++ 程序中最常见的调用约定：
 
 - 参数**从右往左**压栈
-- **调用方（caller）负责清理参数**——call 之后用 `add esp, N` 恢复栈
+- **调用方（caller）负责清理参数**，call 之后用 `add esp, N` 恢复栈
 - 支持可变参数（如 `printf`），因为只有调用方知道自己压了几个参数
 
 ```asm
@@ -471,7 +419,7 @@ add esp, 8              ; ← 调用方清理，ESP 恢复
 stdcall 是 Win32 API 使用的调用约定：
 
 - 参数同样**从右往左**压栈
-- **被调用方（callee）负责清理参数**——函数末尾用 `ret N` 代替 `ret`
+- **被调用方（callee）负责清理参数**，函数末尾用 `ret N` 代替 `ret`
 - 调用方不需要额外的 `add esp`，代码更紧凑
 
 ```asm
@@ -494,7 +442,7 @@ ret 16                  ; 弹出返回地址后，ESP 再加 16（4 个参数 ×
 
 ### fastcall：寄存器传参
 
-fastcall 是三种约定中最快的——前两个参数直接走寄存器，不用压栈：
+fastcall 是三种约定中最快的，前两个参数直接走寄存器，不用压栈：
 
 - **前两个参数**通过 ECX 和 EDX 传递（不用 push，省了内存操作）
 - 剩余参数**从右往左**压栈
@@ -509,7 +457,7 @@ call foo
                         ; ← 没有 add esp，被调用方用 ret 4 清理
 ```
 
-注意 `ret 4` 只清理 1 个栈上参数（4 字节），不是 3 个——前两个走寄存器了。
+注意 `ret 4` 只清理 1 个栈上参数（4 字节），不是 3 个，前两个走寄存器了。
 
 fastcall 在逆向中常见于**编译器内部函数**（编译器自动生成的辅助代码）和**性能敏感的回调**。不过用的比 cdecl 和 stdcall 少。
 
@@ -582,7 +530,7 @@ pop ebp                 ; 恢复调用者的 EBP
 
 一条指令做了两件事。原理是：EBP 指向栈帧底部（旧 EBP 的位置），`mov esp, ebp` 把 ESP 拉回来，等于一次性释放了所有局部变量空间。然后 `pop ebp` 从栈上恢复旧 EBP。
 
-不过现代 MSVC 很少用 `leave`——你看到的 Debug 和 Release 输出都是分开写的 `mov esp, ebp` + `pop ebp`。`leave` 更多出现在 GCC/MinGW 编译的程序，或者手写汇编里。逆向时如果看到 `leave`，知道它是这两条指令的缩写就行。
+不过现代 MSVC 很少用 `leave`，你看到的 Debug 和 Release 输出都是分开写的 `mov esp, ebp` + `pop ebp`。`leave` 更多出现在 GCC/MinGW 编译的程序，或者手写汇编里。逆向时如果看到 `leave`，知道它是这两条指令的缩写就行。
 
 **它们完全等价**，只是编译器的优化选择。你两个都要认识。
 
@@ -590,7 +538,7 @@ pop ebp                 ; 恢复调用者的 EBP
 
 ## 全局变量 vs 局部变量
 
-到目前为止，我们看到的局部变量都通过 `[ebp-X]` 访问——它们住在栈上，函数返回后就没了。但程序还有一种变量：**全局变量**，它们住在固定的内存地址，整个程序运行期间一直存在。
+到目前为止，我们看到的局部变量都通过 `[ebp-X]` 访问，它们住在栈上，函数返回后就没了。但程序还有一种变量：**全局变量**，它们住在固定的内存地址，整个程序运行期间一直存在。
 
 ### 局部变量
 
@@ -661,7 +609,7 @@ pop  ebp
 ret
 ```
 
-同一个函数里，局部变量用 `[ebp-X]` 访问，全局变量用 `ds:[固定地址]` 访问——两种风格共存，非常好认。
+同一个函数里，局部变量用 `[ebp-X]` 访问，全局变量用 `ds:[固定地址]` 访问，两种风格共存，非常好认。
 
 ## 回到 x64dbg 实操
 
@@ -710,167 +658,120 @@ Windows 程序启动时会调用大量 API。我们来找一个 stdcall 调用�
 
 ## 练习
 
-### 第一题
+1. 依次执行以下指令后，ESP 变了多少？
 
-依次执行以下指令后，ESP 变了多少？
+   ```asm
+   push eax
+   push ebx
+   push ecx
+   pop edx
+   pop edx
+   ```
 
-```
-push eax
-push ebx
-push ecx
-pop edx
-pop edx
-```
+   > [!NOTE]- 参考答案
+   > ESP 净变化 = -4（减了 4）。
+   >
+   > 三次 push：ESP - 12。两次 pop：ESP + 8。总共 -12 + 8 = -4。
 
-<details>
-<summary>答案</summary>
+2. 函数 `foo` 的栈帧中，`[ebp+8]` 是第一个参数，`[ebp+0Ch]` 是第二个参数。第三个参数在哪个位置？
 
-ESP 净变化 = -4（减了 4）。
+   > [!NOTE]- 参考答案
+   > `[ebp+10h]`。每个参数 4 字节，第一个 +8，第二个 +8+4=+0xC，第三个 +8+4+4=+0x10。
 
-三次 push：ESP - 12。两次 pop：ESP + 8。总共 -12 + 8 = -4。
+3. 为什么 `call` 要把返回地址压栈？如果不压会怎样？
 
-</details>
+   > [!NOTE]- 参考答案
+   > 因为函数执行完后必须知道"回到哪里继续执行"。如果不压返回地址，`ret` 就不知道该跳回哪里，程序会崩溃。
+   >
+   > `call` 相当于 `push (下一条指令地址)` + `jmp 目标`。`ret` 相当于 `pop eip`。两者配合，形成完整的调用-返回机制。
 
-### 第二题
+4. 以下汇编中，`[ebp-4]` 和 `[ebp+8]` 分别是什么？
 
-函数 `foo` 的栈帧中，`[ebp+8]` 是第一个参数，`[ebp+0Ch]` 是第二个参数。第三个参数在哪个位置？
+   ```asm
+   push ebp
+   mov  ebp, esp
+   sub  esp, 8
+   mov  dword ptr [ebp-4], 0
+   mov  eax, dword ptr [ebp+8]
+   add  eax, dword ptr [ebp-4]
+   mov  dword ptr [ebp-8], eax
+   mov  eax, dword ptr [ebp-8]
+   mov  esp, ebp
+   pop  ebp
+   ret
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > - `[ebp-4]` — 第一个局部变量（初始化为 0）
+   > - `[ebp-8]` — 第二个局部变量（存 `eax + [ebp-4]` 的结果）
+   > - `[ebp+8]` — 函数的第一个参数
+   >
+   > 对应 C 大致是：
+   >
+   > ```c
+   > int foo(int a) {
+   >     int temp = 0;
+   >     int result = a + temp;
+   >     return result;
+   > }
+   > ```
 
-`[ebp+10h]`。每个参数 4 字节，第一个 +8，第二个 +8+4=+0xC，第三个 +8+4+4=+0x10。
+5. 在反汇编中，如何区分一个函数用的是 cdecl 还是 stdcall 调用约定？
 
-</details>
+   > [!NOTE]- 参考答案
+   > 看两处：
+   >
+   > 1. **call 之后**：如果有 `add esp, N` -> cdecl（调用方清理）；如果没有 -> 可能是 stdcall
+   > 2. **函数末尾**：如果是普通 `ret` -> cdecl；如果是 `ret N`（N > 0）-> stdcall（被调用方清理）
+   >
+   > 只要看到 `ret N`，就是 stdcall。只要看到 `add esp, N`，就是 cdecl。
 
-### 第三题
+6. `leave` 指令做了什么？写出与它等价的两条指令。
 
-为什么 `call` 要把返回地址压栈？如果不压会怎样？
+   > [!NOTE]- 参考答案
+   > `leave` 做了两件事：
+   >
+   > 1. `mov esp, ebp` — 把 ESP 恢复到栈帧底部，一次性释放所有局部变量空间
+   > 2. `pop ebp` — 恢复调用者的 EBP
+   >
+   > 等价于：
+   >
+   > ```asm
+   > mov esp, ebp
+   > pop ebp
+   > ```
+   >
+   > 它用在函数尾声（Epilogue），和 `ret` 配合：`leave` -> `ret`。
 
-<details>
-<summary>答案</summary>
+7. 以下两个内存访问，哪个是局部变量，哪个是全局变量？
 
-因为函数执行完后必须知道"回到哪里继续执行"。如果不压返回地址，`ret` 就不知道该跳回哪里，程序会崩溃。
+   ```asm
+   mov eax, dword ptr [0x0040B000]
+   mov ecx, dword ptr [ebp-0Ch]
+   ```
 
-`call` 相当于 `push (下一条指令地址)` + `jmp 目标`。`ret` 相当于 `pop eip`。两者配合，形成完整的调用-返回机制。
+   > [!NOTE]- 参考答案
+   >
+   > - `[0x0040B000]` — **全局变量**。绝对地址，固定不变，位于程序的 `.data` 或 `.bss` 段
+   > - `[ebp-0Ch]` — **局部变量**。相对于 EBP 的偏移，位于栈上，函数返回后失效
+   >
+   > 识别规则：`[ebp-X]` -> 局部；`ds:[固定地址]` 或 `[固定地址]` -> 全局。
 
-</details>
+8. x64dbg 实操题。加载一个程序，完成以下步骤并记录观察结果：
+   1. 找到任意一个 `call` 指令，<kbd>F2</kbd> 设断点
+   2. <kbd>F9</kbd> 运行到断点，记录当前 ESP 和 EIP 的值
+   3. <kbd>F7</kbd> 步入 call，再次记录 ESP 和 EIP，ESP 变了多少？为什么？栈顶现在存着什么？
+   4. 继续按 <kbd>F7</kbd>，找到函数序言（`push ebp` + `mov ebp, esp`），观察 EBP 的变化
+   5. 找到函数尾声（`pop ebp` + `ret` 或 `leave` + `ret`），观察 ESP、EBP 恢复的过程
+   6. ret 之后，EIP 跳到了哪里？和栈顶之前存的值有关系吗？
 
-### 第四题
-
-以下汇编中，`[ebp-4]` 和 `[ebp+8]` 分别是什么？
-
-```asm
-push ebp
-mov  ebp, esp
-sub  esp, 8
-mov  dword ptr [ebp-4], 0
-mov  eax, dword ptr [ebp+8]
-add  eax, dword ptr [ebp-4]
-mov  dword ptr [ebp-8], eax
-mov  eax, dword ptr [ebp-8]
-mov  esp, ebp
-pop  ebp
-ret
-```
-
-<details>
-<summary>答案</summary>
-
-- `[ebp-4]` — 第一个局部变量（初始化为 0）
-- `[ebp-8]` — 第二个局部变量（存 `eax + [ebp-4]` 的结果）
-- `[ebp+8]` — 函数的第一个参数
-
-对应 C 大致是：
-
-```c
-int foo(int a) {
-    int temp = 0;
-    int result = a + temp;
-    return result;
-}
-```
-
-</details>
-
-### 第五题
-
-在反汇编中，如何区分一个函数用的是 cdecl 还是 stdcall 调用约定？
-
-<details>
-<summary>答案</summary>
-
-看两处：
-
-1. **call 之后**：如果有 `add esp, N` -> cdecl（调用方清理）；如果没有 -> 可能是 stdcall
-2. **函数末尾**：如果是普通 `ret` -> cdecl；如果是 `ret N`（N > 0）-> stdcall（被调用方清理）
-
-只要看到 `ret N`，就是 stdcall。只要看到 `add esp, N`，就是 cdecl。
-
-</details>
-
-### 第六题
-
-`leave` 指令做了什么？写出与它等价的两条指令。
-
-<details>
-<summary>答案</summary>
-
-`leave` 做了两件事：
-
-1. `mov esp, ebp` — 把 ESP 恢复到栈帧底部，一次性释放所有局部变量空间
-2. `pop ebp` — 恢复调用者的 EBP
-
-等价于：
-
-```asm
-mov esp, ebp
-pop ebp
-```
-
-它用在函数尾声（Epilogue），和 `ret` 配合：`leave` -> `ret`。
-
-</details>
-
-### 第七题
-
-以下两个内存访问，哪个是局部变量，哪个是全局变量？
-
-```
-mov eax, dword ptr [0x0040B000]
-mov ecx, dword ptr [ebp-0Ch]
-```
-
-<details>
-<summary>答案</summary>
-
-- `[0x0040B000]` — **全局变量**。绝对地址，固定不变，位于程序的 `.data` 或 `.bss` 段
-- `[ebp-0Ch]` — **局部变量**。相对于 EBP 的偏移，位于栈上，函数返回后失效
-
-识别规则：`[ebp-X]` -> 局部；`ds:[固定地址]` 或 `[固定地址]` -> 全局。
-
-</details>
-
-### 第八题
-
-x64dbg 实操题。加载一个程序，完成以下步骤并记录观察结果：
-
-1. 找到任意一个 `call` 指令，<kbd>F2</kbd> 设断点
-2. <kbd>F9</kbd> 运行到断点，记录当前 ESP 和 EIP 的值
-3. <kbd>F7</kbd> 步入 call，再次记录 ESP 和 EIP——ESP 变了多少？为什么？栈顶现在存着什么？
-4. 继续按 <kbd>F7</kbd>，找到函数序言（`push ebp` + `mov ebp, esp`），观察 EBP 的变化
-5. 找到函数尾声（`pop ebp` + `ret` 或 `leave` + `ret`），观察 ESP、EBP 恢复的过程
-6. ret 之后，EIP 跳到了哪里？和栈顶之前存的值有关系吗？
-
-<details>
-<summary>答案</summary>
-
-参考答案（具体数值因程序而异）：
-
-1. 找到 call，比如 `call 0x00401200`，在 0x00401050 处。<kbd>F2</kbd> 设断点
-2. <kbd>F9</kbd> 停下，假设 ESP = `0x0019F700`，EIP = `0x00401050`
-3. <kbd>F7</kbd> 步入后：ESP = `0x0019F6FC`（减了 4，因为返回地址压栈），EIP = `0x00401200`（跳到函数入口）。栈顶 `0x0019F6FC` 存着 `0x00401055`（call 下一条指令的地址）
-4. `push ebp`：ESP 再减 4，EBP 的旧值存入栈。`mov ebp, esp`：EBP 现在等于当前 ESP
-5. `pop ebp` / `leave`：EBP 恢复为调用者的值，ESP 回到返回地址处。`ret`：弹出返回地址到 EIP
-6. ret 之后 EIP = `0x00401055`——就是步骤 3 中栈顶存的那个返回地址。完全吻合
-
-</details>
+   > [!NOTE]- 参考答案
+   > 参考答案（具体数值因程序而异）：
+   >
+   > 1. 找到 call，比如 `call 0x00401200`，在 0x00401050 处。<kbd>F2</kbd> 设断点
+   > 2. <kbd>F9</kbd> 停下，假设 ESP = `0x0019F700`，EIP = `0x00401050`
+   > 3. <kbd>F7</kbd> 步入后：ESP = `0x0019F6FC`（减了 4，因为返回地址压栈），EIP = `0x00401200`（跳到函数入口）。栈顶 `0x0019F6FC` 存着 `0x00401055`（call 下一条指令的地址）
+   > 4. `push ebp`：ESP 再减 4，EBP 的旧值存入栈。`mov ebp, esp`：EBP 现在等于当前 ESP
+   > 5. `pop ebp` / `leave`：EBP 恢复为调用者的值，ESP 回到返回地址处。`ret`：弹出返回地址到 EIP
+   > 6. ret 之后 EIP = `0x00401055`，就是步骤 3 中栈顶存的那个返回地址。完全吻合
