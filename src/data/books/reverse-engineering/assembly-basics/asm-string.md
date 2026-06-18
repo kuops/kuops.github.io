@@ -2,7 +2,7 @@
 title: 字符串指令与 REP 前缀
 draft: true
 description: 搞懂 MOVS/STOS/SCAS 三条字符串指令和 REP 前缀，认出 memcpy、memset、strlen 的汇编形态。
-order: 10
+order: 11
 ---
 
 前 8 章学了数据搬运、算术逻辑、比较跳转、栈和函数调用——直线代码、if/else、循环、函数这些结构你都能看懂了。但还有一类高频指令我们一直没讲：**字符串指令**。

@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 628" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#94a3b8">完整函数调用的栈变化过程</text>
+  <text x="20" y="48" font-size="12" fill="#94a3b8" font-weight="bold">add(3, 5) 调用过程中栈的 5 个阶段，低地址在上，高地址在下</text>
+
+  <!-- 阶段1: 调用前 -->
+  <text x="20" y="72" font-size="13" font-weight="bold" fill="#94a3b8">① 调用前</text>
+  <rect x="20" y="76" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="94" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF320</text>
+  <text x="120" y="94" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">(旧数据)</text>
+  <text x="240" y="94" font-size="12" font-weight="bold" fill="#fbbf24">← ESP</text>
+  <text x="370" y="94" font-size="12" font-weight="bold" fill="#94a3b8">初始状态</text>
+
+  <!-- 箭头 -->
+  <line x1="120" y1="106" x2="120" y2="124" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="116,118 120,124 124,118" fill="#10b981"/>
+  <text x="140" y="118" font-size="12" font-weight="bold" fill="#10b981">push 5; push 3</text>
+
+  <!-- 阶段2: 压参数后 -->
+  <text x="20" y="140" font-size="13" font-weight="bold" fill="#94a3b8">② 压参数后</text>
+  <rect x="20" y="144" width="200" height="26" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="30" y="162" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF318</text>
+  <text x="120" y="162" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">00000003</text>
+  <text x="240" y="162" font-size="12" font-weight="bold" fill="#fbbf24">← ESP</text>
+  <text x="370" y="162" font-size="12" font-weight="bold" fill="#94a3b8">参数 a (3)</text>
+  <rect x="20" y="170" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="188" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF31C</text>
+  <text x="120" y="188" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00000005</text>
+  <text x="370" y="188" font-size="12" font-weight="bold" fill="#94a3b8">参数 b (5)</text>
+  <rect x="20" y="196" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="214" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF320</text>
+  <text x="120" y="214" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">(旧数据)</text>
+
+  <!-- 箭头 -->
+  <line x1="120" y1="226" x2="120" y2="244" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="116,238 120,244 124,238" fill="#10b981"/>
+  <text x="140" y="238" font-size="12" font-weight="bold" fill="#10b981">call add</text>
+
+  <!-- 阶段3: call 后 -->
+  <text x="20" y="260" font-size="13" font-weight="bold" fill="#94a3b8">③ call 后</text>
+  <rect x="20" y="264" width="200" height="26" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="30" y="282" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF314</text>
+  <text x="120" y="282" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">00501E2F</text>
+  <text x="240" y="282" font-size="12" font-weight="bold" fill="#fbbf24">← ESP</text>
+  <text x="370" y="282" font-size="12" font-weight="bold" fill="#94a3b8">返回地址</text>
+  <rect x="20" y="290" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="308" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF318</text>
+  <text x="120" y="308" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00000003</text>
+  <text x="370" y="308" font-size="12" font-weight="bold" fill="#94a3b8">参数 a</text>
+  <rect x="20" y="316" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="334" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF31C</text>
+  <text x="120" y="334" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00000005</text>
+  <text x="370" y="334" font-size="12" font-weight="bold" fill="#94a3b8">参数 b</text>
+  <rect x="20" y="342" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="360" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF320</text>
+  <text x="120" y="360" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">(旧数据)</text>
+
+  <!-- 箭头 -->
+  <line x1="120" y1="372" x2="120" y2="390" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="116,384 120,390 124,384" fill="#10b981"/>
+  <text x="140" y="384" font-size="12" font-weight="bold" fill="#10b981">push ebp; mov ebp,esp; sub esp,4</text>
+
+  <!-- 阶段4: 进入函数后 -->
+  <text x="20" y="406" font-size="13" font-weight="bold" fill="#94a3b8">④ 进入函数后(栈帧建立)</text>
+  <rect x="20" y="410" width="200" height="26" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="30" y="428" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF30C</text>
+  <text x="120" y="428" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">00000008</text>
+  <text x="240" y="428" font-size="12" font-weight="bold" fill="#fbbf24">← ESP</text>
+  <text x="370" y="428" font-size="12" font-weight="bold" fill="#94a3b8">局部变量 result</text>
+  <rect x="20" y="436" width="200" height="26" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="30" y="454" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF310</text>
+  <text x="120" y="454" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">旧 EBP</text>
+  <text x="240" y="454" font-size="12" font-weight="bold" fill="#3b82f6">← EBP</text>
+  <text x="370" y="454" font-size="12" font-weight="bold" fill="#94a3b8">保存的旧 EBP</text>
+  <rect x="20" y="462" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="480" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF314</text>
+  <text x="120" y="480" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00501E2F</text>
+  <text x="370" y="480" font-size="12" font-weight="bold" fill="#94a3b8">返回地址</text>
+  <rect x="20" y="488" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="506" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF318</text>
+  <text x="120" y="506" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00000003</text>
+  <text x="370" y="506" font-size="12" font-weight="bold" fill="#94a3b8">参数 a</text>
+  <rect x="20" y="514" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="532" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF31C</text>
+  <text x="120" y="532" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00000005</text>
+  <text x="370" y="532" font-size="12" font-weight="bold" fill="#94a3b8">参数 b</text>
+
+  <!-- 箭头 -->
+  <line x1="120" y1="544" x2="120" y2="562" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="116,556 120,562 124,556" fill="#10b981"/>
+  <text x="140" y="556" font-size="12" font-weight="bold" fill="#10b981">ret; add esp,8</text>
+
+  <!-- 阶段5: 返回后 -->
+  <text x="20" y="578" font-size="13" font-weight="bold" fill="#94a3b8">⑤ 返回后(栈已恢复)</text>
+  <rect x="20" y="582" width="200" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="30" y="600" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">012FF320</text>
+  <text x="120" y="600" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">(旧数据)</text>
+  <text x="240" y="600" font-size="12" font-weight="bold" fill="#fbbf24">← ESP</text>
+  <text x="370" y="600" font-size="12" font-weight="bold" fill="#94a3b8">回到初始状态</text>
+</svg>

@@ -1,16 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 165" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">call 指令位置</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 195" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">call 指令位置</text>
   <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">EIP=0x00401020，ESP=0x012FF310</text>
   <g transform="translate(20, 80)">
     <text x="0" y="0" font-size="13" fill="#94a3b8" font-weight="bold">地址</text>
     <text x="200" y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
+    <text x="620" y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
     <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
   </g>
   <g transform="translate(20, 110)">
-    <text x="0" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">00401020</text>
+    <text x="0" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">00401020</text>
     <text x="200" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">call 0x00401100</text>
+    <text x="620" y="0" font-size="14" font-weight="bold" fill="#94a3b8">当前 EIP，5 字节指令，下一条在 +5 处</text>
   </g>
   <g transform="translate(20, 140)">
     <text x="0" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#60a5fa">00401025</text>
-    <text x="200" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#60a5fa">mov ebx, eax  ← call 之后的下一条指令</text>
+    <text x="200" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#60a5fa">mov ebx, eax</text>
+    <text x="620" y="0" font-size="14" font-weight="bold" fill="#60a5fa">call 之后的下一条，即返回地址</text>
+  </g>
+  <g transform="translate(20, 170)">
+    <text x="0" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">00401100</text>
+    <text x="200" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">push ebp</text>
+    <text x="620" y="0" font-size="14" font-weight="bold" fill="#94a3b8">call 跳转的目标地址</text>
   </g>
 </svg>

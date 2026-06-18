@@ -1,16 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 135" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">ret 执行状态变化</text>
-  <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">ESP=0x012FF30C，栈顶=0x00401025(返回地址)</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 195" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">ret 执行状态变化</text>
+  <text x="20" y="52" font-size="12" fill="#94a3b8" font-weight="bold">初始：ESP=0x012FF30C，EIP=函数末尾，栈顶=0x00401025(返回地址)</text>
   <g transform="translate(20, 80)">
     <text x="0" y="0" font-size="13" fill="#94a3b8" font-weight="bold">指令</text>
     <text x="150" y="0" font-size="13" fill="#94a3b8" font-weight="bold">ESP</text>
     <text x="300" y="0" font-size="13" fill="#94a3b8" font-weight="bold">EIP</text>
-    <text x="500" y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
+    <text x="480" y="0" font-size="13" fill="#94a3b8" font-weight="bold">栈顶[ESP]</text>
+    <text x="680" y="0" font-size="13" fill="#94a3b8" font-weight="bold">说明</text>
     <rect x="0" y="12" width="900" height="1" fill="#94a3b8" fill-opacity="0.3"/>
   </g>
   <g transform="translate(20, 110)">
-    <text x="0" y="0"  font-size="14" font-weight="bold" fill="#10b981">ret</text>
+    <text x="0" y="0" font-size="14" font-weight="bold" fill="#94a3b8">初始状态</text>
+    <text x="150" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">012FF30C</text>
+    <text x="300" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">函数末尾</text>
+    <text x="480" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">00401025</text>
+    <text x="680" y="0" font-size="14" font-weight="bold" fill="#94a3b8">返回地址在栈顶</text>
+  </g>
+  <g transform="translate(20, 140)">
+    <text x="0" y="0" font-size="14" font-weight="bold" fill="#10b981">ret</text>
     <text x="150" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#fbbf24">012FF310</text>
     <text x="300" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">00401025</text>
-    <text x="500" y="0"  font-size="14" font-weight="bold" fill="#94a3b8">弹出返回地址，EIP 跳回 call 的下一条</text>
+    <text x="480" y="0" font-family="monospace" font-size="14" font-weight="bold" fill="#94a3b8">—</text>
+    <text x="680" y="0" font-size="14" font-weight="bold" fill="#94a3b8">弹出返回地址到 EIP，ESP+4</text>
   </g>
 </svg>
