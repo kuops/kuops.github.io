@@ -67,6 +67,9 @@ mov      eax,       1
 
 ![VS 项目属性 -> 链接器 -> 常规 -> 启用增量链接设为否](asm-navigation-images/vs-disable-incremental-link.png)
 
+> [!NOTE] 为什么建议关闭增量链接？
+> 开启增量链接时，`call` 不会直接跳到函数体，而是先跳到一条 `jmp` 指令，再由 `jmp` 转跳到真实地址。这是为了加快增量编译的速度。关闭后 `call` 会直接指向函数体，逆向时更清晰。
+
 改完后重新编译（<kbd>Ctrl</kbd>+<kbd>B</kbd>），之后每次加载 exe 地址都是固定的 `0x00401xxx` 了。
 
 你可以按 <kbd>Alt</kbd>+<kbd>M</kbd> 打开 Memory Map 窗口，看到当前程序实际占用了哪些内存区域：

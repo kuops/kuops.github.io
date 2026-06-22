@@ -39,11 +39,11 @@ jmp 目标地址
 
 假设当前 EIP = `0x00401020`，ESP = `0x012FF310`：
 
-![call 指令位置：00401020 处是 call 指令，00401025 是返回地址](asm-stack-images/call-instruction.png)
+![call 指令位置：00401020 处是 call 指令，00401025 是返回地址](asm-function-call-images/call-instruction.png)
 
-![call 执行状态变化：初始 ESP=012FF310，执行后 ESP=012FF30C，返回地址 00401025 压栈，EIP 跳到 00401100](asm-stack-images/call-after-trace.png)
+![call 执行状态变化：初始 ESP=012FF310，执行后 ESP=012FF30C，返回地址 00401025 压栈，EIP 跳到 00401100](asm-function-call-images/call-after-trace.png)
 
-![call 后的栈内存布局：返回地址 00401025 压在栈顶，ESP 从 012FF310 减到 012FF30C](asm-stack-images/call-stack-layout.png)
+![call 后的栈内存布局：返回地址 00401025 压在栈顶，ESP 从 012FF310 减到 012FF30C](asm-function-call-images/call-stack-layout.png)
 
 执行 `call 0x00401100` 后，栈顶现在存着 `0x00401025`，这就是 `call` 之后那条指令的地址。函数结束后会用到它。
 
@@ -68,9 +68,9 @@ pop eip        （概念上，实际不能直接这么写）
 
 函数执行到最后，ESP = `0x012FF30C`，栈顶是 `0x00401025`（之前 call 压入的返回地址）：
 
-![ret 前的栈内存布局：ESP 指向返回地址 00401025](asm-stack-images/ret-stack-layout.png)
+![ret 前的栈内存布局：ESP 指向返回地址 00401025](asm-function-call-images/ret-stack-layout.png)
 
-![ret 执行状态变化：弹出返回地址 00401025 到 EIP，ESP 从 012FF30C 加到 012FF310](asm-stack-images/ret-trace.png)
+![ret 执行状态变化：弹出返回地址 00401025 到 EIP，ESP 从 012FF30C 加到 012FF310](asm-function-call-images/ret-trace.png)
 
 现在 EIP 回到了 `0x00401025`（`mov ebx, eax`），函数调用完成。
 
@@ -155,6 +155,10 @@ ret
 让我们跟踪一个完整的函数调用。C 代码：
 
 ```c
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <string.h>
+
 int add(int a, int b) {
     int result = a + b;
     return result;
@@ -171,52 +175,46 @@ MSVC Debug 模式编译后的真实输出：
 ### 调用方（main）
 
 ```asm
-00501E26  push        5                    ; 参数 2（从右往左压栈）
-00501E28  push        3                    ; 参数 1
-00501E2A  call        add (05013C5h)       ; 调用 add，压入返回地址 00501E2F
-00501E2F  add         esp,8                ; 清理参数（调用方负责，cdecl 约定）
-00501E32  mov         dword ptr [sum],eax  ; sum = 返回值
+00401086  push        5                    ; 参数 2（从右往左压栈）
+00401088  push        3                    ; 参数 1
+0040108A  call        add (0401000h)       ; 调用 add，压入返回地址 0040108F
+0040108F  add         esp,8                ; 清理参数（调用方负责，cdecl 约定）
+00401092  mov         dword ptr [ebp-8],eax  ; sum = 返回值
 ```
 
-注意 `call` 之后紧跟的地址是 `00501E2F`，这就是被压入栈的返回地址。
+注意 `call` 之后紧跟的地址是 `0040108F`，这就是被压入栈的返回地址。
 
 ### 被调用方（add 函数）
 
-call 实际跳到的是一个**跳板**（incremental linking thunk）：
+最终到达的函数体：
 
 ```asm
-005013C5  jmp         add (05017A0h)       ; 跳转到 add 函数真正的入口
-```
-
-这是 MSVC 增量链接（Incremental Linking）产生的中转指令，call 不直接跳到函数体，而是先跳到一个 jmp 跳板，再由跳板跳到真实地址。Release 模式关闭增量链接后不会有这个跳板。最终到达的函数体：
-
-```asm
-005017A0  push        ebp                  ; 保存旧 EBP
-005017A1  mov         ebp,esp              ; 设置新 EBP
-005017A3  sub         esp,0CCh             ; 分配栈帧空间（远大于实际需要）
-005017A9  push        ebx                  ; 保存 callee-saved 寄存器
-005017AA  push        esi
-005017AB  push        edi
-005017AC  lea         edi,[ebp-0Ch]        ; 用 0xCC 填充 [ebp-0Ch] ~ [ebp-1]
-005017AF  mov         ecx,3
-005017B4  mov         eax,0CCCCCCCCh
-005017B9  rep stos    dword ptr es:[edi]   ; 3 个 dword = 12 字节
-005017BB  mov         ecx,offset ...       ; MSVC 调试辅助
-005017C0  call        @__CheckForDebuggerJustMyCode@4
-005017C5  nop
-005017C6  mov         eax,dword ptr [a]    ; eax = 参数 a（值是 3）
-005017C9  add         eax,dword ptr [b]    ; eax += 参数 b（值是 5）
-005017CC  mov         dword ptr [result],eax  ; result = 8
-005017CF  mov         eax,dword ptr [result]  ; 返回值 = 8
-005017D2  pop         edi                  ; 恢复 edi
-005017D3  pop         esi                  ; 恢复 esi
-005017D4  pop         ebx                  ; 恢复 ebx
-005017D5  add         esp,0CCh             ; 释放栈帧空间
-005017DB  cmp         ebp,esp              ; 检查栈是否平衡
-005017DD  call        __RTC_CheckEsp       ; 不平衡就报错
-005017E2  mov         esp,ebp              ; 恢复 ESP
-005017E4  pop         ebp                  ; 恢复旧 EBP
-005017E5  ret                              ; 返回到 00501E2F
+00401000  push        ebp                  ; 保存旧 EBP
+00401001  mov         ebp,esp              ; 设置新 EBP
+00401003  sub         esp,0CCh             ; 分配栈帧空间（远大于实际需要）
+00401009  push        ebx                  ; 保存 callee-saved 寄存器
+0040100A  push        esi
+0040100B  push        edi
+0040100C  lea         edi,[ebp-0Ch]        ; 用 0xCC 填充 [ebp-0Ch] ~ [ebp-1]
+0040100F  mov         ecx,3
+00401014  mov         eax,0CCCCCCCCh
+00401019  rep stos    dword ptr es:[edi]   ; 3 个 dword = 12 字节
+0040101B  mov         ecx,offset ...       ; MSVC 调试辅助
+00401020  call        __CheckForDebuggerJustMyCode
+00401025  nop
+00401026  mov         eax,dword ptr [a]    ; eax = 参数 a（值是 3）
+00401029  add         eax,dword ptr [b]    ; eax += 参数 b（值是 5）
+0040102C  mov         dword ptr [result],eax  ; result = 8
+0040102F  mov         eax,dword ptr [result]  ; 返回值 = 8
+00401032  pop         edi                  ; 恢复 edi
+00401033  pop         esi                  ; 恢复 esi
+00401034  pop         ebx                  ; 恢复 ebx
+00401035  add         esp,0CCh             ; 释放栈帧空间
+0040103B  cmp         ebp,esp              ; 检查栈是否平衡
+0040103D  call        __RTC_CheckEsp       ; 不平衡就报错
+00401042  mov         esp,ebp              ; 恢复 ESP
+00401044  pop         ebp                  ; 恢复旧 EBP
+00401045  ret                              ; 返回到 0040108F
 ```
 
 Debug 模式下编译器塞了很多额外代码。逐个拆解：
@@ -226,13 +224,13 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 1. `push ebp` + `mov ebp, esp` — 标准栈帧建立，所有函数都这样开头
 2. `sub esp, 0xCC` — 分配 204 字节栈帧空间。明明只有 1 个 int 局部变量（4 字节），为什么分 204？Debug 模式宁可多分，方便调试时观察内存
 3. `push ebx/esi/edi` — 保存这三个寄存器（调用约定要求 callee-saved，后面讲）
-4. `lea edi, [ebp-0Ch]` + `rep stos` — 把 `[ebp-0Ch]` 到 `[ebp-1]` 填满 `0xCCCCCCCC`。为什么只填这 12 字节（而不是整块 204 字节）？因为编译器只为紧邻 EBP 的局部变量区做填充，这 12 字节正好覆盖了 `[ebp-4]`（result）、`[ebp-8]`、`[ebp-0Ch]` 这些可能被引用的位置；更低的地址段留给后续 push 的寄存器和临时空间，没必要全填。这是 MSVC Debug 的安全措施，未初始化的局部变量会被读成 `0xCCCCCCCC`（而不是随机值），方便发现问题
+4. `lea edi, [ebp-0Ch]` + `rep stos` — 把 `[ebp-0Ch]` 到 `[ebp-1]` 填满 `0xCCCCCCCC`。为什么只填这 12 字节（而不是整块 204 字节）？因为编译器只为紧邻 EBP 的局部变量区做填充，这 12 字节正好覆盖了 `[ebp-4]`、`[ebp-8]`（result 存在这里）、`[ebp-0Ch]` 这些可能被引用的位置；更低的地址段留给后续 push 的寄存器和临时空间，没必要全填。这是 MSVC Debug 的安全措施，未初始化的局部变量会被读成 `0xCCCCCCCC`（而不是随机值），方便发现问题
 5. `__CheckForDebuggerJustMyCode` — MSVC 的"Just My Code"调试辅助，Release 模式不会出现
 
 **函数体**：
 
 6. `[a]` 就是 `[ebp+8]`（第一个参数，值 3），`[b]` 就是 `[ebp+0Ch]`（第二个参数，值 5）
-7. `mov [result], eax` — `[result]` 就是 `[ebp-4]`（第一个局部变量）
+7. `mov [result], eax` — `[result]` 就是 `[ebp-8]`（局部变量）
 8. `mov eax, [result]` — 返回值通过 EAX 传回调用方
 
 **尾声（Epilogue）**：
@@ -241,19 +239,20 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 10. `add esp, 0xCC` — 释放栈帧空间（和序言的 `sub esp, 0xCC` 对应）
 11. `cmp ebp, esp` + `__RTC_CheckEsp` — 检查栈是否平衡，不平衡说明有 bug
 12. `mov esp, ebp` + `pop ebp` — 最终恢复 ESP 和 EBP
-13. `ret` — 弹出返回地址，EIP 跳回 main 的 `00501E2F`
+13. `ret` — 弹出返回地址，EIP 跳回 main 的 `0040108F`
 
-> **Debug 和 Release 差异极大**。Release 模式下，上面整个 `add` 函数可能被优化成一条 `lea eax, [ecx+edx]` 甚至直接内联到 main 里。但逆向入门先学 Debug 形态，结构清晰，Release 的优化以后会讲。
+> [!NOTE] Debug 和 Release 差异极大
+> Release 模式下，上面整个 `add` 函数可能被优化成一条 `lea eax, [ecx+edx]` 甚至直接内联到 main 里。但逆向入门先学 Debug 形态，结构清晰，Release 的优化以后会讲。
 
 ### 栈帧布局图
 
 进入 `add` 函数体后（`mov ebp, esp` 之后），栈帧是这样的，低地址在上，高地址在下，和栈的生长方向一致：
 
-![add 函数栈帧布局：ebp-4 是局部变量 result，ebp 存旧 EBP，ebp+4 是返回地址，ebp+8 和 ebp+0Ch 是参数 a 和 b](asm-stack-images/stack-frame-layout.png)
+![add 函数栈帧布局：ebp-8 是局部变量 result，ebp 存旧 EBP，ebp+4 是返回地址，ebp+8 和 ebp+0Ch 是参数 a 和 b](asm-function-call-images/stack-frame-layout.png)
 
 <!-- 🎨 画图：栈帧的完整变化过程（5 个阶段：调用前->压参数->call->进入函数->ret） -->
 
-![完整函数调用的栈变化过程：从调用前到返回后的 5 个阶段](asm-stack-images/stack-evolution.png)
+![完整函数调用的栈变化过程：从调用前到返回后的 5 个阶段](asm-function-call-images/stack-evolution.png)
 
 **规律**：
 
@@ -266,13 +265,22 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 
 参数在 EBP 上方（高地址），局部变量在 EBP 下方（低地址）。记住这个布局，逆向时看到 `[ebp+X]` 就知道是参数，`[ebp-X]` 就是局部变量。
 
+> [!NOTE] 为什么 result 在 `[ebp-8]` 而不是 `[ebp-4]`？
+> 很多教程把"第一个局部变量在 `[ebp-4]`"当定律，但这只是理想化的讲解。编译器有权根据以下因素自由调整局部变量的位置：
+>
+> - **安全检查**：MSVC Debug 模式开启 `/RTC` 运行时错误检查，可能在 `[ebp-4]` 放置安全 Cookie 或填充 `0xCCCCCCCC` 保护带，把变量挤到更低的地址
+> - **内存对齐**：编译器为了让变量 4 字节或 8 字节对齐，可能跳过 `[ebp-4]`
+> - **变量排序**：C/C++ 源码中变量的声明顺序不等于栈中的内存顺序，编译器会根据使用频率和大小重新排列
+>
+> 规律里写的 `[ebp-4]` 是"第一个局部变量的典型位置"，但实际要看反汇编里的 `mov` 指令操作数才能确定。
+
 ### 调用方清理参数
 
 函数返回后，main 继续执行：
 
 ```asm
-00501E2F  add         esp,8                ; ESP += 8，把之前 push 的两个参数"扔掉"
-00501E32  mov         dword ptr [sum],eax  ; sum = eax（值是 8）
+0040108F  add         esp,8                ; ESP += 8，把之前 push 的两个参数"扔掉"
+00401092  mov         dword ptr [ebp-8],eax  ; sum = eax（值是 8）
 ```
 
 `add esp, 8` 把 ESP 恢复到 push 参数之前的位置。这种"调用方清理参数"的约定叫做 **cdecl**（C declaration），是 C/C++ 程序最常用的调用约定。
