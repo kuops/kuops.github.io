@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 530" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">两点距离公式的 SSE 指令流水线</text>
+
+  <!-- 步骤 1: dx = x2 - x1 -->
+  <g transform="translate(20, 55)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#fbbf24">步骤 1</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">subss xmm0, [x1]</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm0 = dx</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm0</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dx</text>
+  </g>
+
+  <!-- 步骤 2: xmm1 = dx (备份) -->
+  <g transform="translate(20, 95)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#fbbf24">步骤 2</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">movss xmm1, xmm0</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">复制 dx 到 xmm1</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm1</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dx</text>
+  </g>
+
+  <!-- 步骤 3: dx * dx -->
+  <g transform="translate(20, 135)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#10b981">步骤 3</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">mulss xmm0, xmm1</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm0 = dx * dx</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm0</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dx^2</text>
+  </g>
+
+  <!-- 步骤 4: dy = y2 - y1 -->
+  <g transform="translate(20, 175)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#fbbf24">步骤 4</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">subss xmm1, [y1]</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm1 = dy</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm1</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dy</text>
+  </g>
+
+  <!-- 步骤 5: xmm2 = dy (备份) -->
+  <g transform="translate(20, 215)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#fbbf24">步骤 5</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">movss xmm2, xmm1</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">复制 dy 到 xmm2</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm2</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dy</text>
+  </g>
+
+  <!-- 步骤 6: dy * dy -->
+  <g transform="translate(20, 255)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#10b981">步骤 6</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">mulss xmm1, xmm2</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm1 = dy * dy</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm1</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dy^2</text>
+  </g>
+
+  <!-- 步骤 7: dx^2 + dy^2 -->
+  <g transform="translate(20, 295)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#10b981">步骤 7</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">addss xmm0, xmm1</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm0 = dx^2 + dy^2</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm0</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dx^2+dy^2</text>
+  </g>
+
+  <!-- 步骤 8: sqrt -->
+  <g transform="translate(20, 335)">
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#10b981">步骤 8</text>
+
+    <rect x="60" y="0" width="250" height="28" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="185" y="19" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">sqrtss xmm0, xmm0</text>
+
+    <text x="320" y="19" font-size="12" font-weight="bold" fill="#94a3b8">xmm0 = dist</text>
+
+    <rect x="420" y="0" width="50" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="445" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">xmm0</text>
+    <text x="480" y="19" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">= dist</text>
+  </g>
+
+  <!-- 指令模式标注 -->
+  <g transform="translate(20, 390)">
+    <text x="0" y="14" font-size="12" font-weight="bold" fill="#94a3b8">识别规律：</text>
+
+    <rect x="90" y="0" width="70" height="28" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="125" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">黄色</text>
+    <text x="170" y="19" font-size="12" font-weight="bold" fill="#94a3b8">= 数据搬运 / 准备</text>
+
+    <rect x="330" y="0" width="70" height="28" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="365" y="19" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#10b981">绿色</text>
+    <text x="410" y="19" font-size="12" font-weight="bold" fill="#94a3b8">= 实际运算</text>
+  </g>
+
+  <!-- 结果 -->
+  <g transform="translate(20, 435)">
+    <rect x="0" y="0" width="560" height="68" rx="6" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="24" font-size="12" font-weight="bold" fill="#10b981">逆向时看到这个序列就是两点距离公式：</text>
+    <text x="16" y="48" font-family="monospace" font-size="12" font-weight="bold" fill="#10b981">subss -> movss -> mulss -> subss -> movss -> mulss -> addss -> sqrtss</text>
+  </g>
+</svg>
