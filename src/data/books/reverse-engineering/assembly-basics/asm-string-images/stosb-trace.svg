@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">rep stosb 清零 32 字节缓冲区 (AL=0x00)</text>
+  <text x="20" y="50" font-size="12" font-weight="bold" fill="#94a3b8">初始：EDI=0040C000，ECX=32(0x20)，AL=00</text>
+
+  <!-- 表头 -->
+  <g transform="translate(20, 75)">
+    <text x="0"   y="0" font-size="12" font-weight="bold" fill="#94a3b8">步骤</text>
+    <text x="55"  y="0" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">EDI</text>
+    <text x="165" y="0" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">ECX</text>
+    <text x="275" y="0" font-size="12" font-weight="bold" fill="#94a3b8">写入</text>
+    <text x="375" y="0" font-size="12" font-weight="bold" fill="#94a3b8">[EDI] 目标内存 (32 字节)</text>
+    <rect x="0" y="8" width="780" height="1" fill="#94a3b8" fill-opacity="0.3"/>
+  </g>
+
+  <!-- 固定列：375, 409, 443, 477, [520=..], 560 -->
+  <!-- 只展示前 4 字节 + .. + 最后 1 字节，共 6 列 -->
+
+  <!-- 步骤 1 -->
+  <g transform="translate(20, 105)">
+    <text x="0"   y="0" font-size="13" font-weight="bold" fill="#94a3b8">1</text>
+    <text x="55"  y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">0040C001</text>
+    <text x="165" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0000001F</text>
+    <text x="275" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="375" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="409" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="443" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="477" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="520" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">..</text>
+    <text x="560" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+
+  </g>
+
+  <!-- 步骤 2 -->
+  <g transform="translate(20, 130)">
+    <text x="0"   y="0" font-size="13" font-weight="bold" fill="#94a3b8">2</text>
+    <text x="55"  y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">0040C002</text>
+    <text x="165" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0000001E</text>
+    <text x="275" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="375" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="409" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="443" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="477" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="520" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">..</text>
+    <text x="560" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+
+  </g>
+
+  <!-- 步骤 3 -->
+  <g transform="translate(20, 155)">
+    <text x="0"   y="0" font-size="13" font-weight="bold" fill="#94a3b8">3</text>
+    <text x="55"  y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">0040C003</text>
+    <text x="165" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0000001D</text>
+    <text x="275" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="375" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="409" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="443" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="477" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+    <text x="520" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">..</text>
+    <text x="560" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+
+  </g>
+
+  <!-- 省略行 -->
+  <g transform="translate(20, 180)">
+    <text x="0"   y="0" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+    <text x="55"  y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+    <text x="165" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+    <text x="275" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">...</text>
+    <text x="375" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="409" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="443" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="477" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="520" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">..</text>
+    <text x="560" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">??</text>
+
+  </g>
+
+  <!-- 步骤 32 -->
+  <g transform="translate(20, 205)">
+    <text x="0"   y="0" font-size="13" font-weight="bold" fill="#94a3b8">32</text>
+    <text x="55"  y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">0040C020</text>
+    <text x="165" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">00000000</text>
+    <text x="275" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+    <text x="375" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="409" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="443" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="477" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">00</text>
+    <text x="520" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">..</text>
+    <text x="560" y="0" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">00</text>
+
+  </g>
+</svg>

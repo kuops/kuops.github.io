@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 404" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">四条字符串指令：各用哪些寄存器？</text>
+
+  <!-- 列标题 y=60 -->
+  <text x="65"  y="60" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">指令</text>
+  <text x="245" y="60" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">源 (数据从哪来)</text>
+  <text x="420" y="60" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">操作</text>
+  <text x="595" y="60" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">目标 [EDI] 指向的内存</text>
+  <text x="775" y="60" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">计数器</text>
+
+  <!-- 分隔线 -->
+  <line x1="10" y1="72" x2="830" y2="72" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- ===== Row 1: MOVS ===== y=90..130 -->
+  <text x="65" y="115" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">MOVS</text>
+  <!-- 源 -->
+  <rect x="130" y="90" width="230" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="245" y="108" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">[ESI] 指向的内存</text>
+  <text x="245" y="123" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">读内存</text>
+  <!-- 复制箭头 -->
+  <line x1="370" y1="110" x2="468" y2="110" stroke="#10b981" stroke-width="2"/>
+  <polygon points="468,106 476,110 468,114" fill="#10b981"/>
+  <text x="420" y="103" font-size="11" font-weight="bold" text-anchor="middle" fill="#10b981">复制</text>
+  <!-- 目标 -->
+  <rect x="480" y="90" width="230" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="595" y="108" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">写入内存</text>
+  <text x="595" y="123" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[EDI] 指向</text>
+  <!-- ECX -->
+  <rect x="720" y="90" width="110" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="775" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">ECX</text>
+
+  <!-- ===== Row 2: CMPS ===== y=150..190 -->
+  <text x="65" y="175" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">CMPS</text>
+  <rect x="130" y="150" width="230" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="245" y="168" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">[ESI] 指向的内存</text>
+  <text x="245" y="183" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">读内存</text>
+  <!-- 比较箭头（双向虚线） -->
+  <line x1="378" y1="170" x2="468" y2="170" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 3"/>
+  <polygon points="378,166 370,170 378,174" fill="#fbbf24"/>
+  <polygon points="462,166 470,170 462,174" fill="#fbbf24"/>
+  <text x="420" y="163" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">比较</text>
+  <rect x="480" y="150" width="230" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="595" y="168" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">读取内存</text>
+  <text x="595" y="183" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[EDI] 指向</text>
+  <rect x="720" y="150" width="110" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="775" y="175" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">ECX</text>
+
+  <!-- ===== Row 3: STOS ===== y=210..250 -->
+  <text x="65" y="235" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">STOS</text>
+  <rect x="130" y="210" width="230" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="245" y="228" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">AL / AX / EAX 寄存器</text>
+  <text x="245" y="243" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">不用 ESI</text>
+  <line x1="370" y1="230" x2="468" y2="230" stroke="#10b981" stroke-width="2"/>
+  <polygon points="468,226 476,230 468,234" fill="#10b981"/>
+  <text x="420" y="223" font-size="11" font-weight="bold" text-anchor="middle" fill="#10b981">写入</text>
+  <rect x="480" y="210" width="230" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="595" y="228" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">写入内存</text>
+  <text x="595" y="243" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[EDI] 指向</text>
+  <rect x="720" y="210" width="110" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="775" y="235" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">ECX</text>
+
+  <!-- ===== Row 4: SCAS ===== y=270..310 -->
+  <text x="65" y="295" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#94a3b8">SCAS</text>
+  <rect x="130" y="270" width="230" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="245" y="288" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">AL / AX / EAX 寄存器</text>
+  <text x="245" y="303" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">不用 ESI</text>
+  <line x1="378" y1="290" x2="468" y2="290" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 3"/>
+  <polygon points="378,286 370,290 378,294" fill="#fbbf24"/>
+  <polygon points="462,286 470,290 462,294" fill="#fbbf24"/>
+  <text x="420" y="283" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">比较</text>
+  <rect x="480" y="270" width="230" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="595" y="288" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">读取内存</text>
+  <text x="595" y="303" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[EDI] 指向</text>
+  <rect x="720" y="270" width="110" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="775" y="295" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">ECX</text>
+
+  <!-- 底部说明：translate(20, 340) 内 max y=40，最低点=340+40+4=384，viewBox=404 -->
+  <g transform="translate(20, 340)">
+    <text x="0" y="0"  font-size="12" font-weight="bold" fill="#94a3b8">规律：EDI 和 ECX 所有指令都用；ESI 只有 MOVS/CMPS 用</text>
+    <text x="0" y="20" font-size="11" font-weight="bold" fill="#64748b">绿色实线 = 写入内存，黄色虚线 = 比较不写入 (只更新 EFLAGS)</text>
+    <text x="0" y="40" font-size="11" font-weight="bold" fill="#64748b">所有指令执行后 EDI 自动前进，后缀 B=+1 W=+2 D=+4 (DF=0 时)</text>
+  </g>
+</svg>

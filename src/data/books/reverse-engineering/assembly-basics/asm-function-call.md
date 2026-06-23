@@ -83,8 +83,6 @@ pop eip        （概念上，实际不能直接这么写）
 - 旧 EBP（调用者的栈帧底部）
 - 局部变量
 
-<!-- 🎨 画图：完整栈帧结构 -->
-
 ### 函数序言（Prologue）
 
 几乎每个函数开头都有这两条指令：
@@ -250,8 +248,6 @@ Debug 模式下编译器塞了很多额外代码。逐个拆解：
 
 ![add 函数栈帧布局：ebp-8 是局部变量 result，ebp 存旧 EBP，ebp+4 是返回地址，ebp+8 和 ebp+0Ch 是参数 a 和 b](asm-function-call-images/stack-frame-layout.png)
 
-<!-- 🎨 画图：栈帧的完整变化过程（5 个阶段：调用前->压参数->call->进入函数->ret） -->
-
 ![完整函数调用的栈变化过程：从调用前到返回后的 5 个阶段](asm-function-call-images/stack-evolution.png)
 
 **规律**：
@@ -364,8 +360,6 @@ fastcall 在逆向中常见于**编译器内部函数**（编译器自动生成�
 
 ### 三种约定对比
 
-<!-- 🎨 画图：三种调用约定的栈清理流程对比 -->
-
 ```asm
 ; ===== cdecl：调用方清理 =====
 ; 调用方代码
@@ -408,8 +402,6 @@ ret                           ; ← 没有 ret N（两个参数都走寄存器�
 | call 之后 | 有 `add esp, N` | 什么都没有 | 什么都没有       |
 | 函数末尾  | 普通 `ret`      | `ret N`    | `ret` 或 `ret N` |
 
-<!-- 📸 截图：x64dbg 中分别展示 cdecl 和 stdcall 的典型代码片段 -->
-
 实战中，**Windows API 函数全是 stdcall**（MessageBox、CreateFile、ReadFile、WriteFile……），而你自己写的 C/C++ 函数默认是 cdecl。fastcall 偶尔出现在编译器生成的代码中。如果你在 x64dbg 里看到 `ret N`（N > 0），那几乎一定是 stdcall 的 API 函数。
 
 注意：64 位程序用统一的 x64 调用约定（前几个参数走寄存器 RCX、RDX、R8、R9），不再区分这三种约定。这些只在 32 位程序中出现。
@@ -434,8 +426,6 @@ pop ebp                 ; 恢复调用者的 EBP
 不过现代 MSVC 很少用 `leave`，你看到的 Debug 和 Release 输出都是分开写的 `mov esp, ebp` + `pop ebp`。`leave` 更多出现在 GCC/MinGW 编译的程序，或者手写汇编里。逆向时如果看到 `leave`，知道它是这两条指令的缩写就行。
 
 **它们完全等价**，只是编译器的优化选择。你两个都要认识。
-
-<!-- 📸 截图：x64dbg 中 leave 指令执行前后 ESP/EBP 的变化 -->
 
 ## 全局变量 vs 局部变量
 
@@ -473,11 +463,7 @@ mov dword ptr ds:[0x0040A000], 5  ; 全局变量
 | 地址特征 | 相对地址，每次可能不同     | 绝对地址，永远不变                 |
 | 示例     | `mov dword ptr [ebp-4], 5` | `mov dword ptr ds:[0x0040A000], 5` |
 
-<!-- 🎨 画图：内存布局图，展示栈（局部变量）和 .data/.bss 段（全局变量）的位置关系 -->
-
-### 快速识别规则
-
-逆向时看到内存访问，一眼判断：
+回忆第四章的内存布局图，局部变量在栈上，全局变量在 .data/.bss 段。逆向时看到内存访问，一眼判断：
 
 - **`[ebp-X]`** -> 局部变量（栈上）
 - **`[ebp+X]`**（X > 4）-> 参数（栈上，调用者压入的）

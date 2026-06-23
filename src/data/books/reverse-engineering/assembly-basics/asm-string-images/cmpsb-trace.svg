@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 370" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">repe cmpsb 比较两个字符串</text>
+
+  <!-- 寄存器初始值 -->
+  <g transform="translate(20, 50)">
+    <text x="0" y="14" font-size="12" font-weight="bold" fill="#94a3b8">初始：</text>
+    <text x="80" y="14" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">ESI = 0040A000</text>
+    <text x="250" y="14" font-family="monospace" font-size="12" font-weight="bold" fill="#3b82f6">EDI = 0040B000</text>
+    <text x="420" y="14" font-family="monospace" font-size="12" font-weight="bold" fill="#fbbf24">ECX = 3</text>
+  </g>
+
+  <!-- ===== 内存布局 ===== -->
+  <g transform="translate(20, 85)">
+    <!-- ESI 行 -->
+    <text x="0" y="24" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">ESI -></text>
+    <rect x="70" y="6" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="110" y="30" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">41 'A'</text>
+    <rect x="158" y="6" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="30" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">42 'B'</text>
+    <rect x="246" y="6" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="286" y="30" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">43 'C'</text>
+
+    <text x="110" y="56" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">A000</text>
+    <text x="198" y="56" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">A001</text>
+    <text x="286" y="56" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">A002</text>
+
+    <!-- EDI 行 -->
+    <text x="0" y="100" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">EDI -></text>
+    <rect x="70" y="82" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="110" y="106" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">41 'A'</text>
+    <rect x="158" y="82" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="106" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">58 'X'</text>
+    <rect x="246" y="82" width="80" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="286" y="106" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#94a3b8">43 'C'</text>
+
+    <text x="110" y="132" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">B000</text>
+    <text x="198" y="132" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">B001</text>
+    <text x="286" y="132" font-family="monospace" font-size="10" text-anchor="middle" fill="#64748b">B002</text>
+  </g>
+
+  <!-- ===== 步骤 1 ===== -->
+  <g transform="translate(20, 245)">
+    <text x="0" y="0" font-size="11" font-weight="bold" fill="#94a3b8">步骤 1</text>
+    <rect x="60" y="-12" width="60" height="24" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="90" y="5" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">41 'A'</text>
+    <text x="130" y="5" font-family="monospace" font-size="12" font-weight="bold" fill="#10b981">==</text>
+    <rect x="160" y="-12" width="60" height="24" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="190" y="5" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">41 'A'</text>
+    <text x="240" y="5" font-size="12" font-weight="bold" fill="#10b981">A == A，相等，继续</text>
+  </g>
+
+  <!-- ===== 步骤 2 ===== -->
+  <g transform="translate(20, 280)">
+    <text x="0" y="0" font-size="11" font-weight="bold" fill="#94a3b8">步骤 2</text>
+    <rect x="60" y="-12" width="60" height="24" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="90" y="5" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">42 'B'</text>
+    <text x="130" y="5" font-family="monospace" font-size="12" font-weight="bold" fill="#fbbf24">!=</text>
+    <rect x="160" y="-12" width="60" height="24" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="190" y="5" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">58 'X'</text>
+    <text x="240" y="5" font-size="12" font-weight="bold" fill="#fbbf24">B != X，不等，停止</text>
+  </g>
+
+  <!-- ===== 结果 ===== -->
+  <g transform="translate(20, 320)">
+    <rect x="0" y="0" width="780" height="30" rx="6" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="20" font-size="12" font-weight="bold" fill="#fbbf24">第 2 字节 B != X，字符串不相等。若全部相等且 ECX 减到 0，则两串相等</text>
+  </g>
+</svg>

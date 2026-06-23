@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 410" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">32 位进程内存布局概览</text>
+  <text x="20" y="50" font-size="12" font-weight="bold" fill="#94a3b8">高地址在上，低地址在下（和栈的生长方向一致）</text>
+
+  <g transform="translate(20, 70)">
+    <!-- 高地址标注 -->
+    <text x="0" y="14" font-size="11" font-weight="bold" fill="#94a3b8">高地址 0x7FFFFFFF</text>
+
+    <!-- 内核区 -->
+    <rect x="120" y="20" width="240" height="26" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="240" y="37" font-size="12" font-weight="bold" fill="#94a3b8" text-anchor="middle">内核空间（不可访问）</text>
+
+    <!-- 栈 -->
+    <rect x="120" y="46" width="240" height="60" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="66" font-size="13" font-weight="bold" fill="#3b82f6" text-anchor="middle">栈（Stack）</text>
+    <text x="240" y="84" font-size="11" fill="#94a3b8" text-anchor="middle">局部变量、参数、返回地址</text>
+    <text x="240" y="100" font-size="11" fill="#94a3b8" text-anchor="middle">ESP / EBP</text>
+    <text x="370" y="80" font-size="12" font-weight="bold" fill="#3b82f6">← 向低地址生长</text>
+
+    <!-- ... -->
+    <text x="240" y="120" font-size="14" font-weight="bold" fill="#94a3b8" text-anchor="middle">...</text>
+
+    <!-- 堆 -->
+    <rect x="120" y="128" width="240" height="42" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="148" font-size="13" font-weight="bold" fill="#10b981" text-anchor="middle">堆（Heap）</text>
+    <text x="240" y="164" font-size="11" fill="#94a3b8" text-anchor="middle">malloc / new 分配的内存</text>
+
+    <!-- .bss -->
+    <rect x="120" y="170" width="240" height="32" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="190" font-size="13" font-weight="bold" fill="#fbbf24" text-anchor="middle">.bss 段（未初始化的全局变量）</text>
+
+    <!-- .data -->
+    <rect x="120" y="202" width="240" height="32" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="222" font-size="13" font-weight="bold" fill="#fbbf24" text-anchor="middle">.data 段（有初始值的全局变量）</text>
+
+    <!-- .rdata -->
+    <rect x="120" y="234" width="240" height="32" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="254" font-size="13" font-weight="bold" fill="#fbbf24" text-anchor="middle">.rdata 段（只读数据、字符串、常量）</text>
+
+    <!-- .text -->
+    <rect x="120" y="266" width="240" height="32" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="286" font-size="13" font-weight="bold" fill="#94a3b8" text-anchor="middle">.text 段（代码）</text>
+
+    <!-- 低地址标注 -->
+    <text x="0" y="312" font-size="11" font-weight="bold" fill="#94a3b8">低地址 0x00400000</text>
+
+    <!-- 左侧地址范围标注 -->
+    <text x="0" y="80" font-size="11" font-family="monospace" font-weight="bold" fill="#3b82f6">0x0019xxxx</text>
+    <text x="0" y="150" font-size="11" font-family="monospace" font-weight="bold" fill="#10b981">动态分配</text>
+    <text x="0" y="210" font-size="11" font-family="monospace" font-weight="bold" fill="#fbbf24">0x0040Axxx</text>
+    <text x="0" y="286" font-size="11" font-family="monospace" font-weight="bold" fill="#94a3b8">0x00401000</text>
+  </g>
+</svg>
