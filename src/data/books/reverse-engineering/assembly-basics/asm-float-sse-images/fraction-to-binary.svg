@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 420" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">小数转二进制：乘 2 取整法</text>
+
+  <!-- 分割线 -->
+  <line x1="420" y1="50" x2="420" y2="360" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1"/>
+
+  <!-- ===== 左列：0.5 能除完 ===== -->
+  <g transform="translate(20, 55)">
+    <text x="20" y="14" font-size="13" font-weight="bold" fill="#10b981">0.5：能除完</text>
+
+    <!-- 步骤行：text baseline y=4, rect y=-8 height=20 -->
+    <g transform="translate(0, 40)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.5 × 2 = 1.0</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">取 1</text>
+    </g>
+
+    <text x="20" y="74" font-size="12" font-weight="bold" fill="#94a3b8">小数部分归零，结束</text>
+
+    <!-- 结果 -->
+    <rect x="0" y="90" width="380" height="44" rx="6" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="118" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">0.5 = 0.1₂</text>
+
+    <!-- 0.25 作为补充 -->
+    <text x="20" y="168" font-size="13" font-weight="bold" fill="#10b981">0.25：同理</text>
+
+    <g transform="translate(0, 185)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.25 × 2 = 0.5</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">取 0</text>
+    </g>
+
+    <g transform="translate(0, 215)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.5 × 2 = 1.0</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">取 1</text>
+    </g>
+
+    <rect x="0" y="240" width="380" height="44" rx="6" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="268" font-family="monospace" font-size="14" font-weight="bold" fill="#10b981">0.25 = 0.01₂</text>
+  </g>
+
+  <!-- ===== 右列：0.1 永远除不完 ===== -->
+  <g transform="translate(440, 55)">
+    <text x="20" y="14" font-size="13" font-weight="bold" fill="#fbbf24">0.1：永远除不完</text>
+
+    <!-- 步骤 1 -->
+    <g transform="translate(0, 40)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.1 × 2 = 0.2</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">取 0</text>
+    </g>
+
+    <!-- 步骤 2：红色边框，和最后一行呼应 -->
+    <g transform="translate(0, 70)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.2 × 2 = 0.4</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#ef4444">取 0</text>
+      <text x="238" y="6" font-size="11" font-weight="bold" fill="#ef4444">↻ 和最后一行相同</text>
+    </g>
+
+    <!-- 步骤 3 -->
+    <g transform="translate(0, 100)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.4 × 2 = 0.8</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">取 0</text>
+    </g>
+
+    <!-- 步骤 4 -->
+    <g transform="translate(0, 130)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.8 × 2 = 1.6</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">取 1</text>
+    </g>
+
+    <!-- 步骤 5 -->
+    <g transform="translate(0, 160)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">0.6 × 2 = 1.2</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">取 1</text>
+    </g>
+
+    <!-- 步骤 6：循环 -->
+    <g transform="translate(0, 190)">
+      <text x="20" y="4" font-family="monospace" font-size="13" font-weight="bold" fill="#ef4444">0.2 × 2 = 0.4</text>
+      <rect x="180" y="-8" width="50" height="20" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
+      <text x="205" y="6" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#ef4444">取 0</text>
+    </g>
+
+    <!-- 循环箭头：从步骤 6 右边框 → 右侧 → 上方 → 指向步骤 3 右边框 -->
+    <!-- 步骤6 rect 右边缘中心 = (230, 192) -->
+    <!-- 步骤3 rect 右边缘中心 = (230, 102) -->
+    <path d="M 230 192 L 346 192 Q 350 192 350 188 L 350 106 Q 350 102 346 102 L 234 102" fill="none" stroke="#ef4444" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <polygon points="234,98 230,102 234,106" fill="#ef4444" fill-opacity="0.5"/>
+
+    <!-- 循环标注：放在箭头垂直段的左侧 -->
+    <text x="240" y="188" font-size="11" font-weight="bold" fill="#ef4444">从这里开始重复</text>
+
+    <!-- 结果 -->
+    <rect x="0" y="260" width="380" height="44" rx="6" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="288" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0.1 = 0.0001100110011...₂</text>
+  </g>
+
+  <!-- 底部结论 -->
+  <g transform="translate(20, 370)">
+    <rect x="0" y="0" width="800" height="40" rx="6" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="16" y="26" font-size="13" font-weight="bold" fill="#fbbf24">尾数只有 23 位，无限循环只能截断 → 这就是浮点精度问题的根源</text>
+  </g>
+</svg>
