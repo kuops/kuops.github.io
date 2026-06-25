@@ -57,31 +57,71 @@ int main() {
 
 ### 对应的汇编
 
-在 x64dbg 里单步（F8 步过），你会看到类似这样的汇编：
+在 x64dbg 里断到 `main`，你会看到类似这样的汇编：
 
 ```asm
-push ebp                         ; 保存旧帧指针
-mov  ebp, esp                    ; 设置新帧指针
-sub  esp, 0xC                    ; 分配 12 字节 (3 个 int)
-mov  dword ptr [ebp-4], 0xA      ; a = 10
-mov  dword ptr [ebp-8], 0x14     ; b = 20
-mov  eax, dword ptr [ebp-4]      ; eax = a
-add  eax, dword ptr [ebp-8]      ; eax = a + b
-mov  dword ptr [ebp-0xC], eax    ; c = a + b
-mov  eax, dword ptr [ebp-0xC]    ; 返回值放 eax
-mov  esp, ebp                    ; 恢复栈指针
-pop  ebp                         ; 恢复旧帧指针
+push ebp
+mov  ebp, esp
+sub  esp, 0E4h                         ; Debug 模式分配大量栈空间
+push ebx
+push esi
+push edi
+lea  edi, dword ptr ss:[ebp-24h]
+mov  ecx, 9
+mov  eax, 0CCCCCCCCh
+rep  stosd                             ; 把局部变量区域填满 CC
+mov  ecx, offset _9D2AEB17_Clearn@cpp
+call @__CheckForDebuggerJustMyCode@4   ; VS Just My Code 调试特性
+nop
+
+mov  dword ptr ss:[ebp-8], 0xA         ; a = 10
+mov  dword ptr ss:[ebp-14h], 0x14      ; b = 20
+mov  eax, dword ptr ss:[ebp-8]         ; eax = a
+add  eax, dword ptr ss:[ebp-14h]       ; eax = a + b
+mov  dword ptr ss:[ebp-20h], eax       ; c = a + b
+mov  eax, dword ptr ss:[ebp-20h]       ; 返回值
+
+pop  edi
+pop  esi
+pop  ebx
+add  esp, 0E4h
+cmp  ebp, esp
+call __RTC_CheckEsp                    ; 运行时栈检查
+mov  esp, ebp
+pop  ebp
 ret
 ```
 
-前三行（`push ebp` / `mov ebp, esp` / `sub esp, 0xC`）是函数序言，第 10 章讲过。核心就看中间几行。
+比想象的多很多？这是 VS Debug 模式的正常输出。真实的逆向中你看到的代码很少这么干净，需要学会过滤噪音。
 
-**规律：局部变量 = `[ebp - X]`**。编译器把 `a`、`b`、`c` 这些名字翻译成了 `[ebp-4]`、`[ebp-8]`、`[ebp-0xC]` 这些栈上的偏移地址。
+> [!NOTE] VS Debug 模式多出来的东西
+> 这些不是你写的代码，是编译器为调试方便自动插入的：
+>
+> - **`sub esp, 0E4h`**：分配 228 字节而非 12 字节。多出来的空间用于栈溢出检测。
+> - **`rep stosd` 填 `0CCCCCCCCh`**：把局部变量区域全填成 CC。如果你忘了初始化变量，调试时会看到 `0xCCCCCCCC`（十进制 -858993460），一眼就知道有问题。
+> - **`__CheckForDebuggerJustMyCode`**：VS 的 Just My Code 特性，单步时跳过库代码。可以在项目属性里关掉。
+> - **`__RTC_CheckEsp`**：运行时检查栈是否平衡，防止栈损坏。
+> - **`push ebx/esi/edi` + `pop`**：Debug 模式无条件保存这三个寄存器，即使函数没用到。
+
+过滤掉这些噪音后，核心就这几行：
+
+```asm
+mov  dword ptr [ebp-8], 0Ah        ; a = 10
+mov  dword ptr [ebp-14h], 14h      ; b = 20
+mov  eax, [ebp-8]                  ; 读 a
+add  eax, [ebp-14h]                ; a + b
+mov  [ebp-20h], eax               ; c = 结果
+mov  eax, [ebp-20h]               ; 返回值放 eax
+```
+
+**规律：局部变量 = `[ebp - X]`**。编译器把 `a`、`b`、`c` 这些名字翻译成了 `[ebp-8]`、`[ebp-14h]`、`[ebp-20h]` 这些栈偏移地址。
+
+注意偏移不一定是 `[ebp-4]`、`[ebp-8]` 这样整齐排列。Debug 模式会在变量之间插入间隔，具体偏移取决于编译器和优化设置。**逆向时不要猜偏移，要看实际汇编。**
 
 为什么是减法？因为栈从高地址往低地址生长（第 9 章讲过），新变量放在更低地址。
 
 > [!TIP]
-> 在 x64dbg 里单步执行 `mov dword ptr [ebp-4], 0xA` 后，切到堆栈窗口，跳到 `EBP-4` 的地址，你会看到值变成了 `0000000A`。这就是变量赋值的真相：**把一个数值写到栈上某个固定偏移**。
+> 在 x64dbg 里单步执行 `mov dword ptr [ebp-8], 0Ah` 后，切到堆栈窗口，按 `Ctrl+G` 跳到 `EBP-8` 的地址，你会看到值变成了 `0000000A`。这就是变量赋值的真相：**把一个数值写到栈上某个固定偏移**。
 
 ## 全局变量
 
