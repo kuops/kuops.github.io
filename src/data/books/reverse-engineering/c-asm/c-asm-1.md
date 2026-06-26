@@ -89,7 +89,7 @@ mov  dword ptr [ebp-0x1C], 0x40091EB8   ; 高 4 字节 (IEEE 754 双精度编码
 ![long long 在栈上的小端序布局](c-asm-1-images/longlong-stack-layout.png)
 
 > [!NOTE] 8 字节类型在 32 位程序里怎么搬
-> `long long` 和 `double` 都是 8 字节，但 32 位寄存器一次最多搬 4 字节，所以编译器拆成两条 `mov dword ptr`。小端序下**低 4 字节在低地址**，高 4 字节在高地址**。64 位程序用 `qword ptr` 一条搞定。逆向 32 位程序时，**看到连续两条 `mov dword ptr` 写相邻地址，很可能是一个 8 字节变量**。
+> `long long` 和 `double` 都是 8 字节，但 32 位寄存器一次最多搬 4 字节，所以编译器拆成两条 `mov dword ptr`。小端序下**低 4 字节在低地址**，高 4 字节在高地址**。64 位程序用 `qword ptr` 一条搞定。逆向 32 位程序时，**看到连续两条 `mov dword ptr` 写相邻地址，很可能是一个 8 字节变量\*\*。
 
 ### 有符号和无符号：赋值时看不出区别
 
