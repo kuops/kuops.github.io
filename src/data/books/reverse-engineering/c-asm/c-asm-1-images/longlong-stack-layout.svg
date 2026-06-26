@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">long long = 100 的逐字节内存布局 (小端序, 32 位)</text>
+
+  <!-- Group labels -->
+  <text x="220" y="52" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">低 4 字节</text>
+  <text x="460" y="52" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">高 4 字节</text>
+
+  <!-- Byte 0: [ebp-0x18] -->
+  <rect x="100" y="60" width="60" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="130" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#3b82f6">64</text>
+  <text x="130" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x18]</text>
+
+  <!-- Byte 1: [ebp-0x17] -->
+  <rect x="160" y="60" width="60" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="190" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#3b82f6">00</text>
+  <text x="190" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x17]</text>
+
+  <!-- Byte 2: [ebp-0x16] -->
+  <rect x="220" y="60" width="60" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="250" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#3b82f6">00</text>
+  <text x="250" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x16]</text>
+
+  <!-- Byte 3: [ebp-0x15] -->
+  <rect x="280" y="60" width="60" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="310" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#3b82f6">00</text>
+  <text x="310" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x15]</text>
+
+  <!-- Byte 4: [ebp-0x14] -->
+  <rect x="340" y="60" width="60" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="370" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">00</text>
+  <text x="370" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x14]</text>
+
+  <!-- Byte 5: [ebp-0x13] -->
+  <rect x="400" y="60" width="60" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="430" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">00</text>
+  <text x="430" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x13]</text>
+
+  <!-- Byte 6: [ebp-0x12] -->
+  <rect x="460" y="60" width="60" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="490" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">00</text>
+  <text x="490" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x12]</text>
+
+  <!-- Byte 7: [ebp-0x11] -->
+  <rect x="520" y="60" width="60" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="550" y="90" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#10b981">00</text>
+  <text x="550" y="125" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-0x11]</text>
+
+  <!-- LSB / MSB markers -->
+  <text x="130" y="147" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">LSB</text>
+  <text x="550" y="147" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">MSB</text>
+
+  <!-- Low / High address arrows -->
+  <text x="130" y="165" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">低地址</text>
+  <text x="550" y="165" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">高地址</text>
+
+  <!-- Assembly -->
+  <g transform="translate(20, 190)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#94a3b8">对应的汇编:</text>
+    <text x="10" y="22" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">mov dword ptr [ebp-0x18], 0x64</text>
+    <text x="350" y="22" font-size="11" font-weight="bold" fill="#64748b">; 写低 4 字节到 [ebp-0x18] ~ [ebp-0x15]</text>
+    <text x="10" y="44" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov dword ptr [ebp-0x14], 0x0</text>
+    <text x="350" y="44" font-size="11" font-weight="bold" fill="#64748b">; 写高 4 字节到 [ebp-0x14] ~ [ebp-0x11]</text>
+  </g>
+
+</svg>
