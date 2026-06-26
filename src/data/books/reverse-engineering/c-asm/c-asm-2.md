@@ -5,68 +5,15 @@ description: 加减乘除在汇编里长什么样？为什么逆向中到处是 
 order: 12
 ---
 
-## 动手目标
+上一章建立了"C 变量 ↔ 汇编"的直觉。这一章更进一步：**运算**。C 里写 `a + b`、`x * 3`、`flags &= ~READ_ONLY`，编译器会翻译成什么？为什么逆向时到处看到 `xor`、`shl`、`lea`？
 
-今天结束你会：
-
-1. 看到汇编里的 `add`、`sub`、`imul`、`idiv`，立刻知道它在做加减乘除
-2. 理解为什么逆向里到处是 `XOR`、`SHL`、`SHR`——它们不是故弄玄虚，是编译器的日常操作
-3. 看到 `lea` 指令时不再困惑：它不只是算地址，还是编译器最爱用的乘法捷径
-
-打开 Visual Studio，新建一个 C 控制台项目。每个例子都编译成 Release x86，用 x64dbg 对着看。
+和上一章一样，用 `argc` 作为输入值（编译器无法预知，不能做常量折叠），编译 Release x86，用 x64dbg 对照。
 
 ## 加减法
 
-最简单的运算，也是逆向中最常见的。
-
-先写 C 代码：
+最简单的运算：
 
 ```c
-#include <stdio.h>
-
-int main() {
-    int a = 10;
-    int b = 20;
-    int c = a + b;
-    int d = c - 5;
-    printf("%d %d\n", c, d);
-    return 0;
-}
-```
-
-Release x86 编译后，x64dbg 里大概长这样：
-
-<!-- 📸 截图：x64dbg 中显示 add/sub 指令的反汇编窗口 -->
-
-```asm
-mov dword ptr [ebp-4], 0xA       ; a = 10
-mov dword ptr [ebp-8], 0x14      ; b = 20
-mov eax, dword ptr [ebp-4]       ; eax = a
-add eax, dword ptr [ebp-8]       ; eax = a + b
-mov dword ptr [ebp-C], eax       ; c = eax
-mov eax, dword ptr [ebp-C]       ; eax = c
-sub eax, 5                       ; eax = c - 5
-mov dword ptr [ebp-10], eax      ; d = eax
-```
-
-<!-- 🎨 画图：C 变量到汇编指令的映射关系，标注 a->[ebp-4]，b->[ebp-8]，c->[ebp-C]，d->[ebp-10] -->
-
-规律很清楚：
-
-| C 代码      | 汇编指令                                     |
-| ----------- | -------------------------------------------- |
-| `c = a + b` | `mov eax, a` -> `add eax, b` -> `mov c, eax` |
-| `d = c - 5` | `mov eax, c` -> `sub eax, 5` -> `mov d, eax` |
-| `a += 5`    | `add dword ptr [ebp-4], 5`                   |
-| `b -= 3`    | `sub dword ptr [ebp-8], 3`                   |
-
-加减法会设置 CPU 标志位，其中最重要的是 **OF（溢出标志）**。有符号数溢出时 OF=1，逆向分析加密算法时经常用到。
-
-注意：Release 编译器很可能把上面这种简单运算全部优化成常量折叠（直接算出结果 30 和 25）。想看到完整的运算过程，可以给变量加 `volatile`，或者用更复杂的表达式让编译器无法优化：
-
-```c
-#include <stdio.h>
-
 int main(int argc, char *argv[]) {
     int a = argc;
     int b = a + 100;
@@ -76,29 +23,33 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-用 `argc` 作为输入，编译器没法提前知道值，只能老老实实生成运算指令。
+```asm
+mov  eax, dword ptr [ebp+8]     ; eax = argc
+add  eax, 0x64                  ; eax = argc + 100
+sub  eax, 0x32                  ; eax = argc + 100 - 50
+push eax
+push offset "%d\n"
+call dword ptr [printf]
+```
+
+加减法的规律很直接：
+
+| C 代码      | 汇编指令                                     |
+| ----------- | -------------------------------------------- |
+| `c = a + b` | `mov eax, a` -> `add eax, b` -> `mov c, eax` |
+| `d = c - 5` | `mov eax, c` -> `sub eax, 5` -> `mov d, eax` |
+| `a += 5`    | `add dword ptr [ebp-4], 5`                   |
+| `b -= 3`    | `sub dword ptr [ebp-8], 3`                   |
+
+加减法会设置 CPU 标志位，其中最重要的是 **OF (溢出标志)**。有符号数溢出时 OF=1，逆向分析加密算法时经常用到。
 
 ## 乘除法
 
-乘除法比加减复杂一些，因为 x86 有专门的乘除指令，编译器还会做各种优化。
+乘除法比加减复杂，因为 x86 有专门的乘除指令，编译器还会做各种优化。
 
-### 基本乘法
-
-```c
-#include <stdio.h>
-
-int main(int argc, char *argv[]) {
-    int a = argc * 3;
-    printf("%d\n", a);
-    return 0;
-}
-```
-
-你期望看到 `imul eax, ebx, 3`，但编译器可能给你一个惊喜——后面 LEA 章节会讲。先用更复杂的乘法：
+### 乘法：imul
 
 ```c
-#include <stdio.h>
-
 int main(int argc, char *argv[]) {
     int a = argc * 37;
     printf("%d\n", a);
@@ -106,17 +57,15 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-<!-- 📸 截图：x64dbg 中 imul 指令 -->
-
 ```asm
-mov eax, dword ptr [ebp+8]       ; eax = argc
-imul eax, eax, 0x25              ; eax = argc * 37
+mov  eax, dword ptr [ebp+8]     ; eax = argc
+imul eax, eax, 0x25             ; eax = argc * 37
 push eax
 push offset "%d\n"
 call dword ptr [printf]
 ```
 
-`imul` 有三种形式：
+`0x25` 就是十进制 37。`imul` 有三种形式：
 
 | 形式     | 指令                | 含义                             |
 | -------- | ------------------- | -------------------------------- |
@@ -126,13 +75,16 @@ call dword ptr [printf]
 
 逆向中最常见的是三操作数形式。
 
-### 除法
+> [!NOTE] 无符号乘法
+> `imul` 是**有符号**乘法。C 的 `unsigned int` 乘法理论上应该用 `mul` 指令，但实际上编译器几乎总是用 `imul`，因为结果在低位时两者完全一样。只有单操作数 `mul`/`imul` 产生 64 位结果（高位在 EDX）时才有区别。
+>
+> 64 位程序中，乘法指令不变（`imul rax, rbx`），只是寄存器从 32 位换成 64 位。
 
-除法是 x86 里最丑的指令之一。`idiv` 只有一种形式，而且固定用 EDX:EAX 作为被除数：
+### 除法：编译器不老实
+
+除法是 x86 里最慢的算术指令之一。`idiv` 只有一种形式，固定用 EDX:EAX 作为被除数，商放 EAX，余数放 EDX。
 
 ```c
-#include <stdio.h>
-
 int main(int argc, char *argv[]) {
     int a = argc / 7;
     printf("%d\n", a);
@@ -140,97 +92,94 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-你期望看到 `idiv`，但编译器几乎永远不会生成它——除法太慢了。看下一节编译器怎么优化。
+你期望看到 `idiv`，但编译器几乎永远不会生成它。除法太慢了，编译器用**乘法 + 算术右移**来替代。
 
-### 编译器的除法优化
+### 除法优化：魔术数
 
-编译器用**位移+乘法魔术数**替代除法。比如除以 7：
-
-```asm
-mov eax, dword ptr [ebp+8]       ; eax = argc
-cdq                               ; 扩展符号位，EDX:EAX = 符号扩展后的 argc
-and edx, 6                       ; 负数修正：如果 argc < 0，EDX = 6，否则 EDX = 0
-add eax, edx                     ; 加上修正值
-sar eax, 1                       ; 右移 1（除以 2）
-mov ecx, eax                     ; ecx = (argc + 修正) / 2
-sar ecx, 2                       ; 右移 2（除以 4）
-add eax, ecx                     ; eax = argc/2 + argc/8 = 5*argc/8 ...
-; 实际上不同编译器有不同的魔术数序列
-```
-
-<!-- 🎨 画图：除以常数的编译器优化原理，展示魔术数乘法+右移等价于除法 -->
-
-更典型的除以 7 的编译器输出：
+除以 7 的 Release 输出大概长这样：
 
 ```asm
-mov eax, dword ptr [ebp+8]       ; eax = argc
-imul eax, eax, 0x92492493        ; 乘以魔术数
-sar eax, 2                       ; 算术右移 2
-; 结果 = argc / 7
+mov  eax, dword ptr [ebp+8]     ; eax = argc
+imul eax, eax, 0x92492493       ; 乘以魔术数
+sar  eax, 2                     ; 算术右移 2
+; 结果 ≈ argc / 7
 ```
 
-`0x92492493` 就是除以 7 的魔术数。你不需要记住它，只需要知道：**看到 `imul` 一个奇怪的常数再接 `sar`（算术右移），那就是在做除法**。
+`0x92492493` 就是除以 7 的魔术数。你不需要记住它，只需要知道：**看到 `imul` 乘一个奇怪的常数再接 `sar` (算术右移)，那就是在做除法**。
 
 常见除法魔术数速查：
 
-| 除以 | 魔术数（近似） | 右移位数      |
-| ---- | -------------- | ------------- |
-| 3    | `0x55555556`   | 0 + SAR 1     |
-| 5    | `0x66666667`   | SAR 2         |
-| 7    | `0x92492493`   | SAR 2         |
-| 10   | `0x66666667`   | SAR 2 + SAR 1 |
+| 除以 | 魔术数       | 右移位数      |
+| ---- | ------------ | ------------- |
+| 3    | `0x55555556` | SAR 1         |
+| 5    | `0x66666667` | SAR 2         |
+| 7    | `0x92492493` | SAR 2         |
+| 10   | `0x66666667` | SAR 2 + SAR 1 |
 
-逆推方法：找到魔术数和移位位数，用公式 `n / d ≈ (n * M) >> s` 验证。
+负数除法还有额外的修正步骤 (`cdq` + `and` + `add`)，核心思路是向零取整而非向负无穷取整。这部分理解即可，逆向时识别出"魔术数 + sar = 除法"就够了。
 
-## 自增自减
+### 取模：除法的副产品
 
-自增自减在汇编里对应 `inc` 和 `dec`，非常直观：
+C 的 `%` 取模运算也走同一条路。`idiv` 执行后余数在 EDX，但编译器的优化路径里取模是**除法的副产品**：
 
 ```c
-#include <stdio.h>
-
-int main() {
-    int i = 0;
-    i++;
-    i++;
-    i--;
-    printf("%d\n", i);
+int main(int argc, char *argv[]) {
+    int a = argc % 7;
+    printf("%d\n", a);
     return 0;
 }
 ```
 
+编译器会先算除法得到商，再用 `imul` 乘回来减掉：
+
 ```asm
-mov dword ptr [ebp-4], 0         ; i = 0
-inc dword ptr [ebp-4]            ; i++ -> i = 1
-inc dword ptr [ebp-4]            ; i++ -> i = 2
-dec dword ptr [ebp-4]            ; i-- -> i = 1
+mov  eax, dword ptr [ebp+8]     ; eax = argc
+imul ecx, eax, 0x92492493       ; 魔术数乘法
+sar  ecx, 2                     ; ecx = argc / 7 (商)
+imul ecx, ecx, 7                ; ecx = 商 * 7
+sub  eax, ecx                   ; eax = argc - 商*7 = argc % 7
 ```
 
-`inc` 和 `dec` 比等价的 `add ..., 1` 和 `sub ..., 1` 编码更短（少一个立即数字节），所以编译器优先使用。
+识别技巧：**看到 `imul ... sar` 算出商，紧接着 `imul` 乘回除数再 `sub`，那就是取模**。
 
-在循环中很常见：
+> [!NOTE] 无符号除法
+> 无符号 `unsigned` 除法用 `div` 而非 `idiv`，负数修正步骤 (`cdq`/`and`/`add`) 不会出现。但魔术数优化思路一样。
+>
+> 64 位程序中，除法优化模式完全一样，只是寄存器从 EAX/EDX 换成 RAX/RDX。
+
+## 自增自减
+
+自增自减对应 `inc` 和 `dec`：
 
 ```c
-for (int i = 0; i < 10; i++) {
-    // ...
-}
+int i = 0;
+i++;    // inc
+i++;    // inc
+i--;    // dec
 ```
 
 ```asm
-; 循环末尾
-inc dword ptr [ebp-4]            ; i++
-cmp dword ptr [ebp-4], 0xA       ; i < 10?
-jl short loop_start              ; 小于则继续循环
+mov  dword ptr [ebp-4], 0       ; i = 0
+inc  dword ptr [ebp-4]          ; i++ -> i = 1
+inc  dword ptr [ebp-4]          ; i++ -> i = 2
+dec  dword ptr [ebp-4]          ; i-- -> i = 1
 ```
 
-## 位运算（重点）
+`inc`/`dec` 比等价的 `add ..., 1` 和 `sub ..., 1` 编码更短（少一个立即数字节），所以编译器优先使用。
+
+循环中最常见：
+
+```asm
+inc  dword ptr [ebp-4]          ; i++
+cmp  dword ptr [ebp-4], 0xA     ; i < 10?
+jl   short loop_start           ; 小于则继续循环
+```
+
+## 位运算 (重点)
 
 位运算是逆向分析的核心技能。加密算法、游戏反作弊、恶意代码混淆，到处都是位运算。
 
 ### AND — 按位与
-
-<!-- 🎨 画图：AND 真值表 -->
-<!-- 🎨 画图：AND 运算的逐位对比示意 -->
 
 | A   | B   | A AND B |
 | --- | --- | ------- |
@@ -241,7 +190,7 @@ jl short loop_start              ; 小于则继续循环
 
 规则：两个都是 1，结果才是 1。
 
-常见用途 — **提取低位**：
+**取低位**：
 
 ```c
 unsigned int flags = 0xABCD;
@@ -249,17 +198,17 @@ unsigned int low_byte = flags & 0xFF;   // 0xCD
 ```
 
 ```asm
-and eax, 0xFF                    ; 取最低字节
+and  eax, 0xFF                  ; 取最低字节
 ```
 
-常见用途 — **清除标志位**：
+**清除标志位**：
 
 ```c
 permissions &= ~READ_ONLY;  // 清除读权限位
 ```
 
 ```asm
-and dword ptr [ebp-4], 0xFFFFFFFE  ; 清除最低位
+and  dword ptr [ebp-4], 0xFFFFFFFE  ; 清除最低位
 ```
 
 ### OR — 按位或
@@ -273,14 +222,14 @@ and dword ptr [ebp-4], 0xFFFFFFFE  ; 清除最低位
 
 规则：有一个是 1，结果就是 1。
 
-常见用途 — **设置标志位**：
+**设置标志位**：
 
 ```c
 permissions |= EXECUTE;  // 设置执行权限位
 ```
 
 ```asm
-or dword ptr [ebp-4], 4          ; 设置第 2 位
+or   dword ptr [ebp-4], 4       ; 设置第 2 位
 ```
 
 ### XOR — 按位异或
@@ -294,19 +243,17 @@ or dword ptr [ebp-4], 4          ; 设置第 2 位
 
 规则：相同为 0，不同为 1。
 
-<!-- 🎨 画图：XOR 运算的逐位对比示意，强调"相同为0，不同为1" -->
-
 XOR 在逆向中出现频率极高，三个用途必须记住：
 
 **用途一：清零**
 
 ```asm
-xor eax, eax                    ; eax = 0
+xor  eax, eax                   ; eax = 0
 ```
 
 这比 `mov eax, 0` 更常见，原因有两个：
 
-- 编码更短（2 字节 vs 5 字节）
+- 编码更短 (2 字节 vs 5 字节)
 - 现代 CPU 对 `xor reg, reg` 有特殊优化，打破寄存器依赖链
 
 **用途二：简单加密/解密**
@@ -318,13 +265,12 @@ for (int i = 0; i < 5; i++) {
     data[i] ^= key;
 }
 // 现在 data 是密文
+
 for (int i = 0; i < 5; i++) {
     data[i] ^= key;
 }
 // 现在 data 又是 "Hello"
 ```
-
-<!-- 📸 截图：x64dbg 中 XOR 加密/解密的对比 -->
 
 XOR 加密的特点：加密和解密用同一个操作。`A XOR B = C`，`C XOR B = A`。逆向中看到一大片 `xor` 循环，多半是在做简单的字符串加密或解密。
 
@@ -340,12 +286,12 @@ unsigned int b = ~a;  // 0xF0F0F0F0
 ```
 
 ```asm
-not eax                          ; eax = ~eax
+not  eax                         ; eax = ~eax
 ```
 
 NOT 很少单独出现，通常配合 AND 使用来清除某些位：`AND NOT bit`。
 
-### SHL/SHR — 左移/右移
+### SHL / SHR / SAR — 移位
 
 左移一位 = 乘以 2，右移一位 = 除以 2。
 
@@ -356,50 +302,46 @@ int c = a >> 1;   // 5 / 2 = 2
 ```
 
 ```asm
-mov eax, 5
-shl eax, 2                      ; eax = 5 << 2 = 20
-mov eax, 5
-shr eax, 1                      ; eax = 5 >> 1 = 2
+mov  eax, 5
+shl  eax, 2                      ; eax = 5 << 2 = 20
+mov  eax, 5
+shr  eax, 1                      ; eax = 5 >> 1 = 2
 ```
 
-<!-- 🎨 画图：SHL 操作示意，展示比特向左移动，低位补 0 -->
-
-`SHL`（Shift Left）和 `SHR`（Shift Right）是逻辑移位，高位/低位补 0。有符号数右移用 `SAR`（Shift Arithmetic Right），高位补符号位：
+`SHL` (Shift Left) 和 `SHR` (Shift Right) 是逻辑移位，空位补 0。有符号数右移用 `SAR` (Shift Arithmetic Right)，高位补符号位：
 
 ```asm
-mov eax, -8
-sar eax, 1                      ; eax = -4（保持符号）
+mov  eax, -8
+sar  eax, 1                      ; eax = -4 (保持符号)
 ```
 
 编译器用移位替代乘除 2 的幂：
 
-| C 代码  | 汇编                                            |
-| ------- | ----------------------------------------------- |
-| `x * 2` | `shl eax, 1`                                    |
-| `x * 4` | `shl eax, 2`                                    |
-| `x * 8` | `shl eax, 3`                                    |
-| `x / 4` | `shr eax, 2`（无符号）或 `sar eax, 2`（有符号） |
+| C 代码  | 汇编                                           |
+| ------- | ---------------------------------------------- |
+| `x * 2` | `shl eax, 1`                                   |
+| `x * 4` | `shl eax, 2`                                   |
+| `x * 8` | `shl eax, 3`                                   |
+| `x / 4` | `shr eax, 2` (无符号) 或 `sar eax, 2` (有符号) |
 
 ### 位运算综合练习
 
 分析这段汇编在做什么：
 
 ```asm
-mov eax, dword ptr [ebp-4]       ; eax = 输入值
-and eax, 0xF0                    ; 取高 4 位
-shr eax, 4                       ; 右移 4 位到低位
-or eax, 0x30                     ; 加上 0x30
+mov  eax, dword ptr [ebp-4]     ; eax = 输入值
+and  eax, 0xF0                  ; 取高 4 位
+shr  eax, 4                     ; 右移 4 位到低位
+or   eax, 0x30                  ; 加上 0x30
 ```
 
-答案：把一个字节的高 4 位转换成 ASCII 字符。比如输入 `0x7B`，高 4 位是 `7`，加上 `0x30` 变成 `'7'`（0x37）。这种模式在十六进制转字符串的代码里很常见。
+答案：把一个字节的高 4 位转换成 ASCII 字符。比如输入 `0x7B`，高 4 位是 `7`，加上 `0x30` 变成 `'7'` (0x37)。这种模式在十六进制转字符串的代码里很常见。
 
 ## LEA 指令
 
-`LEA`（Load Effective Address）设计初衷是计算内存地址，但编译器经常拿它做**快速算术运算**。
+`LEA` (Load Effective Address) 设计初衷是计算内存地址，但编译器经常拿它做**快速算术运算**。
 
 ```c
-#include <stdio.h>
-
 int main(int argc, char *argv[]) {
     int a = argc;
     int b = a * 3;
@@ -408,16 +350,12 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-你期望看到 `imul`，但编译器给你的是：
-
 ```asm
-mov eax, dword ptr [ebp+8]       ; eax = argc
-lea eax, dword ptr [eax+eax*2]   ; eax = eax + eax*2 = eax*3
+mov  eax, dword ptr [ebp+8]     ; eax = argc
+lea  eax, dword ptr [eax+eax*2] ; eax = eax + eax*2 = eax*3
 ```
 
-<!-- 📸 截图：x64dbg 中 LEA 指令做乘法 -->
-
-`lea eax, [eax+eax*2]` = `eax + eax * 2` = `eax * 3`。LEA 能在一条指令里完成**加法+乘法**，而且不修改标志位，比 `imul` 更快。
+`lea eax, [eax+eax*2]` = `eax + eax*2` = `eax * 3`。LEA 能在一条指令里完成**加法 + 乘法**，而且不修改标志位，比 `imul` 更快。
 
 常见 LEA 模式：
 
@@ -429,8 +367,6 @@ lea eax, dword ptr [eax+eax*2]   ; eax = eax + eax*2 = eax*3
 | `lea eax, [ecx+4]`     | `ecx + 4`   | 加偏移   |
 | `lea eax, [ecx+edx]`   | `ecx + edx` | 两数相加 |
 
-<!-- 🎨 画图：LEA 地址计算公式拆解，展示 base + index*scale + displacement 三个组成部分 -->
-
 LEA 的地址计算格式是 `[base + index*scale + displacement]`：
 
 - **base** — 任意通用寄存器
@@ -438,7 +374,7 @@ LEA 的地址计算格式是 `[base + index*scale + displacement]`：
 - **scale** — 1、2、4 或 8
 - **displacement** — 立即数常量
 
-所以 LEA 能表达的计算是 `base + index * scale + displacement`，比单条 ADD 或 IMUL 更灵活。
+所以 LEA 能表达的计算是 `base + index*scale + displacement`，比单条 ADD 或 IMUL 更灵活。
 
 更复杂的例子：
 
@@ -447,8 +383,8 @@ int b = a * 5 + 10;
 ```
 
 ```asm
-lea eax, dword ptr [ecx+ecx*4]  ; ecx * 5
-add eax, 0xA                     ; + 10
+lea  eax, dword ptr [ecx+ecx*4] ; ecx * 5
+add  eax, 0xA                   ; + 10
 ```
 
 或者：
@@ -458,136 +394,120 @@ int b = a * 12;
 ```
 
 ```asm
-lea eax, dword ptr [ecx+ecx*2]  ; ecx * 3
-shl eax, 2                       ; * 4 = ecx * 12
+lea  eax, dword ptr [ecx+ecx*2] ; ecx * 3
+shl  eax, 2                     ; * 4 = ecx * 12
 ```
 
-识别技巧：**看到 LEA 且第二个操作数是 `[reg+reg*N]` 形式，不是算地址，是在做乘法**。
+识别技巧：**看到 LEA 且操作数是 `[reg+reg*N]` 形式，不是算地址，是在做乘法**。
+
+> [!NOTE] 小乘数的优化选择
+> 并非所有乘法都用 LEA。乘以 2、4、8 时编译器直接用 `shl`。乘以 3、5、9 用 LEA。更大的素数 (37、101) 用 `imul`。编译器会选择最短的编码。
 
 ## 运算指令速查表
 
-把本章所有指令汇总一下：
-
-| 指令 | 格式                  | 作用     | 逆向识别要点                      |
-| ---- | --------------------- | -------- | --------------------------------- |
-| ADD  | `add dest, src`       | 加法     | `a + b`                           |
-| SUB  | `sub dest, src`       | 减法     | `a - b`                           |
-| INC  | `inc dest`            | 加 1     | `i++`                             |
-| DEC  | `dec dest`            | 减 1     | `i--`                             |
-| IMUL | `imul dest, src, imm` | 乘法     | 三操作数形式最常见                |
-| IDIV | `idiv src`            | 除法     | 很少出现，编译器用移位+魔术数替代 |
-| AND  | `and dest, src`       | 按位与   | 取位、清标志                      |
-| OR   | `or dest, src`        | 按位或   | 设置标志                          |
-| XOR  | `xor dest, src`       | 按位异或 | 清零、加密、校验                  |
-| NOT  | `not dest`            | 取反     | 配合 AND 用                       |
-| SHL  | `shl dest, count`     | 左移     | 乘以 2^n                          |
-| SHR  | `shr dest, count`     | 逻辑右移 | 无符号除以 2^n                    |
-| SAR  | `sar dest, count`     | 算术右移 | 有符号除以 2^n                    |
-| LEA  | `lea dest, [addr]`    | 计算地址 | 编译器用它做快速算术              |
-
-<!-- 🎨 画图：运算指令分类思维导图（算术运算 / 位运算 / 移位 / 地址计算） -->
+| 指令 | 格式                  | 作用     | 逆向识别要点                        |
+| ---- | --------------------- | -------- | ----------------------------------- |
+| ADD  | `add dest, src`       | 加法     | `a + b`                             |
+| SUB  | `sub dest, src`       | 减法     | `a - b`                             |
+| INC  | `inc dest`            | 加 1     | `i++`                               |
+| DEC  | `dec dest`            | 减 1     | `i--`                               |
+| IMUL | `imul dest, src, imm` | 乘法     | 三操作数形式最常见                  |
+| IDIV | `idiv src`            | 除法     | 很少出现，编译器用魔术数 + sar 替代 |
+| AND  | `and dest, src`       | 按位与   | 取位、清标志                        |
+| OR   | `or dest, src`        | 按位或   | 设置标志                            |
+| XOR  | `xor dest, src`       | 按位异或 | 清零、加密、校验                    |
+| NOT  | `not dest`            | 取反     | 配合 AND 用                         |
+| SHL  | `shl dest, count`     | 左移     | 乘以 2^n                            |
+| SHR  | `shr dest, count`     | 逻辑右移 | 无符号除以 2^n                      |
+| SAR  | `sar dest, count`     | 算术右移 | 有符号除以 2^n                      |
+| LEA  | `lea dest, [addr]`    | 计算地址 | 编译器用它做快速算术                |
 
 ## 练习
 
 以下是 5 段汇编代码，试着还原出等价的 C 代码。
 
-### 练习 1
+1. 以下汇编做了什么运算？
 
-```asm
-mov eax, dword ptr [ebp+8]
-add eax, dword ptr [ebp+C]
-sub eax, 0xA
-mov dword ptr [ebp-4], eax
-```
+   ```asm
+   mov  eax, dword ptr [ebp+8]
+   add  eax, dword ptr [ebp+C]
+   sub  eax, 0xA
+   mov  dword ptr [ebp-4], eax
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > ```c
+   > int result = a + b - 10;
+   > ```
+   >
+   > `[ebp+8]` 是第一个参数，`[ebp+C]` 是第二个参数。
 
-```c
-int result = a + b - 10;
-```
+2. 以下汇编做了什么运算？
 
-`[ebp+8]` 是第一个参数，`[ebp+C]` 是第二个参数。
+   ```asm
+   xor  eax, eax
+   add  eax, dword ptr [ebp+8]
+   shl  eax, 3
+   ```
 
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > ```c
+   > int result = a * 8;
+   > ```
+   >
+   > `shl eax, 3` = 左移 3 位 = 乘以 8。`xor eax, eax` 是清零，紧接着 `add` 覆盖了它，说明这行是无用代码或编译器保守处理。
 
-### 练习 2
+3. 以下汇编做了什么运算？
 
-```asm
-xor eax, eax
-add eax, dword ptr [ebp+8]
-shl eax, 3
-```
+   ```asm
+   mov  eax, dword ptr [ebp+8]
+   lea  eax, dword ptr [eax+eax*4]
+   add  eax, 1
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > ```c
+   > int result = a * 5 + 1;
+   > ```
+   >
+   > `lea [eax+eax*4]` = `eax * 5`，然后 `+1`。
 
-```c
-int result = a * 8;
-```
+4. 以下汇编做了什么运算？
 
-`shl eax, 3` = 左移 3 位 = 乘以 8。`xor eax, eax` 是清零，但紧接着 `add` 就覆盖了，说明编译器没有完美优化。
+   ```asm
+   mov  eax, dword ptr [ebp+8]
+   cdq
+   and  edx, 7
+   add  eax, edx
+   sar  eax, 3
+   ```
 
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > ```c
+   > int result = a / 8;
+   > ```
+   >
+   > `cdq` 把 EAX 符号扩展到 EDX:EAX。如果 EAX 是负数，EDX = `0xFFFFFFFF`；正数则 EDX = 0。`and edx, 7` 得到修正值 (负数为 7，正数为 0)。加上修正值再算术右移 3 位，实现正确的**向零取整**除法。
 
-### 练习 3
+5. 以下汇编做了什么运算？
 
-```asm
-mov eax, dword ptr [ebp+8]
-lea eax, dword ptr [eax+eax*4]
-add eax, 1
-```
+   ```asm
+   mov  eax, dword ptr [ebp+8]
+   shr  eax, 4
+   and  eax, 0xF
+   shl  eax, 8
+   or   eax, dword ptr [ebp+C]
+   mov  dword ptr [ebp-4], eax
+   ```
 
-<details>
-<summary>答案</summary>
-
-```c
-int result = a * 5 + 1;
-```
-
-`lea [eax+eax*4]` = `eax * 5`。
-
-</details>
-
-### 练习 4
-
-```asm
-mov eax, dword ptr [ebp+8]
-cdq
-and edx, 7
-add eax, edx
-sar eax, 3
-```
-
-<details>
-<summary>答案</summary>
-
-```c
-int result = a / 8;
-```
-
-`cdq` 把 EAX 符号扩展到 EDX:EAX。如果 EAX 是负数，EDX = `0xFFFFFFFF`；正数则 EDX = 0。`and edx, 7` 得到修正值（负数为 7，正数为 0）。加上修正值再算术右移 3 位，实现正确的**向零取整**除法。
-
-</details>
-
-### 练习 5
-
-```asm
-mov eax, dword ptr [ebp+8]
-shr eax, 4
-and eax, 0xF
-shl eax, 8
-or eax, dword ptr [ebp+C]
-mov dword ptr [ebp-4], eax
-```
-
-<details>
-<summary>答案</summary>
-
-```c
-int result = ((a >> 4) & 0xF) << 8 | b;
-```
-
-取 `a` 的第 4-7 位（右移 4 再 AND 0xF），放到结果的高字节（左移 8），再和 `b` 组合。这是一个典型的**位域拼接**操作，在协议解析和数据打包中常见。
-
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > ```c
+   > int result = ((a >> 4) & 0xF) << 8 | b;
+   > ```
+   >
+   > 取 `a` 的第 4-7 位 (右移 4 再 AND 0xF)，放到结果的高字节 (左移 8)，再和 `b` 组合。这是一个典型的**位域拼接**操作，在协议解析和数据打包中常见。
