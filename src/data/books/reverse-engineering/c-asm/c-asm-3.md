@@ -521,7 +521,7 @@ ret
    mov  dword ptr [ebp-4], 1
    jmp  end
    else_branch:
-   mov  dword ptr [ebp-4], 0FFFFFFFFh
+   mov  dword ptr [ebp-4], 0xFFFFFFFF
    end:
    mov  eax, dword ptr [ebp-4]
    ```
@@ -537,7 +537,7 @@ ret
    > }
    > ```
    >
-   > `0FFFFFFFFh` 是 -1 的补码（MSVC 汇编风格，省略前导零）。`jle` 取反得到 `a > 0`，if 体在前，else 体在后——和正文里的 if/else 结构完全一样。
+   > `0xFFFFFFFF` 是 -1 的补码。`jle` 取反得到 `a > 0`，if 体在前，else 体在后——和正文里的 if/else 结构完全一样。
 
 3. 以下汇编还原成什么 C 代码？
 

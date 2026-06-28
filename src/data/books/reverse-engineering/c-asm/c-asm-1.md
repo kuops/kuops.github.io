@@ -97,7 +97,7 @@ mov  dword ptr [ebp-0x1C], 0x40091EB8   ; 高 4 字节 (IEEE 754 双精度编码
 
 ```asm
 ; int x = 10;        和  unsigned int x = 10;  生成的汇编一模一样
-mov  dword ptr [ebp-4], 0Ah
+mov  dword ptr [ebp-4], 0xA
 ```
 
 区别只在**运算和比较时**才会体现：有符号用 `jg`/`jl`（greater/less），无符号用 `ja`/`jb`（above/below）。有符号除法用 `idiv`，无符号用 `div`。第 6 章和第 8 章讲过这些指令，这里只需要记住一个结论：**光看赋值和 mov 分辨不出有符号无符号，要看运算和跳转指令**。
@@ -178,7 +178,7 @@ ret
 过滤掉这些噪音后，核心就这几行：
 
 ```asm
-mov  dword ptr [ebp-8], 0Ah        ; a = 10
+mov  dword ptr [ebp-8], 0xA    ; a = 10
 mov  dword ptr [ebp-14h], 14h      ; b = 20
 mov  eax, [ebp-8]                  ; 读 a
 add  eax, [ebp-14h]                ; a + b
@@ -196,7 +196,7 @@ mov  eax, [ebp-20h]               ; 返回值放 eax
 为什么是减法？因为栈从高地址往低地址生长（第 9 章讲过），新变量放在更低地址。
 
 > [!TIP]
-> 在 x64dbg 里单步执行 `mov dword ptr [ebp-8], 0Ah` 后，切到堆栈窗口，按 `Ctrl+G` 跳到 `EBP-8` 的地址，你会看到值变成了 `0000000A`。这就是变量赋值的真相：**把一个数值写到栈上某个固定偏移**。
+> 在 x64dbg 里单步执行 `mov dword ptr [ebp-8], 0xA` 后，切到堆栈窗口，按 `Ctrl+G` 跳到 `EBP-8` 的地址，你会看到值变成了 `0000000A`。这就是变量赋值的真相：**把一个数值写到栈上某个固定偏移**。
 
 ## 全局变量
 
