@@ -93,13 +93,21 @@ mov  dword ptr [ebp-0x20], edx        ; 写回高 4 字节
 
 这个模式在 32 位程序里到处都是：**看到 `add` 紧跟 `adc`，说明在做 64 位运算**。
 
+![adc 指令执行状态变化(64位加法)](c-asm-2-images/adc-trace.svg)
+
 减法同理，对应的是 `sub` + `sbb` (Subtract with Borrow)。低 4 字节用 `sub`，如果不够减产生借位，CF=1；高 4 字节用 `sbb`，额外减掉 CF。识别方式完全对称：**`sub` + `sbb` = 64 位减法**。
+
+![sbb 指令工作原理(64位减法)](c-asm-2-images/sbb-trace.svg)
 
 ## 乘除法
 
 乘除法比加减复杂，因为 x86 有专门的乘除指令，编译器还会做各种优化。
 
-### 乘法：imul
+### 乘法：编译器怎么选指令
+
+C 里的 `a * N`，Debug 模式下编译器不优化，无论 N 是多少都用 `imul`。但逆向分析的目标几乎都是 Release 编译的，编译器会根据 N 的大小选择不同的指令：
+
+**N 无法拆成少量 lea/shl 组合（如 37）→ `imul`**
 
 ```c
 int calc(int a) {
@@ -109,23 +117,89 @@ int calc(int a) {
 ```
 
 ```asm
-imul eax, dword ptr [ebp+8], 0x25  ; eax = a * 37，直接从内存读参数并乘
+mov  eax, dword ptr [ebp+8]       ; eax = a
+imul eax, eax, 0x25               ; eax = a * 37
 ```
 
-`0x25` 就是十进制 37。`imul` 有三种形式：
+`0x25` 就是十进制 37。`imul` 有三种形式，逆向中最常见的是三操作数 `imul dest, src, imm`。
 
-| 形式     | 指令                | 含义                             |
-| -------- | ------------------- | -------------------------------- |
-| 单操作数 | `imul ebx`          | EAX = EAX \* EBX，结果高位在 EDX |
-| 双操作数 | `imul eax, ebx`     | EAX = EAX \* EBX                 |
-| 三操作数 | `imul eax, ebx, 37` | EAX = EBX \* 37                  |
+为什么 37 用 `imul` 而不是 `lea`+`shl` 组合？因为 37 是质数，拆成 2 的幂次组合需要 `(a*32) + (a*4) + a`——多条 `shl` + `add` 才能搞定，编译器权衡后一条 `imul` 更划算。但 `a * 64` 虽然数字更大，编译器会用 `shl eax, 6` 一条搞定。
 
-逆向中最常见的是三操作数形式。
+**N 能拆成 lea/shl 组合（如 3、5、9）→ `lea`**
+
+```c
+int b = a * 3;
+```
+
+```asm
+mov  eax, dword ptr [ebp+8]       ; eax = a
+lea  eax, dword ptr [eax+eax*2]   ; eax = eax + eax*2 = eax*3
+```
+
+`lea` 设计初衷是算内存地址，但编译器拿它做乘法——地址计算格式 `[base + index*scale + displacement]` 刚好能表达 `base + index*scale`，一条指令搞定小乘数，比 `imul` 更短更快。
+
+**N 是 2 的幂（如 2、4、8）→ `shl`**
+
+```c
+int b = a * 8;
+```
+
+```asm
+mov  eax, dword ptr [ebp+8]       ; eax = a
+shl  eax, 3                       ; 左移 3 位 = 乘以 8
+```
+
+| C 代码   | 编译器选用 | 汇编                   |
+| -------- | ---------- | ---------------------- |
+| `a * 37` | `imul`     | `imul eax, eax, 37`    |
+| `a * 3`  | `lea`      | `lea eax, [eax+eax*2]` |
+| `a * 5`  | `lea`      | `lea eax, [eax+eax*4]` |
+| `a * 8`  | `shl`      | `shl eax, 3`           |
+
+更复杂的乘法会组合使用：
+
+```c
+int b = a * 5 + 10;
+```
+
+```asm
+mov  eax, dword ptr [ebp+8]       ; eax = a
+lea  eax, dword ptr [eax+eax*4]   ; eax = a * 5
+add  eax, 0xA                     ; eax = a * 5 + 10
+```
+
+```c
+int b = a * 12;
+```
+
+```asm
+mov  eax, dword ptr [ebp+8]       ; eax = a
+lea  eax, dword ptr [eax+eax*2]   ; eax = a * 3
+shl  eax, 2                       ; eax = a * 3 * 4 = a * 12
+```
 
 > [!NOTE] 无符号乘法
 > `imul` 是**有符号**乘法。C 的 `unsigned int` 乘法理论上应该用 `mul` 指令，但实际上编译器几乎总是用 `imul`，因为结果在低位时两者完全一样。只有单操作数 `mul`/`imul` 产生 64 位结果（高位在 EDX）时才有区别。
 >
 > 64 位程序中，乘法指令不变（`imul rax, rbx`），只是寄存器从 32 位换成 64 位。
+
+> [!NOTE] 32 位程序的 64 位乘法
+> `long long` 乘法在 32 位模式下没有对应指令。编译器会静态链接一段 helper 代码 `__allmul` 到 EXE 里（不是外部 DLL，而是编译器自动嵌入的），看汇编就能认出来：
+>
+> ```asm
+> ; ll = ll * a;  (ll 是 long long，a 是 int)
+> mov  eax, dword ptr [ebp+8]     ; eax = a
+> cdq                              ; 符号扩展 a 到 EDX:EAX
+> push edx                         ; push a 高 32 位
+> push eax                         ; push a 低 32 位
+> push dword ptr [ebp-8]           ; push ll 高 32 位
+> push dword ptr [ebp-0xC]         ; push ll 低 32 位
+> call __allmul                    ; 结果在 EDX:EAX
+> mov  dword ptr [ebp-0xC], eax    ; 写回 ll 低 32 位
+> mov  dword ptr [ebp-8], edx      ; 写回 ll 高 32 位
+> ```
+>
+> `__allmul` 内部用多条 `mul` 指令实现 64 位乘法。Debug 版有符号能看到 `call __allmul`，Release 或脱壳后可能只剩 `call 0x005D1FE0`，这时需要跟进去看——函数体很短，特征明显：多条 `mul` + `add` 累加 + `ret 0x10`（清理 16 字节参数 = 两个 64 位操作数）。类似的还有 `__allshl`（64 位左移）、`__allshr`（64 位右移）、`__aullrem`（64 位取模）等编译器 helper。
 
 ### 除法：Debug 老实，Release 投机
 
@@ -219,7 +293,7 @@ Debug 模式直接用 `idiv`，余数天然在 EDX 里：
 mov  eax, dword ptr [a]           ; eax = a
 cdq                                ; 符号扩展到 EDX:EAX
 mov  ecx, 7
-idiv eax, ecx                     ; EAX = a / 7, EDX = a % 7
+idiv ecx                          ; EAX = a / 7, EDX = a % 7
 push edx                          ; 余数直接传给 printf
 ```
 
@@ -256,6 +330,7 @@ push esi                          ; 传给 printf
 int i = 0;
 ++i;
 i++;
+--i;
 i--;
 ```
 
@@ -271,36 +346,44 @@ add  eax, 1                        ; +1
 mov  dword ptr [ebp-4], eax        ; 写回 i (i++)
 mov  eax, dword ptr [ebp-4]        ; 读 i
 sub  eax, 1                        ; -1
+mov  dword ptr [ebp-4], eax        ; 写回 i (--i)
+mov  eax, dword ptr [ebp-4]        ; 读 i
+sub  eax, 1                        ; -1
 mov  dword ptr [ebp-4], eax        ; 写回 i (i--)
 ```
 
-`++i` 和 `i++` 生成的代码完全一样？没错。当它们作为**独立语句**使用时，返回值被丢弃，编译器不需要区分先后。
+`++i`、`i++`、`--i`、`i--` 生成的代码两两一样？没错。当它们作为**独立语句**使用时，返回值被丢弃，编译器不需要区分先后。
 
 > [!NOTE] i++ 和 ++i 什么时候才有区别
 > 区别在于**返回值**。`++i` 先加再返回新值，`i++` 先返回旧值再加。当你把结果赋值给另一个变量时，区别就出来了：
 >
 > ```c
-> int a = ++i;   // i 先加 1, a = 新值
-> int b = i++;   // b = 旧值, 然后 i 加 1
+> int i = 0;
+> int a = i++;   // a = 旧值(0), 然后 i 加 1
+> int b = ++i;   // i 先加 1, b = 新值(2)
 > ```
 >
-> Debug 汇编：
+> Debug 汇编（注意 Debug 模式不做任何优化，多出很多存取）：
 >
 > ```asm
-> ; int a = ++i
-> mov  eax, dword ptr [ebp-4]       ; 读 i
-> add  eax, 1                       ; i + 1
-> mov  dword ptr [ebp-4], eax       ; 写回 i (先加)
-> mov  dword ptr [ebp-8], eax       ; a = 新值
+> ; int a = i++
+> mov  eax, dword ptr [i]           ; 读 i
+> mov  dword ptr [ebp-0xE8], eax    ; 存旧值到临时变量 (先存!)
+> mov  ecx, dword ptr [i]           ; 再读 i
+> add  ecx, 1                       ; i + 1
+> mov  dword ptr [i], ecx           ; 写回 i
+> mov  edx, dword ptr [ebp-0xE8]    ; 取旧值
+> mov  dword ptr [a], edx           ; a = 旧值
 >
-> ; int b = i++
-> mov  eax, dword ptr [ebp-4]       ; 读 i
-> mov  dword ptr [ebp-0xC], eax     ; b = 旧值 (先存旧值!)
+> ; int b = ++i
+> mov  eax, dword ptr [i]           ; 读 i
 > add  eax, 1                       ; i + 1
-> mov  dword ptr [ebp-4], eax       ; 写回 i (后加)
+> mov  dword ptr [i], eax           ; 写回 i (先加)
+> mov  ecx, dword ptr [i]           ; 再读 i (新值)
+> mov  dword ptr [b], ecx           ; b = 新值
 > ```
 >
-> `++i` 是先写回再赋值，`i++` 是先赋旧值再写回。逆向时看到"先存旧值再改"的模式，就是后置 `++`。不过 Release 模式下，如果旧值没被真正使用，编译器会优化掉这层区别。
+> 核心区别：`i++` 先存旧值再改 i，`++i` 先改 i 再读新值。逆向时看到"先存到一个临时变量再改"的模式，就是后置 `++`。不过 Release 模式下，如果旧值没被真正使用，编译器会优化掉这层区别。
 
 `inc`/`dec` 指令比 `add ..., 1` 编码更短（少一个立即数字节），Release 模式下编译器优先使用：
 
@@ -337,12 +420,51 @@ and  eax, 0xFF                    ; 取最低字节
 **清除标志位**：
 
 ```c
-permissions &= ~READ_ONLY;  // 清除读权限位
+#define READ_ONLY  0x01   // 0001
+#define WRITE      0x02   // 0010
+#define EXECUTE    0x04   // 0100
+
+unsigned int permissions = 0x05;    // 0101，第 0 位和第 2 位是 1
+permissions &= ~READ_ONLY;          // 清除第 0 位，结果 0x04
 ```
+
+这行新手看着懵，一步一步来：
+
+**第一步**：`READ_ONLY` 的值是 `0x01`
+
+**第二步**：`~READ_ONLY` 就是 `~0x01`，按位取反，0 变 1、1 变 0：
+
+```
+0x00000001  →  0xFFFFFFFE
+0000...0001  →  1111...1110
+```
+
+**第三步**：`&=` 是复合赋值，`a &= b` 等价于 `a = a & b`，所以：
+
+```
+permissions &= ~READ_ONLY
+↓ 把 ~READ_ONLY 替换成 0xFFFFFFFE
+permissions &= 0xFFFFFFFE
+↓ 把 &= 展开成 =
+permissions = permissions & 0xFFFFFFFE
+```
+
+**第四步**：`permissions` 当前是 `0x05`（二进制 `0101`），和 `0xFFFFFFFE`（最低位是 0）做 AND：
+
+```
+  0101  (permissions)
+& 1110  (~READ_ONLY)
+------
+  0100  (结果 = 0x04)
+```
+
+最低位被清零，其他位不变——这就是"清除标志位"。
 
 ```asm
 and  dword ptr [ebp-4], 0xFFFFFFFE   ; 清除最低位
 ```
+
+记住这个套路：**`&= ~X` 清除位**。
 
 ### OR — 按位或
 
@@ -358,12 +480,25 @@ and  dword ptr [ebp-4], 0xFFFFFFFE   ; 清除最低位
 **设置标志位**：
 
 ```c
-permissions |= EXECUTE;  // 设置执行权限位
+// EXECUTE = 0x04
+unsigned int permissions = 0x01;   // 0001，只有读权限
+permissions |= EXECUTE;            // 设置第 2 位，结果 0x05 (0101)
+```
+
+`|=` 和 `&=` 一样是复合赋值，展开就是 `permissions = permissions | 0x04`。OR 的规则是"有一个是 1 就是 1"，所以第 2 位被设为 1，其他位不变：
+
+```
+  0001  (permissions)
+| 0100  (EXECUTE)
+------
+  0101  (结果 = 0x05)
 ```
 
 ```asm
 or   dword ptr [ebp-4], 4         ; 设置第 2 位
 ```
+
+和清除位对称：**`&= ~X` 清除位，`|= X` 设置位**。
 
 ### XOR — 按位异或
 
@@ -378,36 +513,25 @@ or   dword ptr [ebp-4], 4         ; 设置第 2 位
 
 XOR 在逆向中出现频率极高，三个用途必须记住：
 
-**用途一：清零**
-
-```asm
-xor  eax, eax                     ; eax = 0
-```
-
-这比 `mov eax, 0` 更常见，原因有两个：
-
-- 编码更短（2 字节 vs 5 字节）
-- 现代 CPU 对 `xor reg, reg` 有特殊优化，打破寄存器依赖链
-
-**用途二：简单加密/解密**
+**用途一：简单加密/解密**
 
 ```c
 char data[] = "Hello";
 char key = 0x55;
 for (int i = 0; i < 5; i++) {
-    data[i] ^= key;
+    data[i] ^= key;  // 等价于 data[i] = data[i] ^ key
 }
 // 现在 data 是密文
 
 for (int i = 0; i < 5; i++) {
-    data[i] ^= key;
+    data[i] ^= key;  // 再异或一次，恢复原文
 }
 // 现在 data 又是 "Hello"
 ```
 
 XOR 加密的特点：加密和解密用同一个操作。`A XOR B = C`，`C XOR B = A`。逆向中看到一大片 `xor` 循环，多半是在做简单的字符串加密或解密。
 
-**用途三：校验**
+**用途二：校验**
 
 很多校验算法用 XOR 来检测数据变化。比如 `checksum = A ^ B ^ C`，只要其中一个变了，checksum 就变。
 
@@ -429,24 +553,43 @@ NOT 很少单独出现，通常配合 AND 使用来清除某些位：`AND NOT bi
 左移一位 = 乘以 2，右移一位 = 除以 2。
 
 ```c
-int a = 5;
-int b = a << 2;   // 5 * 4 = 20
-int c = a >> 1;   // 5 / 2 = 2
+int s = a >> 1;              // a 是 int → sar（高位补符号位）
+unsigned u = ua >> 1;        // ua 是 unsigned → shr（高位补 0）
+int result = a << 3;         // 左移 → shl
 ```
 
 ```asm
-mov  eax, 5
-shl  eax, 2                        ; eax = 5 << 2 = 20
-mov  eax, 5
-shr  eax, 1                        ; eax = 5 >> 1 = 2
+; int s = a >> 1;
+mov  eax, dword ptr [a]
+sar  eax, 1                       ; int 右移：高位补符号位
+mov  dword ptr [s], eax
+
+; unsigned u = ua >> 1;
+mov  eax, dword ptr [ua]
+shr  eax, 1                       ; unsigned 右移：高位补 0
+mov  dword ptr [u], eax
+
+; int result = a << 3;
+mov  eax, dword ptr [a]
+shl  eax, 3                       ; 左移 3 位 = 乘以 8
+mov  dword ptr [result], eax
 ```
 
-`SHL` (Shift Left) 和 `SHR` (Shift Right) 是逻辑移位，空位补 0。有符号数右移用 `SAR` (Shift Arithmetic Right)，高位补符号位：
+`SHL` (Shift Left) 左移，空位补 0。右移有两种：`SHR` (Shift Right) 逻辑右移，高位补 0；`SAR` (Shift Arithmetic Right) 算术右移，高位补符号位。
 
-```asm
-mov  eax, -8
-sar  eax, 1                        ; eax = -4 (保持符号)
+选 `shr` 还是 `sar` 取决于**被移位的变量类型**——不是赋值目标类型。`a >> 1` 中如果 `a` 是 `int`，无论赋给 `int` 还是 `unsigned`，都用 `sar`；要让编译器生成 `shr`，`a` 本身必须是 `unsigned`。Debug 和 Release 都一样，因为这是类型语义决定的，不是优化。
+
+为什么必须区分？看 `0x80000000`（最高位是 1）：
+
+```c
+unsigned int u = 0x80000000;
+unsigned int d = u >> 1;   // u 是 unsigned → shr：高位补 0 → 0x40000000 (正确)
+
+int s = -8;
+int c = s >> 1;            // s 是 int → sar：高位补 1 → 0xFFFFFFFC = -4 (保持符号)
 ```
+
+如果 `unsigned` 错用了 `sar`，`0x80000000 >> 1` 会变成 `0xC0000000`，结果就错了。
 
 编译器用移位替代乘除 2 的幂：
 
@@ -459,101 +602,22 @@ sar  eax, 1                        ; eax = -4 (保持符号)
 
 ### 位运算综合示例
 
-分析这段汇编在做什么：
-
-```asm
-mov  eax, dword ptr [ebp-4]       ; eax = 输入值
-and  eax, 0xF0                    ; 取高 4 位
-shr  eax, 4                       ; 右移 4 位到低位
-or   eax, 0x30                    ; 加上 0x30
-```
-
-答案：把一个字节的高 4 位转换成 ASCII 字符。比如输入 `0x7B`，高 4 位是 `7`，加上 `0x30` 变成 `'7'` (0x37)。这种模式在十六进制转字符串的代码里很常见。
-
-## LEA 指令
-
-`LEA` (Load Effective Address) 设计初衷是计算内存地址，但编译器经常拿它做**快速算术运算**。
+C 代码里经常把位运算组合起来用，比如把一个字节的高 4 位转成 ASCII 字符：
 
 ```c
-int calc(int a) {
-    int b = a * 3;
-    return b;
-}
+unsigned char byte = 0x7B;        // 0111 1011
+unsigned char high = (byte & 0xF0) >> 4;  // 取高 4 位 → 7
+unsigned char ascii = high | 0x30;        // 7 | 0x30 = 0x37 = '7'
 ```
 
 ```asm
-mov  eax, dword ptr [ebp+8]       ; eax = a (参数)
-lea  eax, dword ptr [eax+eax*2]   ; eax = eax + eax*2 = eax*3
+mov  eax, dword ptr [ebp-4]       ; eax = byte (0x7B)
+and  eax, 0xF0                    ; eax = 0x70 (保留高 4 位)
+shr  eax, 4                       ; eax = 0x07 (右移到低位)
+or   eax, 0x30                    ; eax = 0x37 = '7'
 ```
 
-`lea eax, [eax+eax*2]` = `eax + eax*2` = `eax * 3`。LEA 能在一条指令里完成**加法 + 乘法**，而且不修改标志位，比 `imul` 更快。
-
-常见 LEA 模式：
-
-| LEA 指令               | 等价运算    | 用途     |
-| ---------------------- | ----------- | -------- |
-| `lea eax, [ecx+ecx*2]` | `ecx * 3`   | 乘 3     |
-| `lea eax, [ecx+ecx*4]` | `ecx * 5`   | 乘 5     |
-| `lea eax, [ecx+ecx*8]` | `ecx * 9`   | 乘 9     |
-| `lea eax, [ecx+4]`     | `ecx + 4`   | 加偏移   |
-| `lea eax, [ecx+edx]`   | `ecx + edx` | 两数相加 |
-
-LEA 的地址计算格式是 `[base + index*scale + displacement]`：
-
-- **base** — 任意通用寄存器
-- **index** — 任意通用寄存器
-- **scale** — 1、2、4 或 8
-- **displacement** — 立即数常量
-
-所以 LEA 能表达的计算是 `base + index*scale + displacement`，比单条 ADD 或 IMUL 更灵活。
-
-更复杂的例子：
-
-```c
-int b = a * 5 + 10;
-```
-
-```asm
-lea  eax, dword ptr [ecx+ecx*4]   ; ecx * 5
-add  eax, 0xA                     ; + 10
-```
-
-或者：
-
-```c
-int b = a * 12;
-```
-
-```asm
-lea  eax, dword ptr [ecx+ecx*2]   ; ecx * 3
-shl  eax, 2                       ; * 4 = ecx * 12
-```
-
-识别技巧：**看到 LEA 且操作数是 `[reg+reg*N]` 形式，不是算地址，是在做乘法**。
-
-> [!NOTE] 小乘数的优化选择
-> 并非所有乘法都用 LEA。乘以 2、4、8 时编译器直接用 `shl`。乘以 3、5、9 用 LEA。更大的素数（37、101）用 `imul`。编译器会选择最短的编码。
-
-## 运算指令速查表
-
-| 指令 | 格式                  | 作用     | 逆向识别要点                        |
-| ---- | --------------------- | -------- | ----------------------------------- |
-| ADD  | `add dest, src`       | 加法     | `a + b`                             |
-| ADC  | `adc dest, src`       | 带进位加 | `add` + `adc` = 64 位运算           |
-| SUB  | `sub dest, src`       | 减法     | `a - b`                             |
-| SBB  | `sbb dest, src`       | 带借位减 | `sub` + `sbb` = 64 位运算           |
-| INC  | `inc dest`            | 加 1     | `i++`                               |
-| DEC  | `dec dest`            | 减 1     | `i--`                               |
-| IMUL | `imul dest, src, imm` | 乘法     | 三操作数形式最常见                  |
-| IDIV | `idiv src`            | 除法     | 很少出现，编译器用魔术数 + sar 替代 |
-| AND  | `and dest, src`       | 按位与   | 取位、清标志                        |
-| OR   | `or dest, src`        | 按位或   | 设置标志                            |
-| XOR  | `xor dest, src`       | 按位异或 | 清零、加密、校验                    |
-| NOT  | `not dest`            | 取反     | 配合 AND 用                         |
-| SHL  | `shl dest, count`     | 左移     | 乘以 2^n                            |
-| SHR  | `shr dest, count`     | 逻辑右移 | 无符号除以 2^n                      |
-| SAR  | `sar dest, count`     | 算术右移 | 有符号除以 2^n                      |
-| LEA  | `lea dest, [addr]`    | 计算地址 | 编译器用它做快速算术                |
+这种模式在十六进制转字符串的代码里很常见。
 
 ## 练习
 
@@ -579,8 +643,7 @@ shl  eax, 2                       ; * 4 = ecx * 12
 2. 以下汇编做了什么运算？
 
    ```asm
-   xor  eax, eax
-   add  eax, dword ptr [ebp+8]
+   mov  eax, dword ptr [ebp+8]
    shl  eax, 3
    ```
 
@@ -590,7 +653,7 @@ shl  eax, 2                       ; * 4 = ecx * 12
    > int result = a * 8;
    > ```
    >
-   > `shl eax, 3` = 左移 3 位 = 乘以 8。`xor eax, eax` 是清零，紧接着 `add` 覆盖了它，说明这行是无用代码或编译器保守处理。
+   > `shl eax, 3` = 左移 3 位 = 乘以 8。
 
 3. 以下汇编做了什么运算？
 

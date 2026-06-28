@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 400" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <!-- 标题 -->
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">sbb 指令工作原理(64位减法)</text>
+
+  <!-- 初始状态 -->
+  <g transform="translate(20, 60)">
+    <rect x="0" y="0" width="380" height="80" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="12" fill="#94a3b8" font-weight="bold">初始状态</text>
+    <text x="10" y="45" font-family="monospace" font-size="14" fill="#3b82f6" font-weight="bold">EDX:EAX = 0x00000001:00000000</text>
+    <text x="10" y="65" font-family="monospace" font-size="14" fill="#3b82f6" font-weight="bold">ECX = 1, CF = 0</text>
+  </g>
+
+  <!-- 第一步：sub eax, ecx -->
+  <g transform="translate(20, 160)">
+    <rect x="0" y="0" width="380" height="100" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="12" fill="#10b981" font-weight="bold">第一步：sub eax, ecx</text>
+    <text x="10" y="45" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">EAX = 00000000 - 1 = FFFFFFFF</text>
+    <text x="10" y="65" font-family="monospace" font-size="14" fill="#ef4444" font-weight="bold">CF = 1 (不够减，需要借位)</text>
+    <text x="10" y="85" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">EDX 不变 = 00000001</text>
+  </g>
+
+  <!-- 箭头 -->
+  <g transform="translate(200, 140)">
+    <line x1="0" y1="0" x2="0" y2="20" stroke="#10b981" stroke-width="1.5"/>
+    <polygon points="-4,14 0,20 4,14" fill="#10b981"/>
+  </g>
+
+  <!-- 第二步：sbb edx, 0 -->
+  <g transform="translate(20, 280)">
+    <rect x="0" y="0" width="380" height="100" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="12" fill="#3b82f6" font-weight="bold">第二步：sbb edx, 0</text>
+    <text x="10" y="45" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">EDX = 00000001 - 0 - CF(1) = 00000000</text>
+    <text x="10" y="65" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">CF = 0 (无借位)</text>
+    <text x="10" y="85" font-family="monospace" font-size="14" fill="#94a3b8" font-weight="bold">最终：EDX:EAX = 0x00000000:FFFFFFFF</text>
+  </g>
+
+  <!-- 箭头 -->
+  <g transform="translate(200, 260)">
+    <line x1="0" y1="0" x2="0" y2="20" stroke="#3b82f6" stroke-width="1.5"/>
+    <polygon points="-4,14 0,20 4,14" fill="#3b82f6"/>
+  </g>
+
+  <!-- 说明 -->
+  <g transform="translate(440, 60)">
+    <rect x="0" y="0" width="380" height="320" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="25" font-size="14" fill="#fbbf24" font-weight="bold">关键点</text>
+    <text x="10" y="55" font-size="13" fill="#94a3b8" font-weight="bold">1. sub 低32位，不够减时 CF=1</text>
+    <text x="10" y="80" font-size="13" fill="#94a3b8" font-weight="bold">2. sbb 高32位，减去 CF 的值</text>
+    <text x="10" y="110" font-size="13" fill="#94a3b8" font-weight="bold">3. 两条指令配合完成64位减法</text>
+    <text x="10" y="140" font-size="13" fill="#94a3b8" font-weight="bold">4. 逆向中看到 sub+sbb 组合</text>
+    <text x="10" y="160" font-size="13" fill="#94a3b8" font-weight="bold">   说明在做64位减法</text>
+    <text x="10" y="190" font-size="13" fill="#94a3b8" font-weight="bold">5. 与 add+adc 对称</text>
+    <text x="10" y="220" font-size="13" fill="#94a3b8" font-weight="bold">   adc 是加 CF，sbb 是减 CF</text>
+  </g>
+</svg>
