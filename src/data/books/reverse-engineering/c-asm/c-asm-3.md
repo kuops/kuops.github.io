@@ -279,6 +279,43 @@ end:
 >
 > 字符串字面量（`"hello"`）存在 exe 的 `.rdata` 段，编译期固定地址，所以用 `push offset "hello"` 直接传地址。局部变量（`input`）在栈上，用 `push dword ptr [ebp-X]` 传值。
 
+### 浮点比较：comiss
+
+前面所有比较都是整数（`cmp` / `test`）。浮点变量的 `if` 不用 `cmp`，而用 `comiss`（Compare Scalar Ordered Single-Precision）：
+
+```c
+float a = 1.1f;
+float b = 1.2f;
+if (a > b) {
+    a = b;
+}
+```
+
+```asm
+movss  xmm0, dword ptr [ebp-4]      ; 把 a 加载到 xmm0
+comiss xmm0, dword ptr [ebp-8]      ; 比较 a 和 b（设置 EFLAGS）
+jbe    skip                         ; a <= b 就跳过（取反 a > b）
+movss  xmm0, dword ptr [ebp-8]      ; a = b
+movss  dword ptr [ebp-4], xmm0
+skip:
+```
+
+`comiss` 比较 XMM 寄存器和内存中的 float，结果写入 EFLAGS——和 `cmp` 一样，后面的 `jcc` 读取标志位决定是否跳转。但跳转条件**看起来是反的**：`a > b` 取反后应该是 `a <= b`，整数用 `jle`，浮点却用 `jbe`。
+
+因为 `comiss` 只设置 CF 和 ZF（不设 OF/SF），后面只能用无符号跳转（`ja`/`jb`/`jbe` 等），不能用 `jg`/`jl`。第 12 章讲过这个细节。
+
+| C 条件   | 汇编  | 含义         |
+| -------- | ----- | ------------ |
+| `a == b` | `je`  | ZF=1（相等） |
+| `a != b` | `jne` | ZF=0         |
+| `a > b`  | `ja`  | CF=0 且 ZF=0 |
+| `a >= b` | `jae` | CF=0         |
+| `a < b`  | `jb`  | CF=1         |
+| `a <= b` | `jbe` | CF=1 或 ZF=1 |
+
+> [!NOTE] movss 是什么
+> `movss`（Move Scalar Single-Precision）在内存和 XMM 寄存器之间搬移 4 字节 float。第 12 章讲过 SSE 指令——浮点赋值用 `movss`，浮点加法用 `addss`，浮点比较用 `comiss`。看到 `ss` 后缀就知道在操作 float（Scalar Single-precision）。double 用 `sd` 后缀（如 `comisd`、`movsd`）。
+
 ## 逻辑与 && 和逻辑或 ||
 
 C 的 `&&` 和 `||` 有一个重要特性：**短路求值**（short-circuit evaluation）。`a && b` 中如果 `a` 为假，就不评估 `b`；`a || b` 中如果 `a` 为真，也不评估 `b`。编译器必须生成对应的分支结构来保证这个语义。
