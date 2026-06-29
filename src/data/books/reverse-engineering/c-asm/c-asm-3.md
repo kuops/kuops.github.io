@@ -85,6 +85,8 @@ mov  eax, dword ptr [ebp-4]        ; 返回值
 
 看到这个模式——条件跳转跳到中间某处，前面又有一个 `jmp` 跳过那段代码——就可以确定是 if/else 结构。
 
+![if/else 分支流程](c-asm-3-images/if-else-flow.png)
+
 > [!NOTE] Debug 模式用 0xFFFFFFFF 表示 -1
 > 上面 `mov dword ptr [ebp-4], 0xFFFFFFFF` 就是 `result = -1`。`0xFFFFFFFF` 是 -1 的 32 位补码。Debug 模式不做常量折叠，按补码原样写入。
 

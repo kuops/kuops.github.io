@@ -93,11 +93,11 @@ mov  dword ptr [ebp-0x20], edx        ; 写回高 4 字节
 
 这个模式在 32 位程序里到处都是：**看到 `add` 紧跟 `adc`，说明在做 64 位运算**。
 
-![adc 指令执行状态变化(64位加法)](c-asm-2-images/adc-trace.svg)
+![adc 指令执行状态变化(64位加法)](c-asm-2-images/adc-trace.png)
 
 减法同理，对应的是 `sub` + `sbb` (Subtract with Borrow)。低 4 字节用 `sub`，如果不够减产生借位，CF=1；高 4 字节用 `sbb`，额外减掉 CF。识别方式完全对称：**`sub` + `sbb` = 64 位减法**。
 
-![sbb 指令工作原理(64位减法)](c-asm-2-images/sbb-trace.svg)
+![sbb 指令工作原理(64位减法)](c-asm-2-images/sbb-trace.png)
 
 ## 乘除法
 

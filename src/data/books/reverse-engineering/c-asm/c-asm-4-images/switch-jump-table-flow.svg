@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 504" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">连续 switch 跳转表 (x=3 -&gt; case_3)</text>
+
+  <!-- ========== Left column: dispatch logic ========== -->
+
+  <!-- Box 1: sub ecx, 1 -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">sub ecx, 1</text>
+  </g>
+  <line x1="195" y1="85" x2="195" y2="99" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="191,93 195,99 199,93" fill="#10b981"/>
+  <text x="205" y="96" font-size="11" font-weight="bold" fill="#64748b">ecx = 3-1 = 2 (索引)</text>
+
+  <!-- Box 2: cmp -->
+  <g transform="translate(40, 99)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">cmp dword ptr [ebp-0xC4], 4</text>
+  </g>
+  <line x1="195" y1="129" x2="195" y2="143" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="191,137 195,143 199,137" fill="#fbbf24"/>
+
+  <!-- Box 3: ja (range check, not taken) -->
+  <g transform="translate(40, 143)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">ja default_case</text>
+  </g>
+
+  <!-- ja not taken: green arrow to jmp (34px decision) -->
+  <line x1="195" y1="173" x2="195" y2="207" stroke="#10b981" stroke-width="2"/>
+  <polygon points="191,201 195,207 199,201" fill="#10b981"/>
+  <text x="205" y="192" font-size="11" font-weight="bold" fill="#10b981">索引 2 &lt;= 4, 不跳</text>
+
+  <!-- ja taken: gray dashed to default_case (x=395 channel) -->
+  <path d="M 350 158 L 390 158 Q 395 158 395 163 L 395 334 Q 395 339 390 339 L 354 339" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="5,3"/>
+  <polygon points="358,335 354,339 358,343" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 4: jmp [table] -->
+  <g transform="translate(40, 207)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">jmp dword ptr [edx*4+0x00AB43D0]</text>
+  </g>
+
+  <!-- ========== Right side: jump table ========== -->
+
+  <text x="540" y="62" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">跳转表 (0x00AB43D0)</text>
+
+  <text x="430" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">地址</text>
+  <text x="520" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">小端序字节</text>
+  <text x="640" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">指向</text>
+  <line x1="380" y1="95" x2="710" y2="95" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- Entry 0 -->
+  <text x="430" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+00</text>
+  <text x="520" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">94 43 AB 00</text>
+  <text x="640" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00AB4394</text>
+
+  <!-- Entry 1 -->
+  <text x="430" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+04</text>
+  <text x="520" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">9B 43 AB 00</text>
+  <text x="640" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00AB439B</text>
+
+  <!-- Entry 2: HIGHLIGHTED -->
+  <rect x="400" y="156" width="305" height="28" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="430" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">+08</text>
+  <text x="520" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">A2 43 AB 00</text>
+  <text x="640" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">0x00AB43A2</text>
+
+  <!-- Entry 3 -->
+  <text x="430" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0C</text>
+  <text x="520" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">A9 43 AB 00</text>
+  <text x="640" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00AB43A9</text>
+
+  <!-- Entry 4 -->
+  <text x="430" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+10</text>
+  <text x="520" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">B0 43 AB 00</text>
+  <text x="640" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x00AB43B0</text>
+
+  <!-- Arrow from jmp box to table entry 2 -->
+  <path d="M 350 222 L 365 222 Q 370 222 370 212 L 370 180 Q 370 170 380 170 L 398 170" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="394,166 398,170 394,174" fill="#3b82f6"/>
+  <text x="358" y="260" font-size="11" font-weight="bold" fill="#3b82f6">edx=2, 查索引 2</text>
+
+  <!-- Arrow from table entry 2 to case_3 block (right edge, upper) -->
+  <path d="M 705 170 L 725 170 Q 730 170 730 175 L 730 285 Q 730 290 725 290 L 354 290" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="358,286 354,290 358,294" fill="#3b82f6"/>
+  <text x="740" y="230" font-size="11" font-weight="bold" fill="#3b82f6">跳到 0x00AB43A2</text>
+
+  <!-- ========== Bottom: case blocks + end ========== -->
+
+  <!-- case_3: HIGHLIGHTED (executed) -->
+  <g transform="translate(40, 280)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">case_3: mov eax, 0x1E ; jmp end</text>
+  </g>
+
+  <!-- case_3 → end: green bypass default (x=420 channel) -->
+  <path d="M 350 295 L 415 295 Q 420 295 420 300 L 420 378 Q 420 383 415 383 L 354 383" fill="none" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="358,379 354,383 358,387" fill="#10b981"/>
+
+  <!-- default_case: not executed -->
+  <g transform="translate(40, 324)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">default_case: or eax, 0xFFFFFFFF</text>
+  </g>
+
+  <!-- default → end: gray dashed 14px -->
+  <line x1="195" y1="354" x2="195" y2="368" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="5,3"/>
+  <polygon points="191,362 195,368 199,362" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- end: merge point -->
+  <g transform="translate(40, 368)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="135" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">end:</text>
+  </g>
+
+  <!-- ========== Legend ========== -->
+  <g transform="translate(540, 410)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#94a3b8">图例</text>
+    <rect x="0" y="10" width="20" height="16" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="28" y="22" font-size="12" font-weight="bold" fill="#94a3b8">已执行</text>
+    <rect x="0" y="34" width="20" height="16" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="28" y="46" font-size="12" font-weight="bold" fill="#94a3b8">未执行</text>
+    <rect x="0" y="58" width="20" height="16" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="28" y="70" font-size="12" font-weight="bold" fill="#94a3b8">跳转表/间接跳转</text>
+  </g>
+
+</svg>

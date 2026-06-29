@@ -101,7 +101,7 @@ ja   default_case                   ; 超出范围 → default
 
 ; ── 第四步：查表跳转 ──
 mov  edx, dword ptr [ebp-0xC4]      ; edx = 索引
-jmp  dword ptr [edx*4+0x004B4EC0]   ; 跳转到 表基址 + 索引×4 处存的地址
+jmp  dword ptr [edx*4+0x00AB43D0]   ; 跳转到 表基址 + 索引×4 处存的地址
 
 ; ── 各 case 的代码块 ──
 case_1:                             ; n == 1
@@ -124,20 +124,25 @@ or   eax, 0xFFFFFFFF                ; return -1
 end:
 ```
 
-关键在第二步和第四步。`sub ecx, 1` 把 case 值转成 0 起始的索引：case 1 变成索引 0，case 5 变成索引 4。然后 `jmp dword ptr [edx*4+0x004B4EC0]` 拿这个索引去查表，`edx*4` 是因为每个表项占 4 字节（32 位地址），`0x004B4EC0` 是表基址。
+关键在第二步和第四步。`sub ecx, 1` 把 case 值转成 0 起始的索引：case 1 变成索引 0，case 5 变成索引 4。然后 `jmp dword ptr [edx*4+0x00AB43D0]` 拿这个索引去查表，`edx*4` 是因为每个表项占 4 字节（32 位地址），`0x00AB43D0` 是表基址。
 
-跳转表在内存中长这样（基址 `0x004B4EC0`）：
+跳转表在内存中长这样（基址 `0x00AB43D0`）：
 
 ```
-地址              内容（指向的地址）
-0x004B4EC0       case_1 的地址    索引 0（n=1）
-0x004B4EC4       case_2 的地址    索引 1（n=2）
-0x004B4EC8       case_3 的地址    索引 2（n=3）
-0x004B4ECC       case_4 的地址    索引 3（n=4）
-0x004B4ED0       case_5 的地址    索引 4（n=5）
+地址              内存字节 (小端序)      指向的地址
+0x00AB43D0       94 43 AB 00           0x00AB4394 (case_1)    索引 0 (n=1)
+0x00AB43D4       9B 43 AB 00           0x00AB439B (case_2)    索引 1 (n=2)
+0x00AB43D8       A2 43 AB 00           0x00AB43A2 (case_3)    索引 2 (n=3)
+0x00AB43DC       A9 43 AB 00           0x00AB43A9 (case_4)    索引 3 (n=4)
+0x00AB43E0       B0 43 AB 00           0x00AB43B0 (case_5)    索引 4 (n=5)
 ```
 
-假如 `n = 3`：`sub ecx, 1` 得到索引 2，范围检查通过，`jmp dword ptr [2*4+0x004B4EC0]` 即 `jmp dword ptr [0x004B4EC8]`，从表的第 3 项取出 `case_3` 的地址，跳过去执行 `return 30`。
+> [!NOTE] 小端序怎么看跳转表
+> 内存里存的是 `94 43 AB 00`，但实际地址要**倒着读**：`0x00AB4394`。这就是第 9 章讲过的小端序——低字节在低地址。x64dbg 的内存窗口默认按字节显示，你看到 `94 43 AB 00` 要在脑子里翻转成 `00AB4394`。如果觉得麻烦，x64dbg 的数据窗口可以切换显示模式，按 DWORD 查看，就能直接看到 `00AB4394`。
+
+假如 `n = 3`：`sub ecx, 1` 得到索引 2，范围检查通过，`jmp dword ptr [2*4+0x00AB43D0]` 即 `jmp dword ptr [0x00AB43D8]`，从表的第 3 项取出 `0x00AB43A2`（case_3 的地址），跳过去执行 `return 30`。
+
+![连续 switch 跳转表流程](c-asm-4-images/switch-jump-table-flow.png)
 
 > [!NOTE] `or eax, 0xFFFFFFFF` 为什么不是 `mov eax, 0xFFFFFFFF`
 > 两条指令效果一样（`eax` 都变成 `-1`），但 `or eax, 0xFFFFFFFF` 只需 5 字节，`mov eax, 0xFFFFFFFF` 需要 3 字节。等等，`mov` 不是更短吗？没错，但 MSVC Debug（`/Od`）不优化指令长度，编译器在 `return -1` 时恰好生成了 `or`。逆向时看到 `or eax, 0xFFFFFFFF` 就知道在返回 `-1`。
@@ -215,7 +220,7 @@ end:
 
 和连续 case 的代码**完全一样的结构**：`sub ecx, 1` → `cmp ..., 4` → `ja default` → `jmp [edx*4+表]`。区别只在跳转表内部：索引 2（对应 case 3）的表项填的是 `default_case` 的地址。
 
-![不连续 switch 跳转流程](c-asm-4-images/sparse-switch-flow.svg)
+![不连续 switch 跳转流程](c-asm-4-images/sparse-switch-flow.png)
 
 逆向时如果看到一张跳转表里有多个条目指向同一个地址，那个地址大概率就是 default 分支。
 

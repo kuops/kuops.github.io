@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 349" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">if/else 分支流程 (a > 0 条件满足)</text>
+
+  <!-- Box 1: cmp -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">cmp dword ptr [ebp+8], 0</text>
+  </g>
+  <line x1="195" y1="85" x2="195" y2="99" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="191,93 195,99 199,93" fill="#10b981"/>
+
+  <!-- Box 2: jle (decision) -->
+  <g transform="translate(40, 99)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jle else_branch</text>
+  </g>
+
+  <!-- jle not taken: green arrow to if body (34px decision) -->
+  <line x1="195" y1="129" x2="195" y2="163" stroke="#10b981" stroke-width="2"/>
+  <polygon points="191,157 195,163 199,157" fill="#10b981"/>
+
+  <!-- jle taken: gray dashed bypass to else_branch (x=390 channel) -->
+  <path d="M 350 114 L 385 114 Q 390 114 390 119 L 390 261 Q 390 266 385 266 L 354 266" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="5,3"/>
+  <polygon points="358,262 354,266 358,270" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Annotations for jle decision (right of both channels) -->
+  <text x="460" y="142" font-size="11" font-weight="bold" fill="#10b981">a > 0, 不跳, 继续</text>
+  <text x="460" y="114" font-size="11" font-weight="bold" fill="#94a3b8">a &lt;= 0 时跳到 else</text>
+
+  <!-- Box 3: if body (executed) -->
+  <g transform="translate(40, 163)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov dword ptr [ebp-4], 1</text>
+  </g>
+  <text x="460" y="183" font-size="12" font-weight="bold" fill="#10b981">if 分支</text>
+
+  <line x1="195" y1="193" x2="195" y2="207" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="191,201 195,207 199,201" fill="#10b981"/>
+
+  <!-- Box 4: jmp end (skip else) -->
+  <g transform="translate(40, 207)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="20" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">jmp end</text>
+  </g>
+  <text x="460" y="227" font-size="12" font-weight="bold" fill="#10b981">跳过 else 分支</text>
+
+  <!-- jmp end bypass: green arrow to end (x=440 channel) -->
+  <path d="M 350 222 L 435 222 Q 440 222 440 227 L 440 305 Q 440 310 435 310 L 354 310" fill="none" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="358,306 354,310 358,314" fill="#10b981"/>
+
+  <!-- Box 5: else body (not executed) -->
+  <g transform="translate(40, 251)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">else_branch:</text>
+    <text x="110" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">mov dword ptr [ebp-4], -1</text>
+  </g>
+  <text x="460" y="271" font-size="12" font-weight="bold" fill="#94a3b8">else 分支 (未执行)</text>
+
+  <!-- else → end: gray dashed 14px -->
+  <line x1="195" y1="281" x2="195" y2="295" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="5,3"/>
+  <polygon points="191,289 195,295 199,289" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 6: end -->
+  <g transform="translate(40, 295)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">end:</text>
+    <text x="55" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">mov eax, [ebp-4]</text>
+  </g>
+
+</svg>
