@@ -1,7 +1,7 @@
 ---
 title: switch 与跳转表
 draft: false
-description: switch 在 Debug 汇编里有两种形态：少 case 用 cmp+je 链，连续 case 自动生成跳转表。两种都要认得。
+description: switch 在 Debug 汇编里有三种形态：少 case 用 cmp+je 链，连续 case 用跳转表，稀疏 case 用双重跳转表。三种都要认得。
 order: 14
 ---
 
@@ -163,16 +163,6 @@ end:
 >
 > 逆向 x64 程序时，看到 `movsxd` + `add` + `jmp` 的组合，就是位置无关的跳转表。
 
-> [!NOTE] 双重跳转表（字节映射表）
-> 当 case 有空洞但空洞不算特别大时（如 case 1~100，其中只有 20 个有效），编译器可能用**两级表**来省空间：
->
-> ```asm
-> movzx eax, byte ptr [eax + byte_table]   ; 第一级：查字节表，得到 0~N 的紧凑索引
-> jmp   dword ptr [eax*4 + addr_table]     ; 第二级：查地址表跳转
-> ```
->
-> 一级表（字节数组）每个条目只有 1 字节，把稀疏的 case 值映射成连续的紧凑索引；二级表（地址数组）只存实际 case 的跳转地址。逆向时看到 `movzx ..., byte ptr [...]` 紧接着 `jmp [...*4+...]`，就是双重跳转表。
-
 ## 不连续的 switch
 
 case 值不连续时（如 1, 2, 4, 5，缺了 3），编译器仍然用跳转表，但空洞位置填 default 的地址：
@@ -226,7 +216,7 @@ end:
 
 ## break 和 fall-through
 
-switch 和 if/else 有一个关键区别：**case 穿透**（fall-through）。C 的 switch 如果 case 末尾不写 `break`，会"漏"到下一个 case 继续执行。
+switch 和 if/else 有一个关键区别：**case 穿透**（fall-through）。C 的 switch 如果 case 末尾不写 `break`，EIP 会顺序往下走到下一个 case 的代码，不重新判断条件。
 
 ### 有 break：每个 case 末尾都有 jmp end
 
@@ -249,90 +239,179 @@ end:
 
 每个 case 末尾的 `jmp end` 就是 `break`。逆向时看到 case 代码块末尾有 `jmp` 跳到同一个汇合点，说明每个 case 都有 `break`。
 
-### 无 break（故意 fall-through）
+### 合法用途 1：case 合并
+
+C 语法不支持 `case 'a','e','i','o','u'` 这种写法，case 后面只能跟一个常量。所以多个值共享同一段代码时，只能靠不写 break 让它们穿透：
+
+```c
+switch (ch) {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+        printf("元音\n");
+        break;
+}
+```
+
+编译器的处理方式很简单：跳转表里 5 个条目全部指向 `printf` 那行的地址。运行时查一次表、跳过去、执行一次 printf、break 跳出。**没有"穿透 5 次"这回事**——合并是编译期的事，5 个表项指向同一地址而已。
+
+```asm
+00184985  jmp    dword ptr [eax*4+0x1849B0]   ; 查表跳转
+0018498C  push   offset string "元音\n"       ; 5 个 case 都指向这里
+00184991  call   _printf
+00184996  add    esp, 4
+00184999  jmp    end                           ; break
+```
+
+逆向时看到跳转表里多个表项指向同一地址，就是 case 合并。
+
+### 合法用途 2：累积执行
+
+每个 case 在前一个 case 的基础上追加操作，高级别"顺便"获得低级别的功能：
+
+```c
+switch (level) {
+    case 3: features |= FEATURE_C;    // 管理员：A + B + C
+    case 2: features |= FEATURE_B;    // 普通用户：A + B
+    case 1: features |= FEATURE_A;    // 访客：A
+        break;
+}
+```
+
+case 3 没有 break，执行完 `|= FEATURE_C` 后 EIP 顺序往下走到 case 2 的 `|= FEATURE_B`，再走到 case 1 的 `|= FEATURE_A`。最终 C + B + A 三个特征位都开了。case 2 穿透到 case 1，开 B + A。case 1 只开 A。这是有意为之的 fall-through——每个 case 有自己的代码，靠不写 break 实现累积。
+
+### bug 示例：漏写 break
 
 ```c
 switch (x) {
-    case 1: result = 10;    // 注意：没有 break
-    case 2: result = 20; break;
+    case 10: result = 10;    // 忘了 break
+    case 20: result = 20;    // 忘了 break
+    case 30: result = 30;    // 忘了 break
+    case 40: result = 30; break;
 }
 ```
 
 ```asm
-case_1:
-mov  dword ptr [ebp-4], 0xA
-                                  ; 没有 jmp end！直接掉到 case_2
-case_2:
-mov  dword ptr [ebp-4], 0x14
-jmp  end
-end:
+0101498B  mov  dword ptr [result], 0Ah    ; case 10
+01014992  mov  dword ptr [result], 14h    ; case 20，覆盖了 10
+01014999  mov  dword ptr [result], 1Eh    ; case 30，覆盖了 20
+010149A0  mov  dword ptr [result], 1Eh    ; case 40
+010149A7  jmp  end                        ; break
 ```
 
-`case_1` 没有 `jmp end`，直接"掉"到 `case_2` 的代码，执行完 `result = 10` 后继续执行 `result = 20`。这就是 fall-through。
+跳转表把你送到 `0x0101498B`（case 10），执行完 `result = 10` 后没有 `jmp end`，EIP 顺序往下走到 case 20、case 30、case 40，result 被反复覆盖，最终值是 30。你以为 x=10 返回 10，实际返回 30。C 标准不强制 break，编译器也不警告，所以这是经典 bug。
 
-**逆向时判断有没有 break，就看 case 代码块末尾有没有 `jmp`。** 有 `jmp` 是 break，没有就是 fall-through。
+**逆向时判断有没有 break，就看 case 代码块末尾有没有 `jmp`。** 有 `jmp` 是 break，没有就是 fall-through。case 合并的表项指向同一地址（没有穿透动作）；fall-through 的表项指向不同地址，只是代码块之间没有 `jmp` 隔开，EIP 顺序往下走。
 
-### 多个 case 共享代码（case 合并）
+## 稀疏 switch：双重跳转表
 
-C 里常见的写法，多个 case 值走同一逻辑：
-
-```c
-switch (x) {
-    case 1:
-    case 2:
-    case 3: result = 100; break;    // case 1、2、3 都执行这行
-    case 4: result = 200; break;
-}
-```
-
-跳转表里索引 0、1、2（对应 case 1、2、3）全部指向同一个代码块地址：
-
-```
-索引 0（x=1）: -> 共享代码块 (result = 100)
-索引 1（x=2）: -> 共享代码块 (result = 100)
-索引 2（x=3）: -> 共享代码块 (result = 100)
-索引 3（x=4）: -> case_4      (result = 200)
-```
-
-逆向时看到跳转表里多个**连续的**表项指向同一地址，通常就是 case 合并，而不是 fall-through（fall-through 的表项指向不同地址，只是代码块之间没有 `jmp` 隔开）。
-
-## 极度稀疏的 switch：退化成 cmp 链
-
-case 值跨度太大时（如 10, 20, 30, 40, 50，间隔 10），编译器会放弃跳转表，退回比较 + 跳转。因为跳转表要覆盖 10 到 50 的所有值（41 个条目），但只有 5 个有效，太浪费空间。
+上一节的连续 switch，case 值是 1、2、3、4、5，减 1 后得到 0、1、2、3、4，可以直接当跳转表索引用。但如果 case 值是 10、20、30、40、24 呢？
 
 ```c
 const char* color_name(int code) {
     switch (code) {
         case 10: return "Red";
         case 20: return "Green";
+        case 24: return "Purple";
         case 30: return "Blue";
         case 40: return "Yellow";
-        case 50: return "Purple";
         default: return "Invalid";
     }
 }
 ```
 
-这种情况编译生成的代码和"小型 switch"一样，每个 case 一条 `cmp` + `je`，线性排列：
+减去最小值 10 后，code=40 变成 30。如果直接用这个值当地址表索引，地址表需要 31 个 DWORD（索引 0~30），其中 26 个填 default。MSVC 的解决办法是查**两张表**：先用一张字节表把稀疏偏移压缩成连续小索引，再用小索引查地址表跳转。
 
 ```asm
-cmp  dword ptr [ebp-0xD0], 0xA      ; code == 10?
-je   case_red
-cmp  dword ptr [ebp-0xD0], 0x14     ; code == 20?
-je   case_green
-cmp  dword ptr [ebp-0xD0], 0x1E     ; code == 30?
-je   case_blue
-jmp  default_invalid
-case_red:
+mov  eax, dword ptr [code]            ; eax = code
+mov  dword ptr [ebp-0xC4], eax        ; 存到临时变量
+mov  ecx, dword ptr [ebp-0xC4]
+sub  ecx, 0Ah                         ; ecx = code - 10（最小 case 值）
+mov  dword ptr [ebp-0xC4], ecx
+cmp  dword ptr [ebp-0xC4], 1Eh        ; 索引 > 0x1E (30)?
+ja   default_case                     ; 超出 10~40 范围 → default
+mov  edx, dword ptr [ebp-0xC4]        ; edx = code - 10
+movzx eax, byte ptr [edx+0x185300h]  ; 第一步：查字节表，读出 1 字节
+jmp  dword ptr [eax*4+0x1852E8h]      ; 第二步：查地址表，读出 4 字节跳转
+
+case_10:                              ; code == 10
 mov  eax, offset "Red"
 jmp  end
-...
+case_20:                              ; code == 20
+mov  eax, offset "Green"
+jmp  end
+case_24:                              ; code == 24
+mov  eax, offset "Purple"
+jmp  end
+case_30:                              ; code == 30
+mov  eax, offset "Blue"
+jmp  end
+case_40:                              ; code == 40
+mov  eax, offset "Yellow"
+jmp  end
+default_case:                         ; 不匹配任何 case
+mov  eax, offset "Invalid"
+end:
 ```
 
-逆向时无法仅从汇编区分它是 if/else if 还是不连续的 switch，要看上下文语义。
+`sub` → `cmp` + `ja` 这段和普通跳转表完全一样。区别在最后两行——查了两张表。
 
-> [!NOTE] case 很多时编译器会用二分查找
-> 上面只有 5 个不连续的 case，编译器用线性 `cmp+je` 链。但如果 case 数量很多且极其稀疏（如 20 个不连续的值），线性比较要查 20 次，编译器会改用**二叉决策树**（binary decision tree）进行对半查找。汇编形态类似二分查找：先 `cmp eax, 中间值`，`jl` 走左半边、`jg` 走右半边，递归缩小范围。逆向时如果看到一棵 `cmp` + `jl`/`jg` 嵌套的树形结构，就是编译器对大量稀疏 case 的二分优化。
+### 第一步：查字节表
+
+`movzx eax, byte ptr [edx+0x185300]` 用 `edx`（code 减 10 后的偏移）当索引，从 `0x185300` 处的字节表里读 **1 个字节**。这张表每个条目只有 1 字节，作用是把稀疏的偏移值映射成连续的小索引：
+
+```
+表 A：字节映射表 (0x185300)
+
+偏移   字节值    含义
++00    00       → 索引 0 (case_10)
++0A    01       → 索引 1 (case_20)
++0E    02       → 索引 2 (case_24)
++14    03       → 索引 3 (case_30)
++1E    04       → 索引 4 (case_40)
+其余   05       → 索引 5 (default)
+```
+
+偏移怎么算？`code - 最小 case 值`（这里最小是 10）：
+
+1. code=40 → 偏移 = 40 - 10 = 30 = `0x1E` → 读到字节 `04`
+2. code=24 → 偏移 = 24 - 10 = 14 = `0x0E` → 读到字节 `02`
+3. code=11 → 偏移 = 11 - 10 = 1 → 读到字节 `05`（default）
+
+`movzx` 把读出的字节补零扩展到 32 位——`04` 变成 `0x00000004`，存入 eax 给下一步用。
+
+没有对应 case 的偏移（如 `+01` 对应 code=11）字节值全是 `05`——因为地址表索引 5 存的是 default 的地址，查到 `05` 就直接跳到 default，不用额外判断。
+
+### 第二步：查地址表
+
+`jmp dword ptr [eax*4+0x1852E8]` 用刚才读出的 `eax` 乘 4 当索引，从 `0x1852E8` 处的地址表里读 **4 个字节**（一个 DWORD）。这步和普通跳转表完全一样：
+
+```
+表 B：地址表 (0x1852E8)
+
+索引   小端序字节       指向
+0      AB 52 18 00    0x001852AB (case_10)
+1      B2 52 18 00    0x001852B2 (case_20)
+2      C7 52 18 00    0x001852C7 (case_24)
+3      B9 52 18 00    0x001852B9 (case_30)
+4      C0 52 18 00    0x001852C0 (case_40)  ← code=40 走这里
+5      CE 52 18 00    0x001852CE (default)
+```
+
+eax=4，`4*4=16`，读地址 `0x1852E8 + 16 = 0x1852F8` 处的 DWORD：`C0 52 18 00`，小端序读成 `0x001852C0`，这就是 case_40 的地址，`jmp` 跳过去。
+
+![双重跳转表两步查表流程](c-asm-4-images/dual-jump-table-flow.png)
+
+两张表的关系：表 A 把稀疏的偏移（0、10、14、20、30）压缩成连续的索引（0、1、2、3、4），表 B 用这个连续索引找到真正的 case 地址。如果没有表 A，表 B 就需要 31 个条目（索引 0~30），大部分填 default。有了表 A 压缩，表 B 只需要 6 个条目。
+
+> [!NOTE] movzx 就是补零
+> `movzx` = move with zero-extend。读 `04` 这个字节后高位补零，变成 `0x00000004`。为什么不直接用 `mov`？因为 `mov al, byte ptr [...]` 只改 al，eax 的高 3 字节残留旧值。`movzx` 保证 eax 就是你读到的那个字节值。逆向时看到 `movzx ..., byte ptr [...]`，意思是"读一个字节当索引用"。
+
+### 逆向识别特征
+
+看到 **`movzx ..., byte ptr [...]`** 紧接着 **`jmp dword ptr [...*4+...]`**，就是双重跳转表。两个基址是两张不同的表：`movzx` 行查字节表（每项 1 字节），`jmp` 行查地址表（每项 4 字节）。范围检查（`sub` + `cmp` + `ja`）的用法和普通跳转表完全一样。
 
 ## 怎么读跳转表
 
@@ -355,14 +434,14 @@ cmp  ..., 4          ; 最大索引 = 4
 
 ## 逆向识别清单
 
-| 特征     | if/else if         | switch（cmp 链）   | switch（跳转表）      |
-| -------- | ------------------ | ------------------ | --------------------- |
-| 比较模式 | 不同变量/不同值    | 同一变量反复比较   | 减偏移 + 范围检查     |
-| 跳转方式 | jcc 各自跳不同地址 | je 各自跳不同地址  | jmp [table + index*4] |
-| default  | 最后的 else        | 最后的 jmp default | ja default（范围外）  |
-| 表地址   | 无                 | 无                 | 有，在 .rdata 段      |
+| 特征     | if/else if         | switch（cmp 链）   | switch（跳转表）      | switch（双重跳转表）            |
+| -------- | ------------------ | ------------------ | --------------------- | ------------------------------- |
+| 比较模式 | 不同变量/不同值    | 同一变量反复比较   | 减偏移 + 范围检查     | 减偏移 + 范围检查               |
+| 跳转方式 | jcc 各自跳不同地址 | je 各自跳不同地址  | jmp [table + index*4] | movzx byte表 → jmp [紧凑索引*4] |
+| default  | 最后的 else        | 最后的 jmp default | ja default（范围外）  | ja default（范围外）            |
+| 表地址   | 无                 | 无                 | 有，在 .rdata 段      | 两张表：字节表 + 地址表         |
 
-**最可靠的特征是 `jmp dword ptr [reg*4+XXX]`**：有这条指令一定是跳转表 switch。没有它则需要靠"同一变量反复比较不同常量"来猜是 switch 还是 if/else if。
+**最可靠的特征是 `jmp dword ptr [reg*4+XXX]`**：有这条指令一定是跳转表 switch。如果前面还有 `movzx ..., byte ptr [...]`，就是双重跳转表。没有 `jmp [reg*4+...]` 则需要靠"同一变量反复比较不同常量"来猜是 switch 还是 if/else if。
 
 ## 练习
 

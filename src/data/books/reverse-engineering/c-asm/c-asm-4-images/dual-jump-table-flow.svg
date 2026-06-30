@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 500" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">双重跳转表：两步查表 (code=40)</text>
+
+  <!-- ========== Left column: two instructions ========== -->
+
+  <!-- Box 1: movzx -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">movzx eax, byte ptr [edx+0x185300]</text>
+  </g>
+  <text x="10" y="105" font-size="11" font-weight="bold" fill="#64748b">第一步：edx=30，读 1 字节</text>
+
+  <!-- Arrow movzx → jmp -->
+  <line x1="195" y1="85" x2="195" y2="140" stroke="#3b82f6" stroke-width="1.5"/>
+  <polygon points="191,134 195,140 199,134" fill="#3b82f6"/>
+
+  <!-- Box 2: jmp -->
+  <g transform="translate(40, 140)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">jmp dword ptr [eax*4+0x1852E8]</text>
+  </g>
+  <text x="10" y="190" font-size="11" font-weight="bold" fill="#64748b">第二步：eax=4，读 4 字节跳转</text>
+
+  <!-- ========== Right side: Table A (byte mapping) ========== -->
+
+  <text x="540" y="42" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">表 A：字节映射表 (0x185300)</text>
+  <text x="750" y="42" font-size="11" font-weight="bold" fill="#64748b">每项 1 字节</text>
+
+  <!-- Table A header -->
+  <text x="430" y="68" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">偏移</text>
+  <text x="520" y="68" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">code</text>
+  <text x="640" y="68" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">字节值</text>
+  <line x1="385" y1="75" x2="710" y2="75" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- Entry: offset 0, code=10 -->
+  <text x="430" y="94" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+00</text>
+  <text x="520" y="94" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">10</text>
+  <text x="640" y="94" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">00</text>
+
+  <!-- Entry: offset 0x0A, code=20 -->
+  <text x="430" y="114" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0A</text>
+  <text x="520" y="114" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">20</text>
+  <text x="640" y="114" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">01</text>
+
+  <!-- Entry: offset 0x0E, code=24 -->
+  <text x="430" y="134" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0E</text>
+  <text x="520" y="134" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">24</text>
+  <text x="640" y="134" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">02</text>
+
+  <!-- Entry: offset 0x14, code=30 -->
+  <text x="430" y="154" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+14</text>
+  <text x="520" y="154" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">30</text>
+  <text x="640" y="154" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">03</text>
+
+  <!-- Entry: offset 0x1E, code=40 — HIGHLIGHTED -->
+  <rect x="385" y="162" width="325" height="24" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="430" y="179" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">+1E</text>
+  <text x="520" y="179" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">40</text>
+  <text x="640" y="179" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">04</text>
+  <text x="720" y="183" font-size="11" font-weight="bold" fill="#3b82f6">→ eax=4</text>
+
+  <!-- Arrow: movzx box → Table A highlighted row (first lookup, dashed) -->
+  <path d="M 350 70 L 375 70 Q 380 70 380 80 L 380 174 Q 380 179 385 179" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="381,175 385,179 381,183" fill="#3b82f6"/>
+  <text x="358" y="62" font-size="11" font-weight="bold" fill="#3b82f6">edx=30</text>
+
+  <!-- ========== Right side: Table B (address table) ========== -->
+
+  <text x="540" y="220" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">表 B：地址表 (0x1852E8)</text>
+  <text x="750" y="220" font-size="11" font-weight="bold" fill="#64748b">每项 4 字节</text>
+
+  <!-- Table B header -->
+  <text x="430" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">索引</text>
+  <text x="520" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">小端序字节</text>
+  <text x="640" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">指向</text>
+  <line x1="385" y1="253" x2="710" y2="253" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- Entry 0: case_10 -->
+  <text x="430" y="272" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0</text>
+  <text x="520" y="272" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">AB 52 18 00</text>
+  <text x="640" y="272" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_10</text>
+
+  <!-- Entry 1: case_20 -->
+  <text x="430" y="292" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">1</text>
+  <text x="520" y="292" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">B2 52 18 00</text>
+  <text x="640" y="292" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_20</text>
+
+  <!-- Entry 2: case_24 -->
+  <text x="430" y="312" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">2</text>
+  <text x="520" y="312" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">C7 52 18 00</text>
+  <text x="640" y="312" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_24</text>
+
+  <!-- Entry 3: case_30 -->
+  <text x="430" y="332" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">3</text>
+  <text x="520" y="332" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">B9 52 18 00</text>
+  <text x="640" y="332" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_30</text>
+
+  <!-- Entry 4: case_40 — HIGHLIGHTED -->
+  <rect x="385" y="340" width="325" height="24" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="430" y="357" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">4</text>
+  <text x="520" y="357" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">C0 52 18 00</text>
+  <text x="640" y="357" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">case_40</text>
+
+  <!-- Entry 5: default -->
+  <text x="430" y="382" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">5</text>
+  <text x="520" y="382" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">CE 52 18 00</text>
+  <text x="640" y="382" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">default</text>
+
+  <!-- Arrow: jmp box → Table B highlighted row (second lookup, solid) -->
+  <path d="M 350 155 L 370 155 Q 375 155 375 165 L 375 352 Q 375 357 380 357 L 385 357" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="381,353 385,357 381,361" fill="#3b82f6"/>
+  <text x="370" y="210" font-size="11" font-weight="bold" text-anchor="end" fill="#3b82f6">eax*4=16</text>
+
+  <!-- Arrow: Table B highlighted row → case_40 result -->
+  <path d="M 710 357 L 730 357 Q 735 357 735 362 L 735 425 Q 735 430 730 430 L 354 430" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="358,426 354,430 358,434" fill="#3b82f6"/>
+  <text x="740" y="395" font-size="11" font-weight="bold" fill="#3b82f6">跳到 case_40</text>
+
+  <!-- ========== Bottom: result ========== -->
+
+  <g transform="translate(40, 415)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">case_40: return "Yellow"</text>
+  </g>
+
+</svg>

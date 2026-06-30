@@ -57,61 +57,51 @@
   <text x="530" y="62" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">跳转表 (0x004B4F68)</text>
 
   <!-- Table header -->
-  <text x="450" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">索引</text>
-  <text x="530" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">x 值</text>
-  <text x="620" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">指向</text>
-  <line x1="410" y1="95" x2="670" y2="95" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="430" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">地址</text>
+  <text x="520" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">小端序字节</text>
+  <text x="640" y="88" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">指向</text>
+  <line x1="380" y1="95" x2="710" y2="95" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
 
-  <!-- Entry 0 -->
-  <g transform="translate(0, 100)">
-    <text x="450" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">0</text>
-    <text x="530" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">1</text>
-    <text x="620" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_1</text>
-  </g>
+  <!-- Entry 0: case_1 (x=1) -->
+  <text x="430" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+00</text>
+  <text x="520" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">10 4F 4B 00</text>
+  <text x="640" y="120" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x004B4F10</text>
 
-  <!-- Entry 1 -->
-  <g transform="translate(0, 128)">
-    <text x="450" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">1</text>
-    <text x="530" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">2</text>
-    <text x="620" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_2</text>
-  </g>
+  <!-- Entry 1: case_2 (x=2) -->
+  <text x="430" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+04</text>
+  <text x="520" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">20 4F 4B 00</text>
+  <text x="640" y="148" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x004B4F20</text>
 
   <!-- Entry 2: HIGHLIGHTED (x=3 hole -> default) -->
-  <g transform="translate(0, 156)">
-    <rect x="410" y="0" width="260" height="28" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="450" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">2</text>
-    <text x="530" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">3</text>
-    <text x="620" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#ef4444">default</text>
-  </g>
+  <rect x="385" y="156" width="320" height="28" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="430" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#ef4444">+08</text>
+  <text x="520" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#ef4444">50 4F 4B 00</text>
+  <text x="640" y="176" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#ef4444">0x004B4F50</text>
 
-  <!-- Entry 3 -->
-  <g transform="translate(0, 184)">
-    <text x="450" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">3</text>
-    <text x="530" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">4</text>
-    <text x="620" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_4</text>
-  </g>
+  <!-- Entry 3: case_4 (x=4) -->
+  <text x="430" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0C</text>
+  <text x="520" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">30 4F 4B 00</text>
+  <text x="640" y="204" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x004B4F30</text>
 
-  <!-- Entry 4 -->
-  <g transform="translate(0, 212)">
-    <text x="450" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">4</text>
-    <text x="530" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">5</text>
-    <text x="620" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">case_5</text>
-  </g>
+  <!-- Entry 4: case_5 (x=5) -->
+  <text x="430" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">+10</text>
+  <text x="520" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">40 4F 4B 00</text>
+  <text x="640" y="232" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">0x004B4F40</text>
 
   <!-- Annotation on index 2 -->
-  <text x="685" y="142" font-size="11" font-weight="bold" fill="#ef4444">x=3 没有对应 case</text>
-  <text x="685" y="156" font-size="11" font-weight="bold" fill="#ef4444">表里填 default 地址</text>
+  <text x="725" y="148" font-size="11" font-weight="bold" fill="#ef4444">x=3 没有对应 case</text>
+  <text x="725" y="162" font-size="11" font-weight="bold" fill="#ef4444">表里填 default 地址</text>
 
-  <!-- Arrow from jmp box to table entry 2 -->
-  <path d="M 350 246 L 390 246 Q 400 246 400 236 L 400 180 Q 400 170 410 170" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
-  <polygon points="406,166 410,170 406,174" fill="#3b82f6"/>
-  <text x="355" y="225" font-size="11" font-weight="bold" fill="#3b82f6">edx=2</text>
-  <text x="355" y="238" font-size="11" font-weight="bold" fill="#3b82f6">查索引 2</text>
+  <!-- Arrow from jmp box to table entry 2 (bottom edge of red highlight) -->
+  <path d="M 350 246 L 393 246 Q 399 246 399 240 L 399 190" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="395,190 399,184 403,190" fill="#3b82f6"/>
+  <text x="405" y="260" font-size="11" font-weight="bold" fill="#3b82f6">edx=2</text>
+  <text x="405" y="273" font-size="11" font-weight="bold" fill="#3b82f6">查索引 2</text>
 
   <!-- Arrow from table entry 2 (default) curving down to default_case box right edge -->
-  <path d="M 670 170 L 720 170 Q 725 170 725 175 L 725 450 Q 725 455 720 455 L 354 455" fill="none" stroke="#ef4444" stroke-width="2"/>
+  <path d="M 705 170 L 725 170 Q 730 170 730 175 L 730 450 Q 730 455 725 455 L 354 455" fill="none" stroke="#ef4444" stroke-width="2"/>
   <polygon points="358,451 354,455 358,459" fill="#ef4444"/>
-  <text x="730" y="310" font-size="11" font-weight="bold" fill="#ef4444">跳到 default</text>
+  <text x="740" y="320" font-size="11" font-weight="bold" fill="#ef4444">跳到 default</text>
 
   <!-- ========== Bottom: case blocks ========== -->
 
