@@ -413,6 +413,58 @@ eax=4，`4*4=16`，读地址 `0x1852E8 + 16 = 0x1852F8` 处的 DWORD：`C0 52 18
 
 看到 **`movzx ..., byte ptr [...]`** 紧接着 **`jmp dword ptr [...*4+...]`**，就是双重跳转表。两个基址是两张不同的表：`movzx` 行查字节表（每项 1 字节），`jmp` 行查地址表（每项 4 字节）。范围检查（`sub` + `cmp` + `ja`）的用法和普通跳转表完全一样。
 
+## 混合策略：二分 + 跳转表
+
+case 值跨多个密集段、且段间间隔很大时，编译器会先二分定位到段，每段内部再用双重跳转表。例如：
+
+```c
+const char* color_name(int code) {
+    switch (code) {
+    case 10:   return "Red";
+    case 20:   return "Green";
+    case 30:   return "Blue";
+    case 50:   return "Purple";
+    case 115:  return "Red";
+    case 215:  return "Green";
+    case 315:  return "Blue";
+    case 221:  return "Red";
+    case 222:  return "Green";
+    case 223:  return "Blue";
+    case 224:  return "Yellow";
+    case 225:  return "Purple";
+    case 10001: return "Purple";
+    case 10002: return "Purple";
+    case 10003: return "Purple";
+    case 10102: return "Purple";
+    default:   return "Invalid";
+    }
+}
+```
+
+编译器的三层结构：
+
+```asm
+cmp  dword ptr [ebp-0C4h], 13Bh      ; 13Bh = 315，中点
+jg   right_path                      ; >315 → 右段
+; 左段（10~315）：减最小值 10，双重跳转表
+sub  ecx, 0Ah                        ; ecx = code - 10
+cmp  dword ptr [ebp-0C4h], 0D7h      ; 0D7h = 215，范围检查
+ja   default_case
+movzx eax, byte ptr [edx+XXX1h]      ; 字节表 1
+jmp  dword ptr [eax*4+XXX2h]         ; 地址表 1
+right_path:
+; 右段（10001~10102）：减最小值 10001，另一张双重跳转表
+sub  ecx, 2711h                      ; ecx = code - 10001
+cmp  dword ptr [ebp-0C4h], 65h       ; 65h = 101，范围检查
+ja   default_case
+movzx eax, byte ptr [edx+YYY1h]      ; 字节表 2
+jmp  dword ptr [eax*4+YYY2h]         ; 地址表 2
+```
+
+第一层 `cmp` + `jg` 不是按 case 顺序线性扫，而是取中点值做 pivot 二分切分——和前面"cmp 链顺序检查 10→20→30"是不同结构。切分后每段内部 case 密度高，建双重跳转表划算；段间间隔太大，合并成一张表不划算，所以拆开各建一张。
+
+识别特征：**先看到 `cmp` + `jg` 二分切分，切分后两边各出现 `movzx + jmp` 双重跳转表**，就是混合策略。
+
 ## 怎么读跳转表
 
 看到 `jmp dword ptr [edx*4+XXX]` 后，逆向还原 switch 的步骤：
