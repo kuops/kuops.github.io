@@ -527,7 +527,7 @@ end:
    jz   skip
    inc  ecx
    skip:
-   shr  eax, 1
+   sar  eax, 1
    test eax, eax
    jnz  loop_body
    done:
