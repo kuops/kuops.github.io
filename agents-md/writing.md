@@ -138,3 +138,44 @@ URL 反映完整目录路径：`/books/astro-guide/basics/intro`。
 2. P0 问题立即修正；P1 问题调整段落和过渡；P2 问题做文字润色
 3. 修正后重新打分 → 80 分以上可提交
 4. **并行审核**：章节较长或工作量较大时，可以 dispatch 子 Agent 并行执行 P0 / P1 / P2 三个维度的审核，各自独立输出结果后按优先级汇总修正
+
+## C 代码与汇编验证（C/Assembly verification）
+
+写作过程中涉及 C 代码示例时，必须实际编译验证，不要凭空推断汇编结果。
+
+### 写入代码
+
+代码文件写到 WSL 路径 `/mnt/c/Code/Cpp/Demo/`（对应 Windows 路径 `C:\Code\Cpp\Demo`）。直接写入或覆盖 `Demo.cpp`，无需手动建工程——该目录已有现成的 VS 项目文件（`.vcxproj` / `.slnx`）。
+
+### 编译
+
+用 MSBuild 命令行编译，固定参数如下：
+
+```bash
+MSBuild.exe 'C:\Code\Cpp\Demo' /p:Configuration=Debug /p:Platform=x86 /p:Optimization=Disabled
+```
+
+- `Configuration=Debug` — Debug 模式，和教程里用的模式一致
+- `Platform=x86` — 32 位，寄存器更少、指令更短，与前 12 章汇编基础格式一致
+- `Optimization=Disabled` — 关闭优化，确保汇编和 C 代码逐行对应
+
+编译产物在 `/mnt/c/Code/Cpp/Demo/Debug/Demo.exe`。
+
+### 汇编对照
+
+编译后有两种方式对照汇编：
+
+1. **dumpbin 静态反汇编** — 不启动调试器，直接看 `.obj` 的反汇编，快速核对：
+
+   ```bash
+   dumpbin.exe /disasm 'C:\Code\Cpp\Demo\Demo\Debug\Demo.obj'
+   ```
+
+   输出的是编译器生成的原始汇编（未链接），适合快速验证某段 C 代码对应的指令是否和教程描述一致。
+
+2. **x64dbg 动态对照** — 用 x32dbg 加载 `Debug/Demo.exe`，断到 `main` 单步对照，能看到实际地址、寄存器值和运行时行为。
+
+教程里写的每一段汇编都必须和实际反汇编结果吻合，不吻合就修教程。
+
+> [!NOTE]
+> 逆向章节默认 32 位 Debug 模式。不要切到 Release 或 x64，否则汇编输出和教程对不上。

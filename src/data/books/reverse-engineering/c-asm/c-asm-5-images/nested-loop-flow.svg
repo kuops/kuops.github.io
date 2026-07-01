@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 394" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">嵌套循环汇编结构 (外层套一个内层循环)</text>
+
+  <!-- Box 1: outer_init -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">outer_init:</text>
+    <text x="85" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov i, 0</text>
+  </g>
+  <text x="395" y="75" font-size="11" font-weight="bold" fill="#64748b">外层初始化</text>
+
+  <line x1="195" y1="85" x2="195" y2="99" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,93 195,99 199,93" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 2: jmp outer_check -->
+  <g transform="translate(40, 99)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">jmp outer_check</text>
+  </g>
+  <text x="395" y="119" font-size="11" font-weight="bold" fill="#3b82f6">跳到外层检查</text>
+
+  <!-- jmp outer_check: blue bypass to outer_check (left x=20 channel, skip increment) -->
+  <path d="M 40 114 L 25 114 Q 20 114 20 119 L 20 197 Q 20 202 25 202 L 40 202" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="36,198 40,202 36,206" fill="#3b82f6"/>
+
+  <!-- Box 3: outer_increment (skipped first round) -->
+  <g transform="translate(40, 143)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">outer_increment:</text>
+    <text x="115" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">i++</text>
+  </g>
+  <text x="395" y="163" font-size="11" font-weight="bold" fill="#94a3b8">外层递增</text>
+
+  <line x1="195" y1="173" x2="195" y2="187" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,181 195,187 199,181" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 4: outer_check -->
+  <g transform="translate(40, 187)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">outer_check:</text>
+    <text x="100" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">cmp i, n-1</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">条件检查</text>
+  </g>
+
+  <line x1="195" y1="217" x2="195" y2="231" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,225 195,231 199,225" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 5: jge end (decision) -->
+  <g transform="translate(40, 231)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jge end</text>
+  </g>
+
+  <!-- jge taken: yellow bypass to end (right x=390 channel) -->
+  <path d="M 350 246 L 385 246 Q 390 246 390 251 L 390 348 Q 390 353 385 353 L 354 353" fill="none" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="358,349 354,353 358,357" fill="#fbbf24"/>
+  <text x="395" y="296" font-size="11" font-weight="bold" fill="#fbbf24">i &gt;= n-1, 跳出</text>
+
+  <!-- jge not taken: fall-through to inner block (34px decision) -->
+  <line x1="195" y1="261" x2="195" y2="295" stroke="#10b981" stroke-width="2"/>
+  <polygon points="191,289 195,295 199,289" fill="#10b981"/>
+  <text x="205" y="282" font-size="11" font-weight="bold" fill="#10b981">i &lt; n-1, 进内层</text>
+
+  <!-- Box 6: inner loop (folded block) -->
+  <g transform="translate(40, 295)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#60a5fa">inner</text>
+  </g>
+  <text x="395" y="315" font-size="11" font-weight="bold" fill="#60a5fa">内层循环 (见 for 循环图)</text>
+
+  <!-- inner block back-edge to outer_increment (right x=370 channel, upward) -->
+  <path d="M 350 310 L 365 310 Q 370 310 370 305 L 370 158 Q 370 153 365 153 L 350 153" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="354,149 350,153 354,157" fill="#3b82f6"/>
+  <text x="375" y="237" font-size="11" font-weight="bold" fill="#3b82f6">回递增</text>
+
+  <!-- Box 7: end -->
+  <g transform="translate(40, 339)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">end:</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">循环结束</text>
+  </g>
+
+</svg>

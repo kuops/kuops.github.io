@@ -11,6 +11,7 @@
 
 - 修改代码后必须按 CI 步逐一验证：`npm run lint` → `npm run format:check` → `npm run build`，全部通过才算完成（CI 顺序即如此；format:check 不通过时先 `npm run format` 修复）
 - **仅修改 Markdown / SVG 内容**时可跳过 `npm run build`，只跑 `lint` → `format:check`；如果改了 SVG，还要重新生成同名 PNG
+- **涉及 C 代码示例时**：代码写入 `/mnt/c/Code/Cpp/Demo/`（WSL 路径），用 `MSBuild.exe 'C:\Code\Cpp\Demo' /p:Configuration=Debug /p:Platform=x86 /p:Optimization=Disabled` 编译，再用 x64dbg 对照汇编。详见 [`agents-md/writing.md`](agents-md/writing.md) 的「C 代码与汇编验证」
 - 禁止 push —— 只有用户明确说"推送"时才执行 `git push`
 - commit 风格：`type: short description`
 

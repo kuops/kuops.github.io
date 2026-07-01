@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 454" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">for 循环汇编结构 (实际内存布局)</text>
+
+  <!-- Box 1: init -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">init:</text>
+    <text x="55" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#10b981">mov i, 1</text>
+  </g>
+  <text x="395" y="75" font-size="12" font-weight="bold" fill="#64748b">初始化</text>
+
+  <line x1="195" y1="85" x2="195" y2="99" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,93 195,99 199,93" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 2: jmp check (KEY) -->
+  <g transform="translate(40, 99)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">jmp check</text>
+  </g>
+  <text x="395" y="119" font-size="12" font-weight="bold" fill="#3b82f6">先跳到条件检查</text>
+
+  <!-- jmp check: blue bypass to check (left x=20 channel, skip increment) -->
+  <path d="M 40 114 L 25 114 Q 20 114 20 119 L 20 201 Q 20 206 25 206 L 40 206" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="36,202 40,206 36,210" fill="#3b82f6"/>
+
+  <!-- Box 3: increment (skipped first round visually) -->
+  <g transform="translate(40, 143)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">increment:</text>
+    <text x="80" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">i++</text>
+  </g>
+  <text x="395" y="163" font-size="12" font-weight="bold" fill="#94a3b8">递增 (第一轮被跳过)</text>
+
+  <!-- increment fall-through to check (14px) -->
+  <line x1="195" y1="173" x2="195" y2="187" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,181 195,187 199,181" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 4: check -->
+  <g transform="translate(40, 187)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">check:</text>
+    <text x="60" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">cmp i, n</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">条件检查</text>
+  </g>
+  <text x="375" y="207" font-size="11" font-weight="bold" fill="#3b82f6">跳回递增</text>
+
+  <line x1="195" y1="217" x2="195" y2="231" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,225 195,231 199,225" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 5: jg end (decision) -->
+  <g transform="translate(40, 231)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jg end</text>
+  </g>
+
+  <!-- jg taken: yellow bypass to end (x=390 channel) -->
+  <path d="M 350 246 L 385 246 Q 390 246 390 251 L 390 393 Q 390 398 385 398 L 354 398" fill="none" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="358,394 354,398 358,402" fill="#fbbf24"/>
+  <text x="395" y="296" font-size="11" font-weight="bold" fill="#fbbf24">i &gt; n, 跳出循环</text>
+
+  <!-- jg not taken: fall-through to loop_body (34px decision) -->
+  <line x1="195" y1="261" x2="195" y2="295" stroke="#10b981" stroke-width="2"/>
+  <polygon points="191,289 195,295 199,289" fill="#10b981"/>
+  <text x="205" y="282" font-size="11" font-weight="bold" fill="#10b981">i &lt;= n, 继续</text>
+
+  <!-- Box 6: loop_body -->
+  <g transform="translate(40, 295)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">loop_body:</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">循环体</text>
+  </g>
+
+  <line x1="195" y1="325" x2="195" y2="339" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,333 195,339 199,333" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 7: jmp increment (KEY back-edge) -->
+  <g transform="translate(40, 339)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#3b82f6">jmp increment</text>
+  </g>
+
+  <!-- jmp increment: blue back-edge to increment (right x=370 channel, upward) -->
+  <path d="M 350 354 L 365 354 Q 370 354 370 349 L 370 158 Q 370 153 365 153 L 350 153" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="354,149 350,153 354,157" fill="#3b82f6"/>
+
+  <!-- Box 8: end -->
+  <g transform="translate(40, 383)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">end:</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">循环结束</text>
+  </g>
+
+</svg>

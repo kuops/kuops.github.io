@@ -7,7 +7,7 @@ order: 15
 
 上一章学了 `switch` 多路分支的汇编形态。这一章学**循环**：C 里写 `for`、`while`、`do-while`，编译器翻译成什么。
 
-和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留循环结构相关的核心指令，过滤掉 Debug 噪音（每步读写栈、临时变量复制等，第 3 章讲过）。
+和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留循环结构相关的核心指令，过滤掉 Debug 噪音（每步读写栈、临时变量复制等，前面讲过）。
 
 ## for 循环
 
@@ -47,16 +47,7 @@ mov  eax, dword ptr [ebp-4]     ; 返回 total
 
 for 循环在汇编里的固定结构：
 
-```
-初始化:       mov i, 1
-              jmp check          ← 先跳到检查
-increment:    i++
-check:        cmp i, n
-              jg  end            ← 条件不满足则跳出
-loop_body:    (循环体)
-              jmp increment      ← 跳回递增
-end:          (循环结束后的代码)
-```
+![for 循环汇编结构 (实际内存布局)](c-asm-5-images/for-loop-flow.png)
 
 注意实际布局中 `increment` 在 `check` 之前，`loop_body` 在 `check` 之后。条件检查通过后 fall-through 进入循环体，循环体末尾 `jmp increment` 跳回递增，递增后 fall-through 到 check，形成环。**初始化之后的那条 `jmp check` 是 for 循环最明显的标志**——因为 for 的语义是"先检查条件，再决定是否执行循环体"，第一轮要先跳到 check，不能直接进循环体。
 
@@ -99,15 +90,7 @@ mov  eax, dword ptr [ebp-4]     ; 返回 count
 
 结构：
 
-```
-check:
-    cmp n, 0
-    je  end            ← 条件不满足则跳出
-    (循环体)
-    jmp check          ← 跳回检查
-end:
-    (结束)
-```
+![while 循环汇编结构 (无前置 jmp)](c-asm-5-images/while-loop-flow.png)
 
 while 的结构和 for 不同——**没有初始化后的 `jmp check` 前置跳转**。因为 while 没有独立的递增部分，编译器直接把条件检查放在循环入口，`je end` 跳出，循环体末尾 `jmp check` 跳回。相比之下 for 有独立的递增部分（`i++`），递增在 check 之前，所以需要先 `jmp check` 跳过递增直达检查。
 
@@ -156,15 +139,11 @@ mov  eax, dword ptr [ebp+8]     ; 返回 a
 
 结构：
 
-```
-loop_body:
-    (循环体)
-    cmp b, 0
-    jne loop_body
-    (结束)
-```
+![do-while 循环汇编结构 (末尾检查)](c-asm-5-images/dowhile-loop-flow.png)
 
 **do-while 最显著的特征：没有条件检查的前置跳转。** 循环代码从 `loop_body` 标签开始直接执行，条件检查在末尾。这是和 for/while 的关键区别——for/while 是"先检查后执行"，条件检查在循环体之前；do-while 是"先执行后检查"，直接进循环体，末尾 `jne` 跳回。
+
+这也解释了为什么 for/while 的条件跳转需要一个 `end` 标签，而 do-while 不需要。for/while 在循环体**之前**检查，检查失败时要跳到循环体之后——必须有 `end` 标记目标。do-while 在循环体**之后**检查，检查失败时不跳，fall-through 自然到了循环体后面，不需要专门的退出标签。
 
 三种循环的对比如下：
 
@@ -181,18 +160,12 @@ loop_body:
 
 ## 三种循环的 Release 形态
 
-下面三个函数做同样的事——把 1 加到 n：
+Release（`/O2`）下编译器会做循环展开、指令调度等优化，Debug 的结构差异被抹平。看两个函数的对比：
 
 ```c
 int sum_for(int n) {
     int s = 0;
     for (int i = 1; i <= n; i++) { s += i; }
-    return s;
-}
-
-int sum_while(int n) {
-    int s = 0, i = 1;
-    while (i <= n) { s += i; i++; }
     return s;
 }
 
@@ -209,45 +182,115 @@ MSVC 32 位 Release 编译（`/O2`），两个函数的汇编**不一样**：
 
 ```asm
 ; sum_for — 编译器做了循环展开（每次加 2）
-xor  edx, edx                  ; s = 0
-xor  esi, esi
-lea  eax, [edx+1]              ; eax = i = 1
-cmp  ecx, 2                    ; n < 2 ?
-jl   end
-lea  edi, [ecx-1]              ; edi = n - 1（展开后的上界）
-loop:
-inc  esi                       ; 展开计数器
-add  edx, eax                  ; s += i
-add  esi, eax                  ; 展开累加
-add  eax, 2                    ; i += 2（每次加 2，循环展开）
-cmp  eax, edi
-jle  loop
-end:
-xor  edi, edi
-cmp  eax, ecx
-cmovg eax, edi                 ; 处理 n 为奇数时的最后一次
-add  eax, esi
-add  eax, edx
-ret
+00441040  xor   edx, edx              ; s = 0
+00441042  push  esi
+00441043  xor   esi, esi
+00441045  push  edi
+00441046  lea   eax, [edx+1]          ; i = 1
+00441049  cmp   ecx, 2                ; n < 2 ?
+0044104C  jl    sum_while+1Dh
+0044104E  lea   edi, [ecx-1]          ; n - 1
+00441051  inc   esi
+00441052  add   edx, eax              ; s += i
+00441054  add   esi, eax
+00441056  add   eax, 2                ; i += 2（循环展开）
+00441059  cmp   eax, edi
+0044105B  jle   sum_while+11h
+0044105D  xor   edi, edi
+0044105F  cmp   eax, ecx
+00441061  cmovg eax, edi
+00441064  add   eax, esi
+00441066  pop   edi
+00441067  add   eax, edx
+00441069  pop   esi
+0044106A  ret
 
 ; sum_dowhile — 没有循环展开，结构简单
-xor  eax, eax                  ; s = 0
-lea  edx, [eax+1]              ; i = 1
-cmp  ecx, edx                  ; n >= 1 ?
-jl   end
-loop:
-add  eax, edx                  ; s += i
-inc  edx                       ; i++
-cmp  edx, ecx                  ; i <= n ?
-jle  loop
-end:
-ret
+00441070  xor   eax, eax              ; s = 0
+00441072  lea   edx, [eax+1]          ; i = 1
+00441075  cmp   ecx, edx              ; n >= 1 ?
+00441077  jl    sum_dowhile+17h
+00441079  nop   dword ptr [eax]
+00441080  add   eax, edx              ; s += i
+00441082  inc   edx                   ; i++
+00441083  cmp   edx, ecx              ; i <= n ?
+00441085  jle   sum_dowhile+10h
+00441087  ret
 ```
 
-`sum_for` 被循环展开（每次加 2），用了 `lea` 替代 `mov`、`cmov` 替代分支；`sum_dowhile` 没有展开，保持简单的 `add`+`inc`+`cmp`+`jle`。**编译器对不同循环生成不同代码**——"三种循环 Release 完全一样"是错的。
+`sum_for` 被循环展开（每次加 2），用了 `lea` 替代 `mov`、`cmov` 替代分支；`sum_dowhile` 没有展开，保持简单的 `add`+`inc`+`cmp`+`jle`。**不同循环写法在 Release 下生成不同代码**，不要假设它们会统一。
 
 > [!IMPORTANT] 逆向结论
 > 在 Release 版本中，编译器会做循环展开、指令调度、寄存器分配等优化，Debug 下的结构差异（`jmp check`、递增段位置等）会被抹平。你无法区分原始代码用的是 for、while 还是 do-while，只能还原出"这是一个循环，循环条件是什么，循环体做了什么"。不要试图在 Release 里用 Debug 的结构特征去区分循环类型。
+
+## 死循环
+
+死循环是条件恒为真的循环：`while(1)`、`for(;;)`、`do {...} while(1)`。三种都能写，但 MSVC Debug（`/Od`）对它们的处理不同：
+
+```c
+while (1) { printf("%d", n); }
+for (;;)  { printf("%d", n); }
+do        { printf("%d", n); } while (1);
+```
+
+核心汇编：
+
+```asm
+; while (1) — 开头保留 mov + test + je
+check:
+mov   eax, 1                     ; 加载常量 1
+test  eax, eax                   ; 测试是否为零
+je    end                        ; 为零则跳出（永远不跳）
+mov   eax, dword ptr [n]         ; printf 参数
+push  eax
+push  offset "%d"
+call  printf
+add   esp, 8
+jmp   check                      ; 跳回检查
+
+; for (;;) — 完全没有条件检查
+loop_body:
+mov   eax, dword ptr [n]         ; printf 参数
+push  eax
+push  offset "%d"
+call  printf
+add   esp, 8
+jmp   loop_body                  ; 直接无条件跳回
+
+; do {} while (1) — 末尾保留 mov + test + jne
+loop_body:
+mov   eax, dword ptr [n]         ; printf 参数
+push  eax
+push  offset "%d"
+call  printf
+add   esp, 8
+mov   eax, 1
+test  eax, eax
+jne   loop_body                  ; 非零则继续（永远跳）
+```
+
+三种写法的区别：
+
+- **`while(1)`**：开头 `mov eax,1` + `test` + `je`（永远不跳），循环体末尾 `jmp` 跳回开头
+- **`for(;;)`**：完全省略条件检查，只有循环体 + 末尾 `jmp` 跳回
+- **`do {} while(1)`**：末尾 `mov eax,1` + `test` + `jne`（永远跳），没有开头的检查
+
+`while(1)` 的 `je` 和 `do {} while(1)` 的 `jne` 测试的都是常量 1，一个永远不跳、一个永远跳，但 Debug 模式不优化，照常生成。`for(;;)` 语法上没有条件表达式，编译器直接省掉。
+
+> [!NOTE] Release 下三种写法完全一样
+> Release（`/O2`）下编译器识别出常量条件，三种写法都省掉 `test`，变成纯粹的无条件 `jmp` 跳回，完全无法区分：
+>
+> ```asm
+> loop_body:
+> mov   eax, dword ptr [n]        ; printf 参数
+> push  eax
+> push  offset "%d"
+> call  printf
+> add   esp, 8
+> jmp   loop_body                 ; 三种写法都是这一条
+> ```
+
+**识别死循环的特征**：循环末尾是无条件 `jmp` 跳回（没有 `cmp`/`test`），或者有 `test` 但测试的是非零常量（`je`/`jne` 永远不跳/永远跳）。跳出只能靠 `break`（循环体内的条件 `jmp` 到循环之后）。
 
 ## break 和 continue
 
@@ -278,33 +321,6 @@ int sum_positive(int* arr, int len) {
 `first_negative`（带 break）的核心汇编：
 
 ```asm
-mov  dword ptr [ebp-4], 0       ; i = 0
-jmp  check
-increment:
-mov  eax, dword ptr [ebp-4]     ; i++
-add  eax, 1
-mov  dword ptr [ebp-4], eax
-check:
-mov  ecx, dword ptr [ebp-4]
-cmp  ecx, dword ptr [ebp+0Ch]   ; i < len ?
-jge  after_loop                 ; i >= len → 循环结束
-mov  eax, dword ptr [ebp-4]     ; eax = i
-mov  ecx, dword ptr [ebp+8]     ; ecx = arr
-mov  edx, dword ptr [ecx+eax*4] ; edx = arr[i]
-cmp  edx, 0                     ; arr[i] < 0 ?
-jge  increment                  ; 大于等于 0 → 不 break，跳到递增
-jmp  after_loop                 ; break！跳到循环之后
-after_loop:                     ; ← break 跳到这里
-mov  eax, 0                     ; return 0
-```
-
-> [!NOTE] `arr[i]` 的寻址公式
-> `mov edx, dword ptr [ecx+eax*4]` 就是 `arr[i]`。`ecx` 是数组首地址（base），`eax` 是下标 i（index），`*4` 是因为 `int` 占 4 字节。通用公式是 `[base + index * scale]`，scale 由元素大小决定。寻址模式的细节留到 c-asm-6 数组章节展开。
-
-`sum_positive`（带 continue）的核心汇编：
-
-```asm
-mov  dword ptr [ebp-4], 0       ; total = 0
 mov  dword ptr [ebp-8], 0       ; i = 0
 jmp  check
 increment:
@@ -312,20 +328,46 @@ mov  eax, dword ptr [ebp-8]     ; i++
 add  eax, 1
 mov  dword ptr [ebp-8], eax
 check:
-mov  ecx, dword ptr [ebp-8]
-cmp  ecx, dword ptr [ebp+0Ch]   ; i < len ?
-jge  end                        ; i >= len → 循环结束
+mov  eax, dword ptr [ebp-8]     ; eax = i
+cmp  eax, dword ptr [ebp+0Ch]   ; i < len ?
+jge  after_loop                 ; i >= len → 循环结束
 mov  eax, dword ptr [ebp-8]     ; eax = i
 mov  ecx, dword ptr [ebp+8]     ; ecx = arr
-mov  edx, dword ptr [ecx+eax*4] ; edx = arr[i]
-cmp  edx, 0                     ; arr[i] < 0 ?
+cmp  dword ptr [ecx+eax*4], 0   ; arr[i] < 0 ?（直接在内存比较）
+jge  increment                  ; 大于等于 0 → 不 break，跳到递增
+jmp  after_loop                 ; break！跳到循环之后
+after_loop:                     ; ← break 跳到这里
+xor  eax, eax                   ; return 0
+```
+
+> [!NOTE] `arr[i]` 的寻址公式
+> `cmp dword ptr [ecx+eax*4], 0` 就是拿 `arr[i]` 直接和 0 比较。`ecx` 是数组首地址（base），`eax` 是下标 i（index），`*4` 是因为 `int` 占 4 字节。通用公式是 `[base + index * scale]`，scale 由元素大小决定。寻址模式的细节留到 c-asm-6 数组章节展开。
+
+`sum_positive`（带 continue）的核心汇编：
+
+```asm
+mov  dword ptr [ebp-4], 0       ; total = 0
+mov  dword ptr [ebp-14h], 0     ; i = 0
+jmp  check
+increment:
+mov  eax, dword ptr [ebp-14h]   ; i++
+add  eax, 1
+mov  dword ptr [ebp-14h], eax
+check:
+mov  eax, dword ptr [ebp-14h]   ; eax = i
+cmp  eax, dword ptr [ebp+0Ch]   ; i < len ?
+jge  end                        ; i >= len → 循环结束
+mov  eax, dword ptr [ebp-14h]   ; eax = i
+mov  ecx, dword ptr [ebp+8]     ; ecx = arr
+cmp  dword ptr [ecx+eax*4], 0   ; arr[i] < 0 ?（直接在内存比较）
 jge  skip_continue              ; 大于等于 0 → 不 continue
 jmp  increment                  ; continue！跳到递增部分
 skip_continue:
-mov  eax, dword ptr [ebp-8]
-mov  ecx, dword ptr [ebp+8]
-mov  edx, dword ptr [ecx+eax*4]
-add  dword ptr [ebp-4], edx     ; total += arr[i]
+mov  eax, dword ptr [ebp-14h]   ; eax = i
+mov  ecx, dword ptr [ebp+8]     ; ecx = arr
+mov  edx, dword ptr [ebp-4]     ; edx = total
+add  edx, dword ptr [ecx+eax*4] ; edx += arr[i]
+mov  dword ptr [ebp-4], edx     ; total = edx
 jmp  increment                  ; 执行完跳到递增
 end:
 mov  eax, dword ptr [ebp-4]     ; return total
@@ -356,60 +398,72 @@ void bubble_sort(int* arr, int n) {
 }
 ```
 
-只看循环控制结构（省略 swap 的具体指令）：
+核心汇编：
 
 ```asm
-mov  dword ptr [ebp-4], 0       ; i = 0（外层初始化）
+mov  dword ptr [ebp-8], 0        ; i = 0（外层初始化）
 jmp  outer_check
 outer_increment:
-mov  eax, dword ptr [ebp-4]     ; i++
-add  eax, 1
-mov  dword ptr [ebp-4], eax
-outer_check:
-mov  ecx, dword ptr [ebp+0Ch]   ; ecx = n
-sub  ecx, 1                     ; n - 1
-cmp  dword ptr [ebp-4], ecx     ; i < n - 1 ?
-jge  end                        ; i >= n-1 → 跳出外层
-mov  dword ptr [ebp-8], 0       ; j = 0（内层初始化）
-jmp  inner_check
-inner_increment:
-mov  eax, dword ptr [ebp-8]     ; j++
+mov  eax, dword ptr [ebp-8]      ; i++
 add  eax, 1
 mov  dword ptr [ebp-8], eax
+outer_check:
+mov  eax, dword ptr [ebp+0Ch]    ; eax = n
+sub  eax, 1                      ; n - 1
+cmp  dword ptr [ebp-8], eax      ; i < n - 1 ?
+jge  end                         ; i >= n-1 → 跳出外层
+mov  dword ptr [ebp-14h], 0      ; j = 0（内层初始化）
+jmp  inner_check
+inner_increment:
+mov  eax, dword ptr [ebp-14h]    ; j++
+add  eax, 1
+mov  dword ptr [ebp-14h], eax
 inner_check:
-mov  ecx, dword ptr [ebp-4]     ; ecx = i
-mov  edx, dword ptr [ebp+0Ch]   ; edx = n
-sub  edx, 1                     ; n - 1
-sub  edx, ecx                   ; n - 1 - i
-cmp  dword ptr [ebp-8], edx     ; j < n - 1 - i ?
-jge  outer_increment            ; j >= limit → 跳回外层递增
-; ... arr[j] > arr[j+1] 则 swap ...
-jmp  inner_increment            ; 跳回内层递增
+mov  eax, dword ptr [ebp+0Ch]    ; eax = n
+sub  eax, 1                      ; n - 1
+sub  eax, dword ptr [ebp-8]      ; n - 1 - i
+cmp  dword ptr [ebp-14h], eax    ; j < n - 1 - i ?
+jge  outer_increment             ; j >= limit → 跳回外层递增
+; ── if (arr[j] > arr[j+1]) 则 swap ──
+mov  eax, dword ptr [ebp-14h]    ; eax = j
+mov  ecx, dword ptr [ebp+8]      ; ecx = arr
+mov  edx, dword ptr [ebp-14h]    ; edx = j
+mov  esi, dword ptr [ebp+8]      ; esi = arr
+mov  eax, dword ptr [ecx+eax*4]  ; eax = arr[j]
+cmp  eax, dword ptr [esi+edx*4+4]; arr[j] > arr[j+1] ?
+jle  inner_increment             ; 不大于 → 跳过 swap
+; swap: temp = arr[j]
+mov  eax, dword ptr [ebp-14h]    ; eax = j
+mov  ecx, dword ptr [ebp+8]      ; ecx = arr
+mov  edx, dword ptr [ecx+eax*4]  ; edx = arr[j]
+mov  dword ptr [ebp-20h], edx    ; temp = arr[j]
+; arr[j] = arr[j+1]
+mov  eax, dword ptr [ebp-14h]    ; eax = j
+mov  ecx, dword ptr [ebp+8]      ; ecx = arr
+mov  edx, dword ptr [ebp-14h]    ; edx = j
+mov  esi, dword ptr [ebp+8]      ; esi = arr
+mov  edx, dword ptr [esi+edx*4+4]; edx = arr[j+1]
+mov  dword ptr [ecx+eax*4], edx  ; arr[j] = arr[j+1]
+; arr[j+1] = temp
+mov  eax, dword ptr [ebp-14h]    ; eax = j
+mov  ecx, dword ptr [ebp+8]      ; ecx = arr
+mov  edx, dword ptr [ebp-20h]    ; edx = temp
+mov  dword ptr [ecx+eax*4+4], edx; arr[j+1] = temp
+jmp  inner_increment             ; 跳回内层递增
 end:
 ```
+
+> [!NOTE] Debug 重复加载同一个变量
+> swap 部分每次用 `arr` 或 `j` 都重新从栈上 `mov` 出来（`mov ecx, dword ptr [ebp+8]` 出现了 5 次）。这是 Debug（`/Od`）的机械行为——每步都从栈读写，寄存器只做临时打工。Release 会把 `arr` 和 `j` 固定在寄存器里，这些重复加载全部消失。
 
 嵌套循环的结构：
 
-```
-outer_init:       mov i, 0
-                  jmp outer_check
-outer_increment:  i++
-outer_check:      cmp i, n-1
-                  jge end
-    inner_init:      mov j, 0
-                     jmp inner_check
-    inner_increment: j++
-    inner_check:     cmp j, limit
-                     jge outer_increment
-                     (内层循环体)
-                     jmp inner_increment
-end:
-```
+![嵌套循环汇编结构 (两套 jmp check + cmp + jxx)](c-asm-5-images/nested-loop-flow.png)
 
 识别嵌套循环的关键：找**两对** `jmp check` + `cmp` + `jge` 结构。内层循环的跳转目标都在内层范围内（`inner_increment` → `inner_check` → 循环体 → `inner_increment`），外层循环的跳转目标跨越整个内层结构（`outer_check` 包含完整的内层循环，`inner_check` 失败时跳到 `outer_increment`）。
 
-> [!TIP] Release 下寄存器分配让结构更清晰
-> Debug 版所有变量都在栈上（`[ebp-4]`、`[ebp-8]`），两套循环结构混在密集的栈读写里不好认。Release 版把变量分配到寄存器后，结构一目了然：`esi` = 外层 i，`ebx` = 内层 j，两套 `inc` + `cmp` + `jge` 结构清晰可见。
+> [!NOTE] Release 下寄存器分配让结构更清晰
+> Debug 版所有变量都在栈上（`[ebp-8]`、`[ebp-14h]`），两套循环结构混在密集的栈读写里不好认。逆向嵌套循环时优先看 Release 版，寄存器分配后结构一目了然：`esi` = 外层 i，`ebx` = 内层 j，两套 `inc` + `cmp` + `jge` 结构清晰可见。
 
 ## 逆向识别清单
 

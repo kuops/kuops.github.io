@@ -170,15 +170,4 @@
     <text x="20" y="70" font-family="monospace" font-size="12" font-weight="bold" fill="#ef4444">→ 查表索引 2 → 表里是 default → return -1</text>
   </g>
 
-  <!-- ========== Legend ========== -->
-  <g transform="translate(540, 550)">
-    <text x="0" y="0" font-size="13" font-weight="bold" fill="#94a3b8">图例</text>
-    <rect x="0" y="10" width="20" height="16" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
-    <text x="28" y="22" font-size="12" font-weight="bold" fill="#94a3b8">已执行</text>
-    <rect x="0" y="34" width="20" height="16" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="28" y="46" font-size="12" font-weight="bold" fill="#94a3b8">未执行</text>
-    <rect x="0" y="58" width="20" height="16" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="28" y="70" font-size="12" font-weight="bold" fill="#94a3b8">default / 空洞</text>
-  </g>
-
 </svg>

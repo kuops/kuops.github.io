@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 274" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">do-while 循环汇编结构 (末尾检查)</text>
+
+  <!-- Box 1: loop_body (entry, no jmp check) -->
+  <g transform="translate(40, 55)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">loop_body:</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#10b981">循环体</text>
+  </g>
+
+  <line x1="195" y1="85" x2="195" y2="99" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,93 195,99 199,93" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 2: cmp -->
+  <g transform="translate(40, 99)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">cmp b, 0</text>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">条件检查</text>
+  </g>
+
+  <line x1="195" y1="129" x2="195" y2="143" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="191,137 195,143 199,137" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <!-- Box 3: jne loop_body (decision, back-edge) -->
+  <g transform="translate(40, 143)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">jne loop_body</text>
+  </g>
+
+  <!-- jne taken: yellow back-edge to loop_body (left x=20 channel, upward) -->
+  <path d="M 40 158 L 25 158 Q 20 158 20 153 L 20 75 Q 20 70 25 70 L 40 70" fill="none" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="36,66 40,70 36,74" fill="#fbbf24"/>
+  <text x="365" y="163" font-size="11" font-weight="bold" fill="#fbbf24">b!=0, 继续</text>
+
+  <!-- jne not taken: fall-through to end (34px decision) -->
+  <line x1="195" y1="173" x2="195" y2="207" stroke="#10b981" stroke-width="2"/>
+  <polygon points="191,201 195,207 199,201" fill="#10b981"/>
+  <text x="205" y="194" font-size="11" font-weight="bold" fill="#10b981">b == 0, 退出</text>
+
+  <!-- Box 4: after loop (fall-through, no end label) -->
+  <g transform="translate(40, 207)">
+    <rect x="0" y="0" width="310" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="250" y="20" font-size="11" font-weight="bold" fill="#64748b">循环结束</text>
+  </g>
+  <text x="365" y="227" font-size="11" font-weight="bold" fill="#64748b">fall-through, 无 end 标签</text>
+
+</svg>
