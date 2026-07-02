@@ -497,7 +497,7 @@ func PROC
     mov     ebp, esp
     mov     eax, dword ptr [ebp+8]
     add     eax, dword ptr [ebp+0Ch]
-    add     eax, dword ptr [ebp+10h]
+    add     eax, dword ptr [ebp+10]
     pop     ebp
     ret     0Ch
 func ENDP
@@ -532,7 +532,7 @@ mystery PROC
     mov     ebp, esp
     mov     eax, dword ptr [ebp+8]
     imul    eax, dword ptr [ebp+0Ch]
-    add     eax, dword ptr [ebp+10h]
+    add     eax, dword ptr [ebp+10]
     pop     ebp
     ret
 mystery ENDP

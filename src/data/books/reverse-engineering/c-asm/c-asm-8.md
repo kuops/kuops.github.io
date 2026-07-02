@@ -146,7 +146,7 @@ mov  eax, dword ptr [ebp-4]         ; eax = i
 mov  ecx, dword ptr [ebp+8]         ; ecx = a
 movzx edx, byte ptr [ecx+eax]       ; edx = a[i]
 mov  eax, dword ptr [ebp-4]         ; eax = i
-mov  ecx, dword ptr [ebp+12]       ; ecx = b
+mov  ecx, dword ptr [ebp+C]       ; ecx = b
 movzx eax, byte ptr [ecx+eax]       ; eax = b[i]
 cmp  edx, eax                       ; a[i] == b[i] ?
 jne  end
@@ -162,7 +162,7 @@ end:
 - `byte ptr` 逐字节访问（char 是 1 字节）
 - `movzx` 零扩展到 32 位
 - `test reg, reg` 检查是否 `\0`（零值）
-- 两个指针（`[ebp+8]` 和 `[ebp+12]`）同时推进
+- 两个指针（`[ebp+8]` 和 `[ebp+C]`）同时推进
 
 > [!NOTE] 汇编基础章的字符串指令
 > 汇编基础章讲了 `repne scasb`、`rep movsb` 等 x86 字符串指令。这些是 CPU 硬件提供的批量操作，编译器在 Release 模式或内联 `strcmp`/`memcpy` 时可能用到。但 Debug 模式下 MSVC 通常生成上面的循环形式，逐字节操作。

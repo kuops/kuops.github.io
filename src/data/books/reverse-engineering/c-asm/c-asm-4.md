@@ -38,10 +38,10 @@ int classify(int x) {
 ```asm
 mov  dword ptr [ebp-4], 0           ; result = 0
 mov  eax, dword ptr [ebp+8]         ; eax = x
-mov  dword ptr [ebp-208], eax      ; 复制到临时变量（Debug 特性）
-cmp  dword ptr [ebp-208], 1        ; x == 1?
+mov  dword ptr [ebp-D0], eax      ; 复制到临时变量（Debug 特性）
+cmp  dword ptr [ebp-D0], 1        ; x == 1?
 je   case_1
-cmp  dword ptr [ebp-208], 2        ; x == 2?
+cmp  dword ptr [ebp-D0], 2        ; x == 2?
 je   case_2
 jmp  default_case                   ; 都不匹配 -> default
 case_1:
@@ -59,7 +59,7 @@ mov  eax, dword ptr [ebp-4]
 每个 case 对应一次 `cmp` + `je`，线性排列。和 if/else if 几乎一模一样，无法区分。唯一的线索是：所有比较都针对**同一个变量的不同常量值**，这是 switch 的语义特征。
 
 > [!NOTE] Debug 模式的临时变量
-> 你可能注意到编译器把 `x` 先复制到 `[ebp-208]` 再反复比较，而不是直接 `cmp [ebp+8], 1`。这是 Debug 模式（`/Od`）的特性：它把 `switch(x)` 的 `x` 计算一次存到临时变量，之后所有 case 比较都用这个临时变量。Release 模式不会这样。
+> 你可能注意到编译器把 `x` 先复制到 `[ebp-D0]` 再反复比较，而不是直接 `cmp [ebp+8], 1`。这是 Debug 模式（`/Od`）的特性：它把 `switch(x)` 的 `x` 计算一次存到临时变量，之后所有 case 比较都用这个临时变量。Release 模式不会这样。
 
 ## 中型 switch：跳转表
 
@@ -83,24 +83,24 @@ int day_name_small(int n) {
 ```asm
 ; ── 第一步：取 n 的值，复制到临时变量 ──
 mov  eax, dword ptr [ebp+8]         ; eax = n（参数）
-mov  dword ptr [ebp-196], eax      ; 存到临时变量（Debug 特性）
+mov  dword ptr [ebp-C4], eax      ; 存到临时变量（Debug 特性）
 
 ; ── 第二步：把 case 值转成 0 起始的索引 ──
-mov  ecx, dword ptr [ebp-196]
+mov  ecx, dword ptr [ebp-C4]
 sub  ecx, 1                         ; ecx = n - 1
                                     ;   n=1 → 索引 0
                                     ;   n=2 → 索引 1
                                     ;   n=3 → 索引 2
                                     ;   n=4 → 索引 3
                                     ;   n=5 → 索引 4
-mov  dword ptr [ebp-196], ecx
+mov  dword ptr [ebp-C4], ecx
 
 ; ── 第三步：范围检查 ──
-cmp  dword ptr [ebp-196], 4        ; 索引 > 4？（即 n < 1 或 n > 5）
+cmp  dword ptr [ebp-C4], 4        ; 索引 > 4？（即 n < 1 或 n > 5）
 ja   default_case                   ; 超出范围 → default
 
 ; ── 第四步：查表跳转 ──
-mov  edx, dword ptr [ebp-196]      ; edx = 索引
+mov  edx, dword ptr [ebp-C4]      ; edx = 索引
 jmp  dword ptr [edx*4+0x00AB43D0]   ; 跳转到 表基址 + 索引×4 处存的地址
 
 ; ── 各 case 的代码块 ──
@@ -183,13 +183,13 @@ int sparse(int x) {
 
 ```asm
 mov  eax, dword ptr [ebp+8]         ; eax = x
-mov  dword ptr [ebp-196], eax
-mov  ecx, dword ptr [ebp-196]
+mov  dword ptr [ebp-C4], eax
+mov  ecx, dword ptr [ebp-C4]
 sub  ecx, 1                         ; x - 1（索引）
-mov  dword ptr [ebp-196], ecx
-cmp  dword ptr [ebp-196], 4        ; 索引 > 4?
+mov  dword ptr [ebp-C4], ecx
+cmp  dword ptr [ebp-C4], 4        ; 索引 > 4?
 ja   default_case                   ; 超出范围 -> default
-mov  edx, dword ptr [ebp-196]
+mov  edx, dword ptr [ebp-C4]
 jmp  dword ptr [edx*4+0x004B4F68]   ; 跳转表
 case_1:
 mov  eax, 0x64                      ; return 100
@@ -294,7 +294,7 @@ switch (x) {
 ```
 
 ```asm
-0101498B  mov  dword ptr [result], 0x0A    ; case 10
+0101498B  mov  dword ptr [result], 0xA    ; case 10
 01014992  mov  dword ptr [result], 0x14    ; case 20，覆盖了 10
 01014999  mov  dword ptr [result], 0x1E    ; case 30，覆盖了 20
 010149A0  mov  dword ptr [result], 0x1E    ; case 40
@@ -326,13 +326,13 @@ const char* color_name(int code) {
 
 ```asm
 mov  eax, dword ptr [code]            ; eax = code
-mov  dword ptr [ebp-196], eax        ; 存到临时变量
-mov  ecx, dword ptr [ebp-196]
-sub  ecx, 0x0A                         ; ecx = code - 10（最小 case 值）
-mov  dword ptr [ebp-196], ecx
-cmp  dword ptr [ebp-196], 0x1E        ; 索引 > 0x1E (30)?
+mov  dword ptr [ebp-C4], eax        ; 存到临时变量
+mov  ecx, dword ptr [ebp-C4]
+sub  ecx, 0xA                         ; ecx = code - 10（最小 case 值）
+mov  dword ptr [ebp-C4], ecx
+cmp  dword ptr [ebp-C4], 0x1E        ; 索引 > 0x1E (30)?
 ja   default_case                     ; 超出 10~40 范围 → default
-mov  edx, dword ptr [ebp-196]        ; edx = code - 10
+mov  edx, dword ptr [ebp-C4]        ; edx = code - 10
 movzx eax, byte ptr [edx+0x185300h]  ; 第一步：查字节表，读出 1 字节
 jmp  dword ptr [eax*4+0x1852E8h]      ; 第二步：查地址表，读出 4 字节跳转
 
@@ -444,18 +444,18 @@ const char* color_name(int code) {
 编译器的三层结构：
 
 ```asm
-cmp  dword ptr [ebp-196], 0x13B      ; 0x13B = 315，中点
+cmp  dword ptr [ebp-C4], 0x13B      ; 0x13B = 315，中点
 jg   right_path                      ; >315 → 右段
 ; 左段（10~315）：减最小值 10，双重跳转表
-sub  ecx, 0x0A                        ; ecx = code - 10
-cmp  dword ptr [ebp-196], 0x0D7      ; 0x0D7 = 215，范围检查
+sub  ecx, 0xA                        ; ecx = code - 10
+cmp  dword ptr [ebp-C4], 0xD7      ; 0xD7 = 215，范围检查
 ja   default_case
 movzx eax, byte ptr [edx+XXX1h]      ; 字节表 1
 jmp  dword ptr [eax*4+XXX2h]         ; 地址表 1
 right_path:
 ; 右段（10001~10102）：减最小值 10001，另一张双重跳转表
 sub  ecx, 0x2711                      ; ecx = code - 10001
-cmp  dword ptr [ebp-196], 0x65       ; 0x65 = 101，范围检查
+cmp  dword ptr [ebp-C4], 0x65       ; 0x65 = 101，范围检查
 ja   default_case
 movzx eax, byte ptr [edx+YYY1h]      ; 字节表 2
 jmp  dword ptr [eax*4+YYY2h]         ; 地址表 2

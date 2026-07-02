@@ -47,8 +47,8 @@ mov     ebp, esp
 sub     esp, 0Ch                     ; 分配 12 字节（3 个 int）
 mov     dword ptr [ebp-4], 64h       ; p.hp = 100
 mov     dword ptr [ebp-8], 32h       ; p.mp = 50
-mov     dword ptr [ebp-0Ch], 1       ; p.level = 1
-mov     eax, dword ptr [ebp-0Ch]
+mov     dword ptr [ebp-C], 1       ; p.level = 1
+mov     eax, dword ptr [ebp-C]
 push    eax                           ; p.level
 mov     ecx, dword ptr [ebp-8]
 push    ecx                           ; p.mp
@@ -70,7 +70,7 @@ ret
 1. `struct Player p;` -> 在栈上分配 12 字节（3 个 int × 4 字节）
 2. `p.hp = 100;` -> 写入 `[ebp-4]`
 3. `p.mp = 50;` -> 写入 `[ebp-8]`
-4. `p.level = 1;` -> 写入 `[ebp-0Ch]`
+4. `p.level = 1;` -> 写入 `[ebp-C]`
 
 结构体在内存里就是一段**连续的字节序列**，字段按声明顺序依次排列：
 
@@ -80,7 +80,7 @@ ret
 ─────   ──────
 0x00    hp    (100)     ← [ebp-4]
 0x04    mp    (50)      ← [ebp-8]
-0x08    level (1)       ← [ebp-0Ch]
+0x08    level (1)       ← [ebp-C]
 
 总共 12 字节（0x0C）
 -->
@@ -281,7 +281,7 @@ take_damage ENDP
 
 <!-- 📸 截图：x64dbg 中 take_damage 函数，标注 [eax+0] 和 [eax+8] 对应 hp 和 defense -->
 
-**识别模式：** 当你在一个函数里反复看到 `[reg+0]`、`[reg+4]`、`[reg+8]`、`[reg+0Ch]`... 这种固定偏移访问，而 reg 本身是从参数来的——这就是在访问结构体字段。reg 是结构体的基地址，后面的常数就是字段偏移。
+**识别模式：** 当你在一个函数里反复看到 `[reg+0]`、`[reg+4]`、`[reg+8]`、`[reg+C]`... 这种固定偏移访问，而 reg 本身是从参数来的——这就是在访问结构体字段。reg 是结构体的基地址，后面的常数就是字段偏移。
 
 常见的混淆点：`[eax+8]` 也可能是数组下标访问 `arr[2]`。区别在哪？
 
@@ -368,7 +368,7 @@ area PROC
     mov     eax, dword ptr [esp+4]     ; r 指针
     mov     ecx, dword ptr [eax+8]     ; r->bottom_right.x（偏移 8）
     sub     ecx, dword ptr [eax]       ; - r->top_left.x（偏移 0）
-    mov     edx, dword ptr [eax+0Ch]   ; r->bottom_right.y（偏移 0Ch）
+    mov     edx, dword ptr [eax+C]   ; r->bottom_right.y（偏移 0Ch）
     sub     edx, dword ptr [eax+4]     ; - r->top_left.y（偏移 4）
     mov     eax, ecx
     imul    eax, edx                    ; w * h
@@ -378,7 +378,7 @@ area ENDP
 
 嵌套结构体的字段偏移就是**把内层结构体展开后逐个排列**。`top_left` 占 8 字节（偏移 0-7），`bottom_right` 紧接着占 8 字节（偏移 8-15），`color` 再占 4 字节（偏移 16-19）。
 
-逆向时如果你看到连续的偏移访问，比如 `[reg+0]`、`[reg+4]` 是一组，`[reg+8]`、`[reg+0Ch]` 是另一组，`[reg+10h]` 是单独一个字段——很可能存在嵌套结构体。前两个字段和中间两个字段分别是两个 Point。
+逆向时如果你看到连续的偏移访问，比如 `[reg+0]`、`[reg+4]` 是一组，`[reg+8]`、`[reg+C]` 是另一组，`[reg+10]` 是单独一个字段——很可能存在嵌套结构体。前两个字段和中间两个字段分别是两个 Point。
 
 ## 用 IDA 创建结构体
 
@@ -484,7 +484,7 @@ sub_401100 PROC
     mov     byte ptr [eax], 1
     mov     dword ptr [eax+4], 0x64
     mov     word ptr [eax+8], 5
-    mov     dword ptr [eax+0Ch], 0
+    mov     dword ptr [eax+C], 0
     pop     ebp
     ret
 sub_401100 ENDP
@@ -520,7 +520,7 @@ sub_401200 PROC
     mov     dword ptr [eax], 0xA
     mov     dword ptr [eax+4], 0x14
     mov     dword ptr [eax+8], 0x1E
-    mov     dword ptr [eax+0Ch], 0x28
+    mov     dword ptr [eax+C], 0x28
     mov     dword ptr [eax+10h], 0xFF
     pop     ebp
     ret

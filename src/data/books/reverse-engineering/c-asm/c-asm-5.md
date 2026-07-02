@@ -27,18 +27,18 @@ int sum_to(int n) {
 
 ```asm
 mov  dword ptr [ebp-4], 0       ; total = 0
-mov  dword ptr [ebp-20], 1     ; i = 1（初始化）
+mov  dword ptr [ebp-14], 1     ; i = 1（初始化）
 jmp  check                      ; ← 关键：先跳到条件检查
 increment:
-mov  eax, dword ptr [ebp-20]   ; i++
+mov  eax, dword ptr [ebp-14]   ; i++
 add  eax, 1
-mov  dword ptr [ebp-20], eax
+mov  dword ptr [ebp-14], eax
 check:
-mov  eax, dword ptr [ebp-20]   ; eax = i
+mov  eax, dword ptr [ebp-14]   ; eax = i
 cmp  eax, dword ptr [ebp+8]     ; i <= n ?
 jg   end                        ; i > n → 跳出循环
 mov  eax, dword ptr [ebp-4]     ; eax = total（循环体）
-add  eax, dword ptr [ebp-20]   ; eax += i
+add  eax, dword ptr [ebp-14]   ; eax += i
 mov  dword ptr [ebp-4], eax     ; total = eax
 jmp  increment                  ; 循环体末尾跳回递增
 end:
@@ -126,13 +126,13 @@ int gcd(int a, int b) {
 loop_body:                      ; ← 直接进入循环体，没有 jmp check
 mov  eax, dword ptr [ebp+8]     ; eax = a
 cdq                             ; 扩展符号位到 edx（为 idiv 准备）
-idiv eax, dword ptr [ebp+12]   ; eax / b，余数在 edx
+idiv eax, dword ptr [ebp+C]   ; eax / b，余数在 edx
 mov  dword ptr [ebp-4], edx     ; temp = a % b
-mov  eax, dword ptr [ebp+12]   ; eax = b
+mov  eax, dword ptr [ebp+C]   ; eax = b
 mov  dword ptr [ebp+8], eax     ; a = b
 mov  eax, dword ptr [ebp-4]     ; eax = temp
-mov  dword ptr [ebp+12], eax   ; b = temp
-cmp  dword ptr [ebp+12], 0     ; b != 0 ?
+mov  dword ptr [ebp+C], eax   ; b = temp
+cmp  dword ptr [ebp+C], 0     ; b != 0 ?
 jne  loop_body                  ; 不等于 0 → 继续
 mov  eax, dword ptr [ebp+8]     ; 返回 a
 ```
@@ -329,7 +329,7 @@ add  eax, 1
 mov  dword ptr [ebp-8], eax
 check:
 mov  eax, dword ptr [ebp-8]     ; eax = i
-cmp  eax, dword ptr [ebp+12]   ; i < len ?
+cmp  eax, dword ptr [ebp+C]   ; i < len ?
 jge  after_loop                 ; i >= len → 循环结束
 mov  eax, dword ptr [ebp-8]     ; eax = i
 mov  ecx, dword ptr [ebp+8]     ; ecx = arr
@@ -347,23 +347,23 @@ xor  eax, eax                   ; return 0
 
 ```asm
 mov  dword ptr [ebp-4], 0       ; total = 0
-mov  dword ptr [ebp-20], 0     ; i = 0
+mov  dword ptr [ebp-14], 0     ; i = 0
 jmp  check
 increment:
-mov  eax, dword ptr [ebp-20]   ; i++
+mov  eax, dword ptr [ebp-14]   ; i++
 add  eax, 1
-mov  dword ptr [ebp-20], eax
+mov  dword ptr [ebp-14], eax
 check:
-mov  eax, dword ptr [ebp-20]   ; eax = i
-cmp  eax, dword ptr [ebp+12]   ; i < len ?
+mov  eax, dword ptr [ebp-14]   ; eax = i
+cmp  eax, dword ptr [ebp+C]   ; i < len ?
 jge  end                        ; i >= len → 循环结束
-mov  eax, dword ptr [ebp-20]   ; eax = i
+mov  eax, dword ptr [ebp-14]   ; eax = i
 mov  ecx, dword ptr [ebp+8]     ; ecx = arr
 cmp  dword ptr [ecx+eax*4], 0   ; arr[i] < 0 ?（直接在内存比较）
 jge  skip_continue              ; 大于等于 0 → 不 continue
 jmp  increment                  ; continue！跳到递增部分
 skip_continue:
-mov  eax, dword ptr [ebp-20]   ; eax = i
+mov  eax, dword ptr [ebp-14]   ; eax = i
 mov  ecx, dword ptr [ebp+8]     ; ecx = arr
 mov  edx, dword ptr [ebp-4]     ; edx = total
 add  edx, dword ptr [ecx+eax*4] ; edx += arr[i]
@@ -408,46 +408,46 @@ mov  eax, dword ptr [ebp-8]      ; i++
 add  eax, 1
 mov  dword ptr [ebp-8], eax
 outer_check:
-mov  eax, dword ptr [ebp+12]    ; eax = n
+mov  eax, dword ptr [ebp+C]    ; eax = n
 sub  eax, 1                      ; n - 1
 cmp  dword ptr [ebp-8], eax      ; i < n - 1 ?
 jge  end                         ; i >= n-1 → 跳出外层
-mov  dword ptr [ebp-20], 0      ; j = 0（内层初始化）
+mov  dword ptr [ebp-14], 0      ; j = 0（内层初始化）
 jmp  inner_check
 inner_increment:
-mov  eax, dword ptr [ebp-20]    ; j++
+mov  eax, dword ptr [ebp-14]    ; j++
 add  eax, 1
-mov  dword ptr [ebp-20], eax
+mov  dword ptr [ebp-14], eax
 inner_check:
-mov  eax, dword ptr [ebp+12]    ; eax = n
+mov  eax, dword ptr [ebp+C]    ; eax = n
 sub  eax, 1                      ; n - 1
 sub  eax, dword ptr [ebp-8]      ; n - 1 - i
-cmp  dword ptr [ebp-20], eax    ; j < n - 1 - i ?
+cmp  dword ptr [ebp-14], eax    ; j < n - 1 - i ?
 jge  outer_increment             ; j >= limit → 跳回外层递增
 ; ── if (arr[j] > arr[j+1]) 则 swap ──
-mov  eax, dword ptr [ebp-20]    ; eax = j
+mov  eax, dword ptr [ebp-14]    ; eax = j
 mov  ecx, dword ptr [ebp+8]      ; ecx = arr
-mov  edx, dword ptr [ebp-20]    ; edx = j
+mov  edx, dword ptr [ebp-14]    ; edx = j
 mov  esi, dword ptr [ebp+8]      ; esi = arr
 mov  eax, dword ptr [ecx+eax*4]  ; eax = arr[j]
 cmp  eax, dword ptr [esi+edx*4+4]; arr[j] > arr[j+1] ?
 jle  inner_increment             ; 不大于 → 跳过 swap
 ; swap: temp = arr[j]
-mov  eax, dword ptr [ebp-20]    ; eax = j
+mov  eax, dword ptr [ebp-14]    ; eax = j
 mov  ecx, dword ptr [ebp+8]      ; ecx = arr
 mov  edx, dword ptr [ecx+eax*4]  ; edx = arr[j]
-mov  dword ptr [ebp-32], edx    ; temp = arr[j]
+mov  dword ptr [ebp-20], edx    ; temp = arr[j]
 ; arr[j] = arr[j+1]
-mov  eax, dword ptr [ebp-20]    ; eax = j
+mov  eax, dword ptr [ebp-14]    ; eax = j
 mov  ecx, dword ptr [ebp+8]      ; ecx = arr
-mov  edx, dword ptr [ebp-20]    ; edx = j
+mov  edx, dword ptr [ebp-14]    ; edx = j
 mov  esi, dword ptr [ebp+8]      ; esi = arr
 mov  edx, dword ptr [esi+edx*4+4]; edx = arr[j+1]
 mov  dword ptr [ecx+eax*4], edx  ; arr[j] = arr[j+1]
 ; arr[j+1] = temp
-mov  eax, dword ptr [ebp-20]    ; eax = j
+mov  eax, dword ptr [ebp-14]    ; eax = j
 mov  ecx, dword ptr [ebp+8]      ; ecx = arr
-mov  edx, dword ptr [ebp-32]    ; edx = temp
+mov  edx, dword ptr [ebp-20]    ; edx = temp
 mov  dword ptr [ecx+eax*4+4], edx; arr[j+1] = temp
 jmp  inner_increment             ; 跳回内层递增
 end:
@@ -463,7 +463,7 @@ end:
 识别嵌套循环的关键：找**两对** `jmp check` + `cmp` + `jge` 结构。内层循环的跳转目标都在内层范围内（`inner_increment` → `inner_check` → 循环体 → `inner_increment`），外层循环的跳转目标跨越整个内层结构（`outer_check` 包含完整的内层循环，`inner_check` 失败时跳到 `outer_increment`）。
 
 > [!NOTE] Release 下寄存器分配让结构更清晰
-> Debug 版所有变量都在栈上（`[ebp-8]`、`[ebp-20]`），两套循环结构混在密集的栈读写里不好认。逆向嵌套循环时优先看 Release 版，寄存器分配后结构一目了然：`esi` = 外层 i，`ebx` = 内层 j，两套 `inc` + `cmp` + `jge` 结构清晰可见。
+> Debug 版所有变量都在栈上（`[ebp-8]`、`[ebp-14]`），两套循环结构混在密集的栈读写里不好认。逆向嵌套循环时优先看 Release 版，寄存器分配后结构一目了然：`esi` = 外层 i，`ebx` = 内层 j，两套 `inc` + `cmp` + `jge` 结构清晰可见。
 
 ## 逆向识别清单
 
@@ -555,7 +555,7 @@ end:
 3. 下面这段汇编包含嵌套循环。找出外层和内层循环的边界，说明循环变量和终止条件。
 
    ```asm
-   mov  dword ptr [ebp-12], 0      ; sum = 0
+   mov  dword ptr [ebp-C], 0      ; sum = 0
    mov  dword ptr [ebp-4], 0       ; i = 0
    jmp  outer_check
    outer_increment:
@@ -578,10 +578,10 @@ end:
    jge  outer_increment            ; j >= n → 跳回外层递增
    mov  eax, dword ptr [ebp-4]     ; eax = i
    add  eax, dword ptr [ebp-8]     ; eax += j
-   add  dword ptr [ebp-12], eax   ; sum += i + j
+   add  dword ptr [ebp-C], eax   ; sum += i + j
    jmp  inner_increment            ; 跳回内层递增
    end:
-   mov  eax, dword ptr [ebp-12]   ; return sum
+   mov  eax, dword ptr [ebp-C]   ; return sum
    ```
 
    > [!NOTE]- 参考答案
@@ -617,7 +617,7 @@ end:
    mov  dword ptr [ebp-4], eax
    check:
    mov  ecx, dword ptr [ebp-4]
-   cmp  ecx, dword ptr [ebp+12]   ; i < len ?
+   cmp  ecx, dword ptr [ebp+C]   ; i < len ?
    jge  after_loop                 ; i >= len → 循环结束
    mov  eax, dword ptr [ebp+8]     ; eax = arr
    mov  ecx, dword ptr [ebp-4]     ; ecx = i

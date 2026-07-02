@@ -38,17 +38,17 @@ int sum_array(int arr[], int n) {
 
 ```asm
 mov  dword ptr [ebp-8], 0        ; total = 0
-mov  dword ptr [ebp-20], 0      ; i = 0
+mov  dword ptr [ebp-14], 0      ; i = 0
 jmp  check
 increment:
-mov  eax, dword ptr [ebp-20]    ; i++
+mov  eax, dword ptr [ebp-14]    ; i++
 add  eax, 1
-mov  dword ptr [ebp-20], eax
+mov  dword ptr [ebp-14], eax
 check:
-mov  eax, dword ptr [ebp-20]    ; eax = i
-cmp  eax, dword ptr [ebp+12]    ; i < n ?
+mov  eax, dword ptr [ebp-14]    ; eax = i
+cmp  eax, dword ptr [ebp+C]    ; i < n ?
 jge  end
-mov  eax, dword ptr [ebp-20]    ; eax = i
+mov  eax, dword ptr [ebp-14]    ; eax = i
 mov  ecx, dword ptr [ebp+8]      ; ecx = arr（基址）
 mov  edx, dword ptr [ebp-8]      ; edx = total
 add  edx, dword ptr [ecx+eax*4]  ; total += arr[i] ← SIB 寻址
@@ -89,16 +89,16 @@ int   get_int(int    arr[], int i) { return arr[i]; }
 ```asm
 ; get_char — scale=1，不加乘数
 mov  eax, dword ptr [ebp+8]       ; eax = arr（基址）
-add  eax, dword ptr [ebp+12]     ; eax += i（直接加，因为 char 占 1 字节）
+add  eax, dword ptr [ebp+C]     ; eax += i（直接加，因为 char 占 1 字节）
 movzx eax, byte ptr [eax]         ; 取 1 字节，零扩展
 
 ; get_short — scale=2
-mov  eax, dword ptr [ebp+12]     ; eax = i
+mov  eax, dword ptr [ebp+C]     ; eax = i
 mov  ecx, dword ptr [ebp+8]       ; ecx = arr
 movzx eax, word ptr [ecx+eax*2]   ; 取 2 字节，零扩展
 
 ; get_int — scale=4
-mov  eax, dword ptr [ebp+12]     ; eax = i
+mov  eax, dword ptr [ebp+C]     ; eax = i
 mov  ecx, dword ptr [ebp+8]       ; ecx = arr
 mov  eax, dword ptr [ecx+eax*4]   ; 取 4 字节
 ```
@@ -169,10 +169,10 @@ int get_element(int arr[][4], int i, int j) {
 核心汇编：
 
 ```asm
-mov  eax, dword ptr [ebp+12]     ; eax = i
+mov  eax, dword ptr [ebp+C]     ; eax = i
 shl  eax, 4                       ; eax = i × 16（一行 4 个 int × 4 字节 = 16）
 add  eax, dword ptr [ebp+8]       ; eax += arr（行基址）
-mov  ecx, dword ptr [ebp+16]     ; ecx = j
+mov  ecx, dword ptr [ebp+10]     ; ecx = j
 mov  eax, dword ptr [eax+ecx*4]   ; eax = arr[i][j] ← SIB 寻址
 ```
 
@@ -207,14 +207,14 @@ int ptr_indirect(void) {
 
 ```asm
 ; arr_direct — 数组在栈上，直接用 ebp 偏移
-mov  dword ptr [ebp-24], 1       ; 初始化 arr[0]
-mov  dword ptr [ebp-20], 2       ; arr[1]
-mov  dword ptr [ebp-16], 3       ; arr[2]
-mov  dword ptr [ebp-12], 4       ; arr[3]
+mov  dword ptr [ebp-18], 1       ; 初始化 arr[0]
+mov  dword ptr [ebp-14], 2       ; arr[1]
+mov  dword ptr [ebp-10], 3       ; arr[2]
+mov  dword ptr [ebp-C], 4       ; arr[3]
 mov  dword ptr [ebp-8], 5         ; arr[4]
 mov  eax, 4                       ; sizeof(int)
 shl  eax, 1                       ; eax = 2 × 4 = 8（下标 2 偏移）
-mov  eax, dword ptr [ebp+eax-18h] ; eax = arr[2] ← 直接栈偏移
+mov  eax, dword ptr [ebp+eax-18] ; eax = arr[2] ← 直接栈偏移
 
 ; ptr_indirect — 指针在栈上，数据在静态区
 mov  dword ptr [ebp-8], offset data ; ptr = data（先存指针）
@@ -226,7 +226,7 @@ mov  eax, dword ptr [ecx+eax]     ; eax = ptr[2] ← 间接访问
 
 区别：
 
-- **数组**：数据就在栈上，地址编译时确定（`[ebp+eax-18h]`），不需要先加载指针
+- **数组**：数据就在栈上，地址编译时确定（`[ebp+eax-18]`），不需要先加载指针
 - **指针**：数据在别处（静态区），先从栈上读出指针值（`mov ecx, [ebp-8]`），再通过指针间接访问（`[ecx+eax]`）
 
 > [!WARNING] 数组参数退化为指针
@@ -250,7 +250,7 @@ int global_vs_local(void) {
 mov  ecx, dword ptr ?global_arr@@3PAHA[ecx]  ; 直接从全局地址读
 
 ; local_arr[0] — 用栈偏移
-add  ecx, dword ptr [ebp+eax-18h]            ; 从栈偏移读
+add  ecx, dword ptr [ebp+eax-18]            ; 从栈偏移读
 ```
 
 | 特征     | 全局数组             | 局部数组              |
@@ -280,7 +280,7 @@ add  ecx, dword ptr [ebp+eax-18h]            ; 从栈偏移读
 1. 下面这段汇编访问的是什么类型的数组？元素大小是多少？
 
    ```asm
-   mov  eax, dword ptr [ebp+12]     ; eax = i
+   mov  eax, dword ptr [ebp+C]     ; eax = i
    mov  ecx, dword ptr [ebp+8]       ; ecx = arr
    movsx eax, word ptr [ecx+eax*2]   ; eax = arr[i]
    ```
@@ -292,10 +292,10 @@ add  ecx, dword ptr [ebp+eax-18h]            ; 从栈偏移读
 2. 下面这段汇编对应的 C 代码是什么？还原出完整的函数。
 
    ```asm
-   mov  eax, dword ptr [ebp+12]     ; eax = i
+   mov  eax, dword ptr [ebp+C]     ; eax = i
    shl  eax, 3                       ; eax = i × 8
    add  eax, dword ptr [ebp+8]       ; eax += arr
-   mov  ecx, dword ptr [ebp+16]     ; ecx = j
+   mov  ecx, dword ptr [ebp+10]     ; ecx = j
    mov  eax, dword ptr [eax+ecx*2]   ; eax = arr[i][j]
    ```
 
@@ -314,7 +314,7 @@ add  ecx, dword ptr [ebp+eax-18h]            ; 从栈偏移读
 3. 下面这段汇编是数组访问还是指针访问？说明理由。
 
    ```asm
-   mov  eax, dword ptr [ebp+12]     ; eax = i
+   mov  eax, dword ptr [ebp+C]     ; eax = i
    mov  ecx, dword ptr [ebp-4]       ; ecx = ?
    mov  eax, dword ptr [ecx+eax*4]   ; eax = ?[i]
    ```

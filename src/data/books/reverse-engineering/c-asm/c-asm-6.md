@@ -24,24 +24,24 @@ void ptr_basic(void) {
 核心汇编：
 
 ```asm
-mov  dword ptr [ebp-12], 0x2A     ; a = 42，直接把立即数写到栈上
-lea  eax, [ebp-12]               ; 取 a 的地址到 eax
-mov  dword ptr [ebp-24], eax     ; p = &a，把地址值存到 p 的栈位置
-mov  eax, dword ptr [ebp-24]     ; 读取 p 的值（即 a 的地址）
+mov  dword ptr [ebp-C], 0x2A     ; a = 42，直接把立即数写到栈上
+lea  eax, [ebp-C]               ; 取 a 的地址到 eax
+mov  dword ptr [ebp-18], eax     ; p = &a，把地址值存到 p 的栈位置
+mov  eax, dword ptr [ebp-18]     ; 读取 p 的值（即 a 的地址）
 mov  dword ptr [eax], 0x64         ; 往那个地址写入 100 → a 被修改
 ```
 
 两条关键指令：
 
-- **`lea eax, [ebp-12]`** — Load Effective Address，取 `[ebp-12]` 这个地址本身，不是取那个地址里的值。等同于 `eax = ebp - 0xC`，即 `&a`
+- **`lea eax, [ebp-C]`** — Load Effective Address，取 `[ebp-C]` 这个地址本身，不是取那个地址里的值。等同于 `eax = ebp - 0xC`，即 `&a`
 - **`mov dword ptr [eax], 0x64`** — `eax` 里存的是地址，`[eax]` 就是解引用，往那个地址写值。等同于 `*p = 100`
 
 > [!NOTE] lea 和 mov 的区别
-> `lea eax, [ebp-12]` 取的是**地址**（`ebp - 0xC` 这个值），`mov eax, [ebp-12]` 取的是**那个地址里的值**（42）。前者是 `&a`，后者是 `a`。一个字母之差，语义完全不同。
+> `lea eax, [ebp-C]` 取的是**地址**（`ebp - 0xC` 这个值），`mov eax, [ebp-C]` 取的是**那个地址里的值**（42）。前者是 `&a`，后者是 `a`。一个字母之差，语义完全不同。
 
 ### 指针变量本身也是变量
 
-`p` 是个指针，但 `p` 自己也占内存。上面 `p` 在 `[ebp-24]`，`a` 在 `[ebp-12]`，两个不同的栈位置。`&p` 是指针的指针——`int **` 类型，多级指针的根基就在这里。
+`p` 是个指针，但 `p` 自己也占内存。上面 `p` 在 `[ebp-18]`，`a` 在 `[ebp-C]`，两个不同的栈位置。`&p` 是指针的指针——`int **` 类型，多级指针的根基就在这里。
 
 ## 多级指针
 
@@ -59,19 +59,19 @@ void ptr_address(void) {
 核心汇编：
 
 ```asm
-mov  dword ptr [ebp-12], 0x2A     ; a = 42
-lea  eax, [ebp-12]               ; &a
-mov  dword ptr [ebp-24], eax     ; p = &a
-lea  eax, [ebp-24]               ; &p
-mov  dword ptr [ebp-36], eax     ; pp = &p
-mov  eax, dword ptr [ebp-36]     ; 第一次解引用：读 pp → 得到 p 的地址
+mov  dword ptr [ebp-C], 0x2A     ; a = 42
+lea  eax, [ebp-C]               ; &a
+mov  dword ptr [ebp-18], eax     ; p = &a
+lea  eax, [ebp-18]               ; &p
+mov  dword ptr [ebp-24], eax     ; pp = &p
+mov  eax, dword ptr [ebp-24]     ; 第一次解引用：读 pp → 得到 p 的地址
 mov  ecx, dword ptr [eax]         ; 第二次解引用：读 p → 得到 a 的地址
 mov  dword ptr [ecx], 0x3E7        ; 往 a 的地址写 999
 ```
 
 `**pp = 999` 拆成三步：
 
-1. `mov eax, [ebp-36]` — 从 pp 的位置读出 p 的地址
+1. `mov eax, [ebp-24]` — 从 pp 的位置读出 p 的地址
 2. `mov ecx, [eax]` — 从 p 的位置读出 a 的地址
 3. `mov [ecx], 999` — 往 a 的位置写入 999
 
@@ -92,7 +92,7 @@ void multi_ptr(void) {
 核心汇编：
 
 ```asm
-mov  eax, dword ptr [ebp-48]     ; 读 ppp → pp 的地址
+mov  eax, dword ptr [ebp-30]     ; 读 ppp → pp 的地址
 mov  ecx, dword ptr [eax]         ; 读 pp → p 的地址
 mov  edx, dword ptr [ecx]         ; 读 p → value 的地址
 mov  dword ptr [edx], 0x4D2        ; 写 value = 1234
@@ -131,25 +131,25 @@ int ptr_arith(int *p, int n) {
 核心汇编：
 
 ```asm
-mov  eax, dword ptr [ebp+12]     ; eax = n
+mov  eax, dword ptr [ebp+C]     ; eax = n
 mov  ecx, dword ptr [ebp+8]       ; ecx = p
 lea  edx, [ecx+eax*4]             ; end = p + n（×4 因为 int 是 4 字节）
 mov  dword ptr [ebp-8], edx       ; 存 end
-mov  dword ptr [ebp-20], 0       ; total = 0
+mov  dword ptr [ebp-14], 0       ; total = 0
 check:
 mov  eax, dword ptr [ebp+8]       ; eax = p
 cmp  eax, dword ptr [ebp-8]       ; p < end ?
 jae  end
 mov  eax, dword ptr [ebp+8]       ; eax = p
-mov  ecx, dword ptr [ebp-20]     ; ecx = total
+mov  ecx, dword ptr [ebp-14]     ; ecx = total
 add  ecx, dword ptr [eax]         ; total += *p
-mov  dword ptr [ebp-20], ecx
+mov  dword ptr [ebp-14], ecx
 mov  eax, dword ptr [ebp+8]       ; eax = p
 add  eax, 4                       ; p++（加 sizeof(int) = 4）
 mov  dword ptr [ebp+8], eax       ; 写回 p
 jmp  check
 end:
-mov  eax, dword ptr [ebp-20]     ; 返回 total
+mov  eax, dword ptr [ebp-14]     ; 返回 total
 ```
 
 `p++` 不是让地址加 1。`int` 是 4 字节，所以 `add eax, 4`。`p + n` 用 `lea edx, [ecx+eax*4]`——n 乘以 4 再加到基址上。
@@ -169,7 +169,7 @@ int ptr_diff(int *p1, int *p2) {
 核心汇编：
 
 ```asm
-mov  eax, dword ptr [ebp+12]     ; eax = p2（地址）
+mov  eax, dword ptr [ebp+C]     ; eax = p2（地址）
 sub  eax, dword ptr [ebp+8]       ; eax = p2 - p1（字节数）
 sar  eax, 2                       ; eax /= 4（除以 sizeof(int)）
 ```
@@ -287,8 +287,8 @@ add  esp, 4
    lea  eax, [ebp-4]
    mov  dword ptr [ebp-8], eax       ; B
    lea  eax, [ebp-8]
-   mov  dword ptr [ebp-12], eax     ; C
-   mov  eax, dword ptr [ebp-12]     ; 读 C
+   mov  dword ptr [ebp-C], eax     ; C
+   mov  eax, dword ptr [ebp-C]     ; 读 C
    mov  ecx, dword ptr [eax]         ; 读 *C
    mov  edx, dword ptr [ecx]         ; 读 **C
    mov  dword ptr [edx], 0x309        ; ***C = 777
@@ -296,12 +296,12 @@ add  esp, 4
 
    > [!NOTE]- 参考答案
    >
-   > 三级指针。链路：C (`[ebp-12]`) → B (`[ebp-8]`) → A/value (`[ebp-4]`)。三次 `mov reg, [reg]` 读取，最后 `mov [edx], 777` 写值。
+   > 三级指针。链路：C (`[ebp-C]`) → B (`[ebp-8]`) → A/value (`[ebp-4]`)。三次 `mov reg, [reg]` 读取，最后 `mov [edx], 777` 写值。
    >
    > ```c
    > int value = 100;       // [ebp-4]
    > int *b = &value;       // [ebp-8]
-   > int **c = &b;          // [ebp-12]
+   > int **c = &b;          // [ebp-C]
    > ***c = 777;
    > ```
    >
@@ -310,12 +310,12 @@ add  esp, 4
 3. 下面这段汇编中 `add eax, 0x0C` 是什么操作？假设 `arr` 是 `int` 数组 `{10, 20, 30, 40, 50}`，`*p` 读出什么？
 
    ```asm
-   lea  eax, [ebp-32]               ; arr 首地址
-   mov  dword ptr [ebp-40], eax     ; p = arr
-   mov  eax, dword ptr [ebp-40]     ; 读 p
+   lea  eax, [ebp-20]               ; arr 首地址
+   mov  dword ptr [ebp-28], eax     ; p = arr
+   mov  eax, dword ptr [ebp-28]     ; 读 p
    add  eax, 0x0C                     ; p += ?
-   mov  dword ptr [ebp-40], eax     ; 写回 p
-   mov  ecx, dword ptr [ebp-40]     ; 读 p
+   mov  dword ptr [ebp-28], eax     ; 写回 p
+   mov  ecx, dword ptr [ebp-28]     ; 读 p
    mov  eax, dword ptr [ecx]         ; *p = ?
    ```
 

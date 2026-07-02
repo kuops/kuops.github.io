@@ -36,7 +36,7 @@ add  eax, 0x64                    ; eax = a + 100
 mov  dword ptr [ebp-8], eax       ; 存到 b
 mov  eax, dword ptr [ebp-8]       ; 重新读 b（Debug 不优化）
 sub  eax, 0x32                    ; eax = b - 50
-mov  dword ptr [ebp-20], eax    ; 存到 c
+mov  dword ptr [ebp-14], eax    ; 存到 c
 ```
 
 注意第 4、5 行：Debug 模式把 `b` 存到 `[ebp-8]` 后，紧接着又从 `[ebp-8]` 读回来做减法。看起来多此一举，但 Debug 模式（`/Od`）不做任何优化，每行 C 语句独立翻译，该存就存、该读就读。Release 模式会合并成 `add eax, 0x64` + `sub eax, 0x32` 两行，去掉中间的存取。
@@ -68,16 +68,16 @@ ll = ll + a;    // a 是 int 参数
 ```asm
 ; 先把 0xFFFFFFFF11111111 放到局部变量
 or   eax, 0xFFFFFFFF                  ; eax = 0xFFFFFFFF
-mov  dword ptr [ebp-36], 0x11111111 ; 低 4 字节
-mov  dword ptr [ebp-32], eax        ; 高 4 字节
+mov  dword ptr [ebp-24], 0x11111111 ; 低 4 字节
+mov  dword ptr [ebp-20], eax        ; 高 4 字节
 
 ; 64 位加法: ll + a
 mov  eax, dword ptr [ebp+8]           ; eax = a (32 位 int)
 cdq                                    ; 符号扩展: EDX:EAX = a (64 位)
-add  eax, dword ptr [ebp-36]        ; 低 4 字节相加，CF 记录进位
-adc  edx, dword ptr [ebp-32]        ; 高 4 字节相加 + CF
-mov  dword ptr [ebp-36], eax        ; 写回低 4 字节
-mov  dword ptr [ebp-32], edx        ; 写回高 4 字节
+add  eax, dword ptr [ebp-24]        ; 低 4 字节相加，CF 记录进位
+adc  edx, dword ptr [ebp-20]        ; 高 4 字节相加 + CF
+mov  dword ptr [ebp-24], eax        ; 写回低 4 字节
+mov  dword ptr [ebp-20], edx        ; 写回高 4 字节
 ```
 
 这段代码分三步：
@@ -193,9 +193,9 @@ shl  eax, 2                       ; eax = a * 3 * 4 = a * 12
 > push edx                         ; push a 高 32 位
 > push eax                         ; push a 低 32 位
 > push dword ptr [ebp-8]           ; push ll 高 32 位
-> push dword ptr [ebp-12]         ; push ll 低 32 位
+> push dword ptr [ebp-C]         ; push ll 低 32 位
 > call __allmul                    ; 结果在 EDX:EAX
-> mov  dword ptr [ebp-12], eax    ; 写回 ll 低 32 位
+> mov  dword ptr [ebp-C], eax    ; 写回 ll 低 32 位
 > mov  dword ptr [ebp-8], edx      ; 写回 ll 高 32 位
 > ```
 >
@@ -368,11 +368,11 @@ mov  dword ptr [ebp-4], eax        ; 写回 i (i--)
 > ```asm
 > ; int a = i++
 > mov  eax, dword ptr [i]           ; 读 i
-> mov  dword ptr [ebp-232], eax    ; 存旧值到临时变量 (先存!)
+> mov  dword ptr [ebp-E8], eax    ; 存旧值到临时变量 (先存!)
 > mov  ecx, dword ptr [i]           ; 再读 i
 > add  ecx, 1                       ; i + 1
 > mov  dword ptr [i], ecx           ; 写回 i
-> mov  edx, dword ptr [ebp-232]    ; 取旧值
+> mov  edx, dword ptr [ebp-E8]    ; 取旧值
 > mov  dword ptr [a], edx           ; a = 旧值
 >
 > ; int b = ++i
@@ -606,7 +606,7 @@ or   eax, 0x30                    ; eax = 0x37 = '7'
 
    ```asm
    mov  eax, dword ptr [ebp+8]
-   add  eax, dword ptr [ebp+12]
+   add  eax, dword ptr [ebp+C]
    sub  eax, 0xA
    mov  dword ptr [ebp-4], eax
    ```
@@ -617,7 +617,7 @@ or   eax, 0x30                    ; eax = 0x37 = '7'
    > int result = a + b - 10;
    > ```
    >
-   > `[ebp+8]` 是第一个参数，`[ebp+12]` 是第二个参数。
+   > `[ebp+8]` 是第一个参数，`[ebp+C]` 是第二个参数。
 
 2. 以下汇编做了什么运算？
 
@@ -675,7 +675,7 @@ or   eax, 0x30                    ; eax = 0x37 = '7'
    shr  eax, 4
    and  eax, 0xF
    shl  eax, 8
-   or   eax, dword ptr [ebp+12]
+   or   eax, dword ptr [ebp+C]
    mov  dword ptr [ebp-4], eax
    ```
 
