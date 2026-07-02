@@ -56,7 +56,7 @@ int main() {
 不同类型的 C 代码，对应的汇编宽度不同：
 
 ```c
-char      ch = 'A';       // 1 字节
+char      0xC = 'A';       // 1 字节
 short     s  = 1000;      // 2 字节
 int       i  = 100000;    // 4 字节
 float     f  = 3.14f;     // 4 字节（浮点）
@@ -65,25 +65,25 @@ double    d  = 3.14;      // 8 字节（双精度浮点）
 ```
 
 ```asm
-; char ch = 'A'
-mov  byte ptr [ebp-0x4], 0x41           ; 0x41 = 'A', byte = 1 字节
+; char 0xC = 'A'
+mov  byte ptr [ebp-4], 0x41           ; 0x41 = 'A', byte = 1 字节
 
 ; short s = 1000
-mov  word ptr [ebp-0x8], 0x3E8          ; 0x3E8 = 1000, word = 2 字节
+mov  word ptr [ebp-8], 0x3E8          ; 0x3E8 = 1000, word = 2 字节
 
 ; int i = 100000
-mov  dword ptr [ebp-0xC], 0x186A0       ; 0x186A0 = 100000, dword = 4 字节
+mov  dword ptr [ebp-12], 0x186A0       ; 0x186A0 = 100000, dword = 4 字节
 
 ; float f = 3.14f
-mov  dword ptr [ebp-0x10], 0x4048F5C3   ; 3.14 的 IEEE 754 编码, dword
+mov  dword ptr [ebp-16], 0x4048F5C3   ; 3.14 的 IEEE 754 编码, dword
 
 ; long long ll = 100
-mov  dword ptr [ebp-0x18], 0x64         ; 低 4 字节 = 100 (小端序, 低地址)
-mov  dword ptr [ebp-0x14], 0x0          ; 高 4 字节 = 0
+mov  dword ptr [ebp-24], 0x64         ; 低 4 字节 = 100 (小端序, 低地址)
+mov  dword ptr [ebp-20], 0x0          ; 高 4 字节 = 0
 
 ; double d = 3.14
-mov  dword ptr [ebp-0x20], 0x51EB851F   ; 低 4 字节 (小端序, 低地址)
-mov  dword ptr [ebp-0x1C], 0x40091EB8   ; 高 4 字节 (IEEE 754 双精度编码)
+mov  dword ptr [ebp-32], 0x51EB851F   ; 低 4 字节 (小端序, 低地址)
+mov  dword ptr [ebp-28], 0x40091EB8   ; 高 4 字节 (IEEE 754 双精度编码)
 ```
 
 ![long long 在栈上的小端序布局](c-asm-1-images/longlong-stack-layout.png)
@@ -107,9 +107,9 @@ mov  dword ptr [ebp-4], 0xA
 `float` 和 `int` 都是 4 字节，但浮点赋值用 `mov dword ptr` 搬进去的只是编码值。一旦涉及浮点运算（加减乘除），编译器就切换到 SSE 指令（第 12 章讲过）：
 
 ```asm
-movss  xmm0, dword ptr [ebp-0x10]  ; 把 float 加载到 XMM0
-addss  xmm0, dword ptr [ebp-0x14]  ; 浮点加法
-movss  dword ptr [ebp-0x18], xmm0  ; 存回内存
+movss  xmm0, dword ptr [ebp-16]  ; 把 float 加载到 XMM0
+addss  xmm0, dword ptr [ebp-20]  ; 浮点加法
+movss  dword ptr [ebp-24], xmm0  ; 存回内存
 ```
 
 看到 `movss`、`addss` 这些带 `ss` 后缀的指令，就知道在操作 float。
@@ -134,29 +134,29 @@ return c;
 ```asm
 push ebp
 mov  ebp, esp
-sub  esp, 0E4h                         ; Debug 模式分配大量栈空间
+sub  esp, 0x0E4                         ; Debug 模式分配大量栈空间
 push ebx
 push esi
 push edi
-lea  edi, dword ptr ss:[ebp-24h]
+lea  edi, dword ptr ss:[ebp-36]
 mov  ecx, 9
-mov  eax, 0CCCCCCCCh
+mov  eax, 0x0CCCCCCCC
 rep  stosd                             ; 把局部变量区域填满 CC
 mov  ecx, offset _9D2AEB17_Clearn@cpp
 call @__CheckForDebuggerJustMyCode@4   ; VS Just My Code 调试特性
 nop
 
 mov  dword ptr ss:[ebp-8], 0xA         ; a = 10
-mov  dword ptr ss:[ebp-14h], 0x14      ; b = 20
+mov  dword ptr ss:[ebp-20], 0x14      ; b = 20
 mov  eax, dword ptr ss:[ebp-8]         ; eax = a
-add  eax, dword ptr ss:[ebp-14h]       ; eax = a + b
-mov  dword ptr ss:[ebp-20h], eax       ; c = a + b
-mov  eax, dword ptr ss:[ebp-20h]       ; 返回值
+add  eax, dword ptr ss:[ebp-20]       ; eax = a + b
+mov  dword ptr ss:[ebp-32], eax       ; c = a + b
+mov  eax, dword ptr ss:[ebp-32]       ; 返回值
 
 pop  edi
 pop  esi
 pop  ebx
-add  esp, 0E4h
+add  esp, 0x0E4
 cmp  ebp, esp
 call __RTC_CheckEsp                    ; 运行时栈检查
 mov  esp, ebp
@@ -169,8 +169,8 @@ ret
 > [!NOTE] VS Debug 模式多出来的东西
 > 这些不是你写的代码，是编译器为调试方便自动插入的：
 >
-> - **`sub esp, 0E4h`**：分配 228 字节而非 12 字节。多出来的空间用于栈溢出检测。
-> - **`rep stosd` 填 `0CCCCCCCCh`**：把局部变量区域全填成 CC。如果你忘了初始化变量，调试时会看到 `0xCCCCCCCC`（十进制 -858993460），一眼就知道有问题。
+> - **`sub esp, 0x0E4`**：分配 228 字节而非 12 字节。多出来的空间用于栈溢出检测。
+> - **`rep stosd` 填 `0xCCCCCCCC`**：把局部变量区域全填成 CC。如果你忘了初始化变量，调试时会看到 `0xCCCCCCCC`（十进制 -858993460），一眼就知道有问题。
 > - **`__CheckForDebuggerJustMyCode`**：VS 的 Just My Code 特性，单步时跳过库代码。可以在项目属性里关掉。
 > - **`__RTC_CheckEsp`**：运行时检查栈是否平衡，防止栈损坏。
 > - **`push ebx/esi/edi` + `pop`**：Debug 模式无条件保存这三个寄存器，即使函数没用到。
@@ -179,14 +179,14 @@ ret
 
 ```asm
 mov  dword ptr [ebp-8], 0xA    ; a = 10
-mov  dword ptr [ebp-14h], 14h      ; b = 20
+mov  dword ptr [ebp-20], 0x14      ; b = 20
 mov  eax, [ebp-8]                  ; 读 a
-add  eax, [ebp-14h]                ; a + b
-mov  [ebp-20h], eax               ; c = 结果
-mov  eax, [ebp-20h]               ; 返回值放 eax
+add  eax, [ebp-20]                ; a + b
+mov  [ebp-32], eax               ; c = 结果
+mov  eax, [ebp-32]               ; 返回值放 eax
 ```
 
-**规律：局部变量 = `[ebp - X]`**。编译器把 `a`、`b`、`c` 这些名字翻译成了 `[ebp-8]`、`[ebp-14h]`、`[ebp-20h]` 这些栈偏移地址。
+**规律：局部变量 = `[ebp - X]`**。编译器把 `a`、`b`、`c` 这些名字翻译成了 `[ebp-8]`、`[ebp-20]`、`[ebp-32]` 这些栈偏移地址。
 
 注意偏移不一定是 `[ebp-4]`、`[ebp-8]` 这样整齐排列。Debug 模式会在变量之间插入间隔，具体偏移取决于编译器和优化设置。**逆向时不要猜偏移，要看实际汇编。**
 
@@ -288,7 +288,7 @@ int main() {
    ```
 
    > [!NOTE]- 参考答案
-   > `byte ptr [ebp-4]` 是 1 字节，通常是 `char` 或 `bool`。值为 1，可能是 `bool flag = true` 或 `char ch = 1`。
+   > `byte ptr [ebp-4]` 是 1 字节，通常是 `char` 或 `bool`。值为 1，可能是 `bool flag = true` 或 `char 0xC = 1`。
    >
    > `word ptr [ebp-8]` 是 2 字节，`short`。值为 0x64（100），即 `short s = 100`。
 
@@ -309,7 +309,7 @@ int main() {
    > ```asm
    > mov  byte ptr [ebp-4], 0x58    ; a = 'X'
    > mov  dword ptr [ebp-8], 0x2A   ; b = 42
-   > mov  word ptr [ebp-0xC], 0x7   ; c = 7
+   > mov  word ptr [ebp-12], 0x7   ; c = 7
    > ```
    >
    > Debug 模式通常按声明顺序分配，Release 模式可能重新排列。**关键是你自己用 x64dbg 看，实际编译结果才是真相。**

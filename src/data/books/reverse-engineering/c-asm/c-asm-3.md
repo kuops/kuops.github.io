@@ -160,7 +160,7 @@ mov  dword ptr [ebp-4], 0          ; result = 0
 cmp  dword ptr [ebp+8], 0          ; a - 0
 jle  outer_else                    ; a <= 0 -> 外层 else
 ; ---- 外层 if 体 ----
-cmp  dword ptr [ebp+0Ch], 0        ; b - 0（第二个参数）
+cmp  dword ptr [ebp+12], 0        ; b - 0（第二个参数）
 jle  inner_else                    ; b <= 0 -> 内层 else
 mov  dword ptr [ebp-4], 3          ; result = 3（内层 if 体）
 jmp  inner_end
@@ -339,7 +339,7 @@ int test_and(int a, int b) {
 ```asm
 cmp  dword ptr [ebp+8], 0          ; a - 0
 jle  skip                          ; a <= 0 -> 短路，跳过整个 if 体
-cmp  dword ptr [ebp+0Ch], 0        ; b - 0
+cmp  dword ptr [ebp+12], 0        ; b - 0
 jle  skip                          ; b <= 0 -> 也跳过
 mov  dword ptr [ebp-4], 1          ; result = 1（两个条件都满足）
 skip:
@@ -368,7 +368,7 @@ int test_or(int a, int b) {
 ```asm
 cmp  dword ptr [ebp+8], 0          ; a - 0
 jg   do_if                         ; a > 0 -> 直接进 if 体
-cmp  dword ptr [ebp+0Ch], 0        ; b - 0
+cmp  dword ptr [ebp+12], 0        ; b - 0
 jle  skip                          ; b <= 0 -> 跳过 if 体
 do_if:
 mov  dword ptr [ebp-4], 1          ; result = 1
@@ -404,10 +404,10 @@ C 的优先级：`&&` 比 `||` 高，所以等价于 `(a > 0 && b > 0) || c > 0`
 ```asm
 cmp  dword ptr [ebp+8], 0          ; a - 0
 jle  check_c                       ; a <= 0 -> && 失败，去检查 c
-cmp  dword ptr [ebp+0Ch], 0        ; b - 0
+cmp  dword ptr [ebp+12], 0        ; b - 0
 jg   do_if                         ; a>0 && b>0 -> 整个 || 为真，进 if 体
 check_c:
-cmp  dword ptr [ebp+10h], 0        ; c - 0（第三个参数）
+cmp  dword ptr [ebp+16], 0        ; c - 0（第三个参数）
 jle  skip                          ; c <= 0 -> 全部不满足，跳过
 do_if:
 mov  dword ptr [ebp-4], 1
@@ -545,7 +545,7 @@ ret
 
    ```asm
    mov  eax, dword ptr [ebp+8]
-   cmp  eax, dword ptr [ebp+0Ch]
+   cmp  eax, dword ptr [ebp+12]
    jge  check_100
    mov  dword ptr [ebp-4], 1
    jmp  end
@@ -581,7 +581,7 @@ ret
    mov  dword ptr [ebp-4], 0
    cmp  dword ptr [ebp+8], 0
    jle  skip
-   cmp  dword ptr [ebp+0Ch], 0
+   cmp  dword ptr [ebp+12], 0
    jle  skip
    mov  dword ptr [ebp-4], 1
    skip:

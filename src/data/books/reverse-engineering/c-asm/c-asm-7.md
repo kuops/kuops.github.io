@@ -1,548 +1,354 @@
 ---
-title: 指针与内存
-draft: true
-description: 指针就是地址。多级指针是指针的指针。逆向中到处都是指针链，搞懂这个才能追踪数据。
+title: 数组
+draft: false
+description: 数组在汇编里就是"基址 + 索引 × 元素大小"。SIB 寻址 [base+index*scale] 是识别数组访问的唯一模式，二维数组只是多算一次行偏移。
 order: 17
 ---
 
-## 动手目标
+上一章学了循环的汇编形态。这一章学**数组**：C 里写 `arr[i]`、`matrix[i][j]`，编译器翻译成什么。
 
-今天结束你会：
+和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留数组访问相关的核心指令，过滤掉 Debug 噪音（每步读写栈、临时变量复制等，前面讲过）。
 
-1. 理解指针在汇编里就是 `lea` 取地址、`mov` 解引用
-2. 知道指针变量本身也是变量，存在栈上，有自己的地址
-3. 看懂多级指针链在汇编里的连续解引用过程
-4. 理解指针运算按类型大小递增，不是简单的 +1
-5. 把指针链追踪过程映射到 CE 指针扫描的原理
+## 一维数组
 
-核心认识：**指针 = 地址 = 一个整数**。`int *p` 里的 `p` 存的不是整数 42，而是某个内存地址。多级指针就是指针的指针，地址指向地址指向值。
+数组的核心就一句话：**连续内存，基址 + 偏移**。`int arr[5]` 在内存中是 5 个连续的 4 字节：
 
-## 指针基础
+```
+地址        值
+arr+0x00    arr[0]
+arr+0x04    arr[1]
+arr+0x08    arr[2]
+arr+0x0C    arr[3]
+arr+0x10    arr[4]
+```
 
-### C 代码
+访问 `arr[i]` 的公式：`地址 = arr + i × sizeof(int) = arr + i × 4`。编译器怎么算这个偏移？看一个简单的数组求和：
 
 ```c
-#include <stdio.h>
-
-int main(void) {
-    int a = 42;
-    int *p = &a;
-    *p = 100;
-    printf("a = %d\n", a);
-    printf("*p = %d\n", *p);
-    printf("&a = %p\n", &a);
-    printf("p = %p\n", p);
-    printf("&p = %p\n", &p);
-    return 0;
-}
-```
-
-这段代码做了三件事：
-
-1. 声明整型变量 `a`，值为 42
-2. 声明指针 `p`，指向 `a`（`p` 存的是 `a` 的地址）
-3. 通过 `*p` 修改 `a` 的值
-
-<!-- 🎨 画图：内存布局示意图，左侧栈地址从高到低排列，画出 a（地址 0x0019FF40，值 42->100）和 p（地址 0x0019FF3C，值 0x0019FF40），箭头从 p 指向 a -->
-
-### 汇编：取地址和解引用
-
-MSVC 32 位 Debug 编译：
-
-```asm
-; int a = 42;
-mov     dword ptr [ebp-8], 0x2A        ; a = 42，直接把立即数写到栈上
-
-; int *p = &a;
-lea     eax, [ebp-8]                  ; 取 a 的地址到 eax
-mov     dword ptr [ebp-14h], eax      ; p = &a，把地址值存到 p 的栈位置
-
-; *p = 100;
-mov     eax, dword ptr [ebp-14h]      ; 读取 p 的值（即 a 的地址）
-mov     dword ptr [eax], 0x64         ; 往那个地址写入 100 -> a 被修改
-```
-
-两条指令搞清楚：
-
-- **`lea eax, [ebp-8]`** — Load Effective Address，取 `[ebp-8]` 这个地址本身，不是取那个地址里的值。等同于 `eax = ebp - 8`，即 `&a`
-- **`mov dword ptr [eax], 0x64`** — eax 里存的是地址，`[eax]` 就是解引用，往那个地址写值。等同于 `*p = 100`
-
-<!-- 📸 截图：x64dbg 中执行完 lea 和 mov 后，寄存器和栈窗口显示 p 的值等于 a 的地址 -->
-
-### 指针变量本身也是变量
-
-`p` 是个指针，但 `p` 自己也占内存。上面 `p` 在 `[ebp-14h]`，`a` 在 `[ebp-8]`，两个不同的栈位置。
-
-```asm
-; printf("&p = %p\n", &p);
-lea     eax, [ebp-14h]                ; 取 p 自身的地址
-push    eax
-push    offset "&p = %p\n"
-call    printf
-```
-
-`&p` 是指针的指针——`int **` 类型。这很关键，多级指针的根基就在这里。
-
-<!-- 🎨 画图：三栏表格，第一栏"变量名"（a, p），第二栏"地址"（0x0019FF40, 0x0019FF3C），第三栏"值"（100, 0x0019FF40）。底部标注：p 的值就是 a 的地址 -->
-
-## 指针运算
-
-### 按类型大小递增
-
-```c
-#include <stdio.h>
-
-int main(void) {
-    int arr[] = {10, 20, 30, 40, 50};
-    int *p = arr;
-
-    printf("p   = %p, *p = %d\n", p, *p);
-    p++;
-    printf("p+1 = %p, *p = %d\n", p, *p);
-    p++;
-    printf("p+2 = %p, *p = %d\n", p, *p);
-
-    return 0;
-}
-```
-
-`p++` 不是让地址加 1。`int` 是 4 字节，所以 `p++` 让地址加 4。
-
-### 汇编
-
-```asm
-; int *p = arr;
-lea     eax, [ebp-1Ch]               ; arr 的首地址
-mov     dword ptr [ebp-2Ch], eax     ; p = arr
-
-; p++;
-mov     eax, dword ptr [ebp-2Ch]     ; 读取当前 p
-add     eax, 4                        ; 加 sizeof(int) = 4
-mov     dword ptr [ebp-2Ch], eax     ; 写回 p
-
-; 再一次 p++
-mov     eax, dword ptr [ebp-2Ch]     ; 读取当前 p
-add     eax, 4                        ; 又加 4
-mov     dword ptr [ebp-2Ch], eax     ; 写回 p
-```
-
-<!-- 🎨 画图：内存条形图，每格 4 字节，标注 arr[0]=10 到 arr[4]=50。指针 p 的箭头依次指向 arr[0]、arr[1]、arr[2]，每次跳 4 字节 -->
-
-如果类型是 `char *`，`p++` 只加 1。如果是 `double *`，`p++` 加 8。编译器在编译时根据类型决定步长，不是运行时。
-
-```asm
-; char *cp;  cp++
-add     eax, 1                        ; char = 1 字节
-
-; double *dp;  dp++
-add     eax, 8                        ; double = 8 字节
-```
-
-### 指针减法
-
-两个同类型指针相减，结果是元素个数，不是字节数：
-
-```c
-int arr[] = {10, 20, 30};
-int *p1 = &arr[0];
-int *p2 = &arr[2];
-int diff = p2 - p1;  // 2，不是 8
-```
-
-```asm
-; p2 - p1
-mov     eax, dword ptr [ebp-34h]     ; p2 的值（地址）
-sub     eax, dword ptr [ebp-28h]     ; 减去 p1 的值（地址）
-sar     eax, 2                        ; 算术右移 2 位，等于除以 sizeof(int)=4
-mov     dword ptr [ebp-3Ch], eax     ; diff = (p2地址 - p1地址) / 4
-```
-
-`sar eax, 2` 就是除以 4，把地址差转换成元素个数。
-
-## 多级指针
-
-这是本章重点。逆向工程里到处都是指针链：基址 -> 一级偏移 -> 二级偏移 -> 目标值。搞懂多级指针，后面 CE 指针扫描、分析游戏数据结构才能跟上。
-
-### 双重指针
-
-```c
-#include <stdio.h>
-
-int main(void) {
-    int value = 42;
-    int *p = &value;
-    int **pp = &p;
-
-    printf("value = %d\n", value);
-    printf("*p = %d\n", *p);
-    printf("**pp = %d\n", **pp);
-
-    **pp = 999;
-    printf("value = %d\n", value);
-    return 0;
-}
-```
-
-<!-- 🎨 画图：多级指针链——三个方框横向排列。[pp] 地址 0x0019FF30 -> 值 0x0019FF38；[p] 地址 0x0019FF38 -> 值 0x0019FF40；[value] 地址 0x0019FF40 -> 值 42->999。箭头链：pp -> p -> value -->
-
-### 汇编：两级解引用
-
-```asm
-; int value = 42;
-mov     dword ptr [ebp-8], 0x2A
-
-; int *p = &value;
-lea     eax, [ebp-8]                  ; &value
-mov     dword ptr [ebp-14h], eax     ; p = &value
-
-; int **pp = &p;
-lea     eax, [ebp-14h]               ; &p
-mov     dword ptr [ebp-20h], eax     ; pp = &p
-
-; **pp = 999;
-mov     eax, dword ptr [ebp-20h]     ; 第一次解引用：读 pp -> 得到 p 的地址
-mov     ecx, dword ptr [eax]         ; 第二次解引用：读 p -> 得到 value 的地址
-mov     dword ptr [ecx], 0x3E7       ; 第三步：往 value 的地址写 999
-```
-
-<!-- 📸 截图：x64dbg 中执行 **pp = 999 的三条指令，逐步观察 eax -> ecx -> [ecx] 的变化 -->
-
-拆解这个过程：
-
-1. `mov eax, [ebp-20h]` — 从 pp 的位置读出 p 的地址
-2. `mov ecx, [eax]` — 从 p 的位置读出 value 的地址
-3. `mov [ecx], 999` — 往 value 的位置写入 999
-
-三次内存访问，两次读地址，最后一次写值。这就是指针链。
-
-### 三级指针
-
-再加一层：
-
-```c
-int value = 42;
-int *p = &value;
-int **pp = &p;
-int ***ppp = &pp;
-
-***ppp = 1234;
-```
-
-```asm
-; ***ppp = 1234;
-mov     eax, dword ptr [ebp-2Ch]     ; 读 ppp -> pp 的地址
-mov     ecx, dword ptr [eax]         ; 读 pp -> p 的地址
-mov     edx, dword ptr [ecx]         ; 读 p -> value 的地址
-mov     dword ptr [edx], 0x4D2       ; 写 value
-```
-
-四次内存访问，三级指针多一层就多一次读。
-
-<!-- 🎨 画图：多级指针链示意图——基址 [ppp] -> 偏移 +0 -> [pp] -> 偏移 +0 -> [p] -> 偏移 +0 -> [value=1234]。标注这就是 CE 指针扫描里 "基址 + 偏移链" 的原型 -->
-
-### 指针链与 CE
-
-这就是 Cheat Engine 指针扫描的底层原理。游戏里角色的血量地址每次启动都变（动态分配），但总有一条指针链从某个固定地址（模块基址）出发，经过几次偏移到达目标：
-
-```
-[module.dll + 0x12345] -> 偏移 +0x10 -> [地址A] -> 偏移 +0x28 -> [地址B] -> 偏移 +0x4 -> 血量
-```
-
-翻译成汇编：
-
-```asm
-mov     eax, [module_base + 12345h]   ; 第一级
-mov     ecx, [eax + 10h]              ; 第二级
-mov     edx, [ecx + 28h]              ; 第三级
-mov     eax, [edx + 4]                ; 血量
-```
-
-每一级都是 `mov reg, [reg + offset]` 的模式——先读出一个地址，加上偏移，再读下一个地址。你在逆向里看到连续好几行这样的指令，就是在追踪指针链。
-
-## 指针与数组的关系
-
-### 数组下标 vs 指针运算
-
-```c
-#include <stdio.h>
-
-int main(void) {
-    int arr[] = {10, 20, 30, 40};
-    int i = 2;
-
-    printf("%d\n", arr[i]);
-    printf("%d\n", *(arr + i));
-
-    return 0;
-}
-```
-
-`arr[i]` 和 `*(arr + i)` 完全等价，编译器生成相同的汇编：
-
-```asm
-; arr[i] 或 *(arr + i)，i = 2
-mov     eax, dword ptr [ebp-1Ch]     ; 读取 i 的值（2）
-shl     eax, 2                        ; i * sizeof(int) = 2 * 4 = 8
-lea     ecx, [ebp-18h]               ; arr 的首地址
-mov     edx, dword ptr [ecx + eax]   ; *(arr + i) = arr[2] = 30
-push    edx
-push    offset "%d\n"
-call    printf
-```
-
-<!-- 📸 截图：x64dbg 中两种访问方式生成的相同汇编指令 -->
-
-两种写法，一条汇编。编译器不关心你用什么语法，它只算地址：`基地址 + 索引 × 类型大小`。
-
-### 数组作为参数退化为指针
-
-```c
-void print_sum(int arr[], int n) {
-    int sum = 0;
+int sum_array(int arr[], int n) {
+    int total = 0;
     for (int i = 0; i < n; i++) {
-        sum += arr[i];
+        total += arr[i];
     }
-    printf("sum = %d\n", sum);
-}
-
-int main(void) {
-    int data[] = {1, 2, 3};
-    print_sum(data, 3);
-    return 0;
+    return total;
 }
 ```
 
-函数参数里写 `int arr[]`，编译器实际处理成 `int *arr`。`sizeof(arr)` 在函数内部是指针大小（4 字节），不是数组大小。
+核心汇编：
 
 ```asm
-; 调用 print_sum(data, 3)
-; data 是数组名，传参时退化为首地址
-lea     eax, [ebp-18h]               ; data 的首地址
-push    3                             ; n = 3
-push    eax                           ; 传的是地址，不是整个数组
-call    print_sum
-
-; print_sum 内部，arr 就是第一个参数
-; push    ebp
-; mov     ebp, esp
-; arr 在 [ebp+8]，是个指针值（地址）
-mov     eax, dword ptr [ebp+8]       ; 读取 arr（一个地址）
+mov  dword ptr [ebp-8], 0        ; total = 0
+mov  dword ptr [ebp-20], 0      ; i = 0
+jmp  check
+increment:
+mov  eax, dword ptr [ebp-20]    ; i++
+add  eax, 1
+mov  dword ptr [ebp-20], eax
+check:
+mov  eax, dword ptr [ebp-20]    ; eax = i
+cmp  eax, dword ptr [ebp+12]    ; i < n ?
+jge  end
+mov  eax, dword ptr [ebp-20]    ; eax = i
+mov  ecx, dword ptr [ebp+8]      ; ecx = arr（基址）
+mov  edx, dword ptr [ebp-8]      ; edx = total
+add  edx, dword ptr [ecx+eax*4]  ; total += arr[i] ← SIB 寻址
+mov  dword ptr [ebp-8], edx
+jmp  increment
+end:
+mov  eax, dword ptr [ebp-8]      ; 返回 total
 ```
 
-<!-- 🎨 画图：main 函数栈帧中数组 data 的内存布局（连续 12 字节），print_sum 栈帧中 arr 参数（只是一个 4 字节地址值）。箭头从 arr 指向 main 中的 data 首地址 -->
+关键指令是 `add edx, dword ptr [ecx+eax*4]`——这就是数组访问。`ecx` 是数组基址（`arr`），`eax` 是下标 `i`，`*4` 是因为 `int` 占 4 字节。这条指令一步完成了"基址 + 索引 × 元素大小"的计算和取值。
 
-数组退化是 C 语言的经典陷阱，但在汇编层面很清晰——传的就是一个地址值，和指针没区别。
+> [!NOTE] `[ecx+eax*4]` 是 SIB 寻址
+> SIB = Scale-Index-Base，格式是 `[base + index × scale + disp]`。CPU 硬件直接支持这种寻址，不需要先算偏移再取值。`ecx` 是 base（数组基址），`eax` 是 index（下标），`4` 是 scale（元素大小）。
 
-## 指针与动态内存
+逆向时看到 `[reg1 + reg2*4]` 或 `[reg1 + reg2*2]`，这就是数组访问。reg1 是基址，reg2 是索引，乘数是元素大小。
 
-### malloc 和 free
+## SIB 寻址与元素大小
+
+SIB 中的 scale 只能是 1、2、4、8，对应常见类型：
+
+| scale | 对应类型          | SIB 形式           |
+| ----- | ----------------- | ------------------ |
+| 1     | char、byte        | `[base + index]`   |
+| 2     | short、word       | `[base + index*2]` |
+| 4     | int、float、dword | `[base + index*4]` |
+| 8     | double、指针(x64) | `[base + index*8]` |
+
+scale=1 时省略乘法（因为 ×1 不写）。看三种类型的访问对比：
 
 ```c
-#include <stdio.h>
-#include <stdlib.h>
+char  get_char(char  arr[], int i) { return arr[i]; }
+short get_short(short arr[], int i) { return arr[i]; }
+int   get_int(int    arr[], int i) { return arr[i]; }
+```
 
-int main(void) {
-    int *p = (int *)malloc(4 * sizeof(int));
-    if (!p) return 1;
+核心汇编：
 
-    p[0] = 100;
-    p[1] = 200;
-    p[2] = 300;
-    p[3] = 400;
+```asm
+; get_char — scale=1，不加乘数
+mov  eax, dword ptr [ebp+8]       ; eax = arr（基址）
+add  eax, dword ptr [ebp+12]     ; eax += i（直接加，因为 char 占 1 字节）
+movzx eax, byte ptr [eax]         ; 取 1 字节，零扩展
 
-    for (int i = 0; i < 4; i++) {
-        printf("p[%d] = %d\n", i, p[i]);
+; get_short — scale=2
+mov  eax, dword ptr [ebp+12]     ; eax = i
+mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+movzx eax, word ptr [ecx+eax*2]   ; 取 2 字节，零扩展
+
+; get_int — scale=4
+mov  eax, dword ptr [ebp+12]     ; eax = i
+mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+mov  eax, dword ptr [ecx+eax*4]   ; 取 4 字节
+```
+
+三个函数结构一样，区别只在 scale 和取值宽度：
+
+- **char**：`add` 把下标直接加到基址（scale=1 省略），`byte ptr` + `movzx`
+- **short**：`[ecx+eax*2]`，`word ptr` + `movzx`
+- **int**：`[ecx+eax*4]`，`dword ptr`
+
+> [!NOTE] movzx vs movsx
+> `movzx` 是零扩展（无符号），`movsx` 是符号扩展（有符号）。`char` 和 `short` 作为函数返回值时，编译器用 `movzx` 把小类型扩展到 `eax`（32 位）。如果数组元素是 `signed char` 或 `signed short`，可能用 `movsx`。
+
+逆向时通过 scale 判断元素大小：看到 `*2` 是 short 数组，`*4` 是 int 数组，没有乘数是 char 数组。
+
+### 数组写入
+
+上面的例子是读数组。写数组同理，只是方向反过来。看 `arr[i] *= 2`：
+
+```c
+void scale_array(int arr[], int n) {
+    for (int i = 0; i < n; i++) {
+        arr[i] *= 2;
     }
-
-    free(p);
-    return 0;
 }
 ```
 
-### 汇编
+核心汇编：
 
 ```asm
-; int *p = (int *)malloc(4 * sizeof(int));
-push    0x10                          ; 参数：16 字节 = 4 * 4
-call    _malloc                       ; 调用 malloc
-add     esp, 4                        ; 清理参数
-mov     dword ptr [ebp-14h], eax     ; p = 返回的堆地址
-
-; if (!p) return 1;
-cmp     dword ptr [ebp-14h], 0
-je      fail_label
-
-; p[0] = 100;
-mov     eax, dword ptr [ebp-14h]     ; 读取 p（堆地址）
-mov     dword ptr [eax], 0x64        ; 往堆地址 +0 写 100
-
-; p[1] = 200;
-mov     eax, dword ptr [ebp-14h]     ; 读取 p
-mov     dword ptr [eax+4], 0xC8      ; 往堆地址 +4 写 200
-
-; p[2] = 300;
-mov     eax, dword ptr [ebp-14h]
-mov     dword ptr [eax+8], 0x12C     ; 堆地址 +8
-
-; p[3] = 400;
-mov     eax, dword ptr [ebp-14h]
-mov     dword ptr [eax+0Ch], 0x190   ; 堆地址 +12（0xC）
-
-; free(p);
-mov     eax, dword ptr [ebp-14h]     ; 读取 p
-push    eax                           ; 传给 free
-call    _free
-add     esp, 4
+mov  eax, dword ptr [ebp-8]       ; eax = i
+mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+mov  edx, dword ptr [ecx+eax*4]   ; edx = arr[i]（读）
+shl  edx, 1                       ; edx *= 2（左移 1 位）
+mov  eax, dword ptr [ebp-8]       ; eax = i
+mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+mov  dword ptr [ecx+eax*4], edx   ; arr[i] = edx（写）
 ```
 
-<!-- 📸 截图：x64dbg 中 malloc 返回后，eax 里的堆地址，以及在内存窗口看到 100/200/300/400 写入堆中 -->
+`[ecx+eax*4]` 出现了两次：先从这里读出 `arr[i]`，左移 1 位（乘以 2），再写回同一个地址。Debug 模式每次访问 `arr` 和 `i` 都从栈上重新加载，Release 会把它们固定在寄存器里。
 
-关键点：
+## 二维数组
 
-1. `malloc` 返回值在 `eax`，是堆上的地址。栈上的 `p` 存着这个地址
-2. `p[i]` 编译成 `[eax + i*4]`，和数组访问一样
-3. `free` 传的是同一个地址值，告诉系统这块堆内存可以回收了
-4. `free` 之后 `p` 的值不变（还是那个地址），但那块内存已经不归你了。访问它就是未定义行为
+二维数组 `int arr[3][4]` 在内存中仍然是**一维连续**的。C 语言按行优先存储：
 
-<!-- 🎨 画图：栈 vs 堆的内存关系。左侧栈区域：p（4 字节，值=0x0052A3B8）。右侧堆区域：从 0x0052A3B8 开始的 16 字节块，分四格标注 100/200/300/400。箭头从栈上的 p 指向堆上的内存块 -->
+```
+逻辑视图：              内存布局：
+arr[0][0] [0][1] [0][2] [0][3]    +0   +4   +8   +12
+arr[1][0] [1][1] [1][2] [1][3]    +16  +20  +24  +28
+arr[2][0] [2][1] [2][2] [2][3]    +32  +36  +40  +44
+```
 
-### 逆向中的堆
+访问 `arr[i][j]` 的地址公式：
 
-逆向分析常见模式：程序调用 `malloc`/`HeapAlloc`/`new` 在堆上分配对象，然后用指针访问。你在 x64dbg 里看到：
+```
+地址 = arr + (i × cols + j) × sizeof(int)
+     = arr + i × cols × 4 + j × 4
+```
+
+`cols` 是列数（第二维大小），编译时确定。看代码：
+
+```c
+int get_element(int arr[][4], int i, int j) {
+    return arr[i][j];
+}
+```
+
+核心汇编：
 
 ```asm
-call    _malloc          ; 或 new、HeapAlloc
-test    eax, eax         ; 检查是否分配成功
-je      error_handler
-mov     [ebp-xx], eax    ; 保存堆地址到局部变量
+mov  eax, dword ptr [ebp+12]     ; eax = i
+shl  eax, 4                       ; eax = i × 16（一行 4 个 int × 4 字节 = 16）
+add  eax, dword ptr [ebp+8]       ; eax += arr（行基址）
+mov  ecx, dword ptr [ebp+16]     ; ecx = j
+mov  eax, dword ptr [eax+ecx*4]   ; eax = arr[i][j] ← SIB 寻址
 ```
 
-之后所有 `mov reg, [reg+offset]` 都是在访问这个堆对象的成员。
+这里有两个计算步骤：
+
+1. `shl eax, 4` — 算行偏移：`i × 16`（一行 4 个 int，每行 16 字节）
+2. `[eax+ecx*4]` — 算列偏移并取值：`eax` 是行起始地址，`ecx*4` 是 `j × sizeof(int)`
+
+**为什么行偏移用 `shl` 而不是 SIB？** 因为行偏移涉及 `cols`（列数），这是一个编译时常量。`i × cols × 4` 在编译时折叠成一个常数乘法（`cols × 4 = 16`，所以 `shl 4`）。SIB 的 scale 只能是 1/2/4/8，没法表达 `×16`，所以编译器先用 `shl` 算出行起始地址，再用 SIB 算列偏移。
+
+> [!NOTE] 从 shl 反推列数
+> `shl eax, N` 算行偏移时，每行字节数 = `2^N`，列数 = `2^N / sizeof(element)`。上面 `shl 4` → `2^4 = 16` 字节/行 → `16 / 4 = 4` 列。如果是 `short arr[][4]`，每行 `4 × 2 = 8` 字节，编译器用 `shl 3`。
+
+## 数组 vs 指针
+
+C 语言里 `arr[i]` 和 `*(ptr+i)` 在汇编层面可能生成不同的代码。看两个函数：
+
+```c
+int arr_direct(void) {
+    int arr[] = {1, 2, 3, 4, 5};
+    return arr[2];
+}
+
+int ptr_indirect(void) {
+    static int data[] = {1, 2, 3, 4, 5};
+    int *ptr = data;
+    return ptr[2];
+}
+```
+
+核心汇编：
+
+```asm
+; arr_direct — 数组在栈上，直接用 ebp 偏移
+mov  dword ptr [ebp-24], 1       ; 初始化 arr[0]
+mov  dword ptr [ebp-20], 2       ; arr[1]
+mov  dword ptr [ebp-16], 3       ; arr[2]
+mov  dword ptr [ebp-12], 4       ; arr[3]
+mov  dword ptr [ebp-8], 5         ; arr[4]
+mov  eax, 4                       ; sizeof(int)
+shl  eax, 1                       ; eax = 2 × 4 = 8（下标 2 偏移）
+mov  eax, dword ptr [ebp+eax-18h] ; eax = arr[2] ← 直接栈偏移
+
+; ptr_indirect — 指针在栈上，数据在静态区
+mov  dword ptr [ebp-8], offset data ; ptr = data（先存指针）
+mov  eax, 4                       ; sizeof(int)
+shl  eax, 1                       ; eax = 2 × 4 = 8
+mov  ecx, dword ptr [ebp-8]       ; ecx = ptr（先读指针）
+mov  eax, dword ptr [ecx+eax]     ; eax = ptr[2] ← 间接访问
+```
+
+区别：
+
+- **数组**：数据就在栈上，地址编译时确定（`[ebp+eax-18h]`），不需要先加载指针
+- **指针**：数据在别处（静态区），先从栈上读出指针值（`mov ecx, [ebp-8]`），再通过指针间接访问（`[ecx+eax]`）
+
+> [!WARNING] 数组参数退化为指针
+> 当数组作为函数参数传递时（如 `int sum_array(int arr[], int n)`），C 语言自动把 `arr` 退化为 `int *arr`。函数内部看不到数组大小，只能用指针访问。所以 `sum_array` 里 `arr` 是从 `[ebp+8]` 读出的指针，不是栈上偏移。
+
+## 全局数组 vs 局部数组
+
+```c
+int global_arr[5] = {1, 2, 3, 4, 5};
+
+int global_vs_local(void) {
+    int local_arr[5] = {1, 2, 3, 4, 5};
+    return global_arr[0] + local_arr[0];
+}
+```
+
+核心汇编：
+
+```asm
+; global_arr[0] — 用固定地址
+mov  ecx, dword ptr ?global_arr@@3PAHA[ecx]  ; 直接从全局地址读
+
+; local_arr[0] — 用栈偏移
+add  ecx, dword ptr [ebp+eax-18h]            ; 从栈偏移读
+```
+
+| 特征     | 全局数组             | 局部数组              |
+| -------- | -------------------- | --------------------- |
+| 地址     | 固定地址（.data 段） | 栈偏移（ebp/esp + N） |
+| 初始化   | 程序加载时自动完成   | 函数入口处逐个写入    |
+| 生命周期 | 整个程序运行期间     | 函数执行期间          |
+
+逆向时，看到访问一个固定地址（如 `?global_arr@@3PAHA`），大概率是全局变量或全局数组。如果看到 `[ebp-N]`，是局部数组。
+
+## 逆向识别清单
+
+| 特征                             | 含义                      |
+| -------------------------------- | ------------------------- |
+| `[base + index*4]`               | int 数组访问（scale=4）   |
+| `[base + index*2]`               | short 数组访问（scale=2） |
+| `[base + index]`（无乘数）       | char 数组访问（scale=1）  |
+| `shl eax, N` + SIB               | 二维数组（shl 算行偏移）  |
+| `mov ecx, [ebp-N]` + `[ecx+...]` | 指针间接访问（先读指针）  |
+| 固定地址（如 `?xxx@@3PAHA`）     | 全局数组                  |
+| `[ebp-N]` 直接访问               | 局部数组                  |
+
+**一维数组看 SIB 的 scale**（`*4` 是 int，`*2` 是 short，无乘数是 char），**二维数组看 `shl` 算行偏移再接 SIB 算列偏移**，**指针访问多一步先读指针值**。
 
 ## 练习
 
-### 练习 1：追踪指针
+1. 下面这段汇编访问的是什么类型的数组？元素大小是多少？
 
-```asm
-mov     dword ptr [ebp-4], 0x2A       ; [ebp-4] = ?
-lea     eax, [ebp-4]
-mov     dword ptr [ebp-8], eax        ; [ebp-8] = ?
-mov     eax, dword ptr [ebp-8]
-mov     dword ptr [eax], 0x63         ; [ebp-4] 现在是？
-```
+   ```asm
+   mov  eax, dword ptr [ebp+12]     ; eax = i
+   mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+   movsx eax, word ptr [ecx+eax*2]   ; eax = arr[i]
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > `short`（或 `signed short`）数组。`word ptr` 表示 2 字节元素，`*2` 是 scale，`movsx` 做符号扩展说明是有符号类型。
 
-- `[ebp-4]` 初始为 42（0x2A），最后变成 99（0x63）
-- `[ebp-8]` 存的是 `[ebp-4]` 的地址（即 `ebp-4`）
-- 第三步通过 `[ebp-8]` 里的地址间接修改了 `[ebp-4]` 的值
+2. 下面这段汇编对应的 C 代码是什么？还原出完整的函数。
 
-这就是 `int a = 42; int *p = &a; *p = 99;`
+   ```asm
+   mov  eax, dword ptr [ebp+12]     ; eax = i
+   shl  eax, 3                       ; eax = i × 8
+   add  eax, dword ptr [ebp+8]       ; eax += arr
+   mov  ecx, dword ptr [ebp+16]     ; ecx = j
+   mov  eax, dword ptr [eax+ecx*2]   ; eax = arr[i][j]
+   ```
 
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > 二维数组访问。`shl eax, 3` → 每行 8 字节，`*2` → 元素 2 字节，列数 = 8 / 2 = 4。
+   >
+   > ```c
+   > short get(short arr[][4], int i, int j) {
+   >     return arr[i][j];
+   > }
+   > ```
+   >
+   > `shl 3` 算行偏移（一行 4 个 short × 2 字节 = 8 字节），`[eax+ecx*2]` 算列偏移并取值（scale=2 是 short）。
 
-### 练习 2：多级指针链
+3. 下面这段汇编是数组访问还是指针访问？说明理由。
 
-```asm
-mov     dword ptr [ebp-4], 0x64       ; A
-lea     eax, [ebp-4]
-mov     dword ptr [ebp-8], eax        ; B
-lea     eax, [ebp-8]
-mov     dword ptr [ebp-0Ch], eax      ; C
+   ```asm
+   mov  eax, dword ptr [ebp+12]     ; eax = i
+   mov  ecx, dword ptr [ebp-4]       ; ecx = ?
+   mov  eax, dword ptr [ecx+eax*4]   ; eax = ?[i]
+   ```
 
-mov     eax, dword ptr [ebp-0Ch]      ; 读 C
-mov     ecx, dword ptr [eax]          ; 读 *C
-mov     edx, dword ptr [ecx]          ; 读 **C
-mov     dword ptr [edx], 0x309        ; ***C = 777
-```
+   > [!NOTE]- 参考答案
+   >
+   > **指针访问**。`mov ecx, [ebp-4]` 先从栈上读出一个值放进 `ecx`，再用 `ecx` 作为基址访问内存。如果是数组访问，基址直接从参数（`[ebp+8]`）或栈偏移（`[ebp-N]`）取，不会多一步间接读取。这里 `[ebp-4]` 存的是一个指针变量，先读指针再用它访问数据。
+   >
+   > ```c
+   > int get_via_ptr(int *ptr, int i) {
+   >     return ptr[i];
+   > }
+   > ```
 
-`[ebp-4]` 最终的值是什么？C 是几级指针？
+4. 下面这段汇编在做什么？还原出 C 代码。
 
-<details>
-<summary>答案</summary>
+   ```asm
+   mov  eax, dword ptr [ebp-8]       ; eax = i
+   mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+   mov  edx, dword ptr [ecx+eax*4]   ; edx = arr[i]
+   shl  edx, 1                       ; edx *= 2
+   mov  eax, dword ptr [ebp-8]       ; eax = i
+   mov  ecx, dword ptr [ebp+8]       ; ecx = arr
+   mov  dword ptr [ecx+eax*4], edx   ; arr[i] = edx
+   ```
 
-- `[ebp-4]` 最终值为 777
-- C (`[ebp-0Ch]`) 是三级指针 (`int ***`)
-- 链路：C -> B -> A -> 值 100->777
-
-对应 C 代码：
-
-```c
-int a = 100;       // [ebp-4]
-int *b = &a;       // [ebp-8]
-int **c = &b;      // [ebp-0Ch]
-***c = 777;
-```
-
-</details>
-
-### 练习 3：指针运算
-
-```asm
-lea     eax, [ebp-20h]               ; arr 首地址
-mov     dword ptr [ebp-28h], eax     ; p = arr
-mov     eax, dword ptr [ebp-28h]     ; 读 p
-add     eax, 0Ch                      ; p += 3?
-mov     dword ptr [ebp-28h], eax     ; 写回 p
-mov     ecx, dword ptr [ebp-28h]     ; 读 p
-mov     eax, dword ptr [ecx]         ; *p = ?
-```
-
-假设 `arr` 是 `int` 数组，初始值为 `{10, 20, 30, 40, 50}`。`*p` 最终读出什么？
-
-<details>
-<summary>答案</summary>
-
-`*p` 读出 40。
-
-`add eax, 0Ch` 即 `p += 12`，但因为 `int` 是 4 字节，这等于 `p += 3`（偏移 3 个元素）。`arr[3] = 40`。
-
-</details>
-
-### 练习 4：堆对象
-
-```asm
-push    8
-call    _malloc
-add     esp, 4
-mov     dword ptr [ebp-4], eax       ; p = malloc(8)
-
-mov     ecx, dword ptr [ebp-4]       ; 读 p
-mov     dword ptr [ecx], 0x6F        ; p[0] = 111
-mov     edx, dword ptr [ebp-4]
-mov     dword ptr [edx+4], 0xDE      ; p[1] = 222
-
-mov     eax, dword ptr [ebp-4]
-push    eax
-call    _free
-add     esp, 4
-
-mov     ecx, dword ptr [ebp-4]       ; p 还在吗？
-mov     eax, dword ptr [ecx]         ; 这行能执行吗？
-```
-
-最后一个 `mov eax, [ecx]` 有什么问题？
-
-<details>
-<summary>答案</summary>
-
-这是**释放后使用**（Use After Free）。
-
-- `free(p)` 之后，`p` 的值（栈上 `[ebp-4]`）没变，还是那个堆地址
-- 但那块堆内存已经被释放，不再属于这个程序
-- 最后两行去读已释放的内存，是未定义行为——可能读到旧值，可能读到垃圾，可能直接崩溃
-
-对应 C 代码：
-
-```c
-int *p = malloc(8);
-p[0] = 111;
-p[1] = 222;
-free(p);
-int x = p[0];  // 危险！释放后使用
-```
-
-逆向分析时，如果看到程序 crash 在 `free` 之后的内存访问，检查是不是 UAF。
-
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > 数组元素乘以 2。`[ecx+eax*4]` 出现两次：第一次读出 `arr[i]`，`shl 1` 左移 1 位（乘以 2），第二次写回同一地址。
+   >
+   > ```c
+   > void double_element(int arr[], int i) {
+   >     arr[i] *= 2;
+   > }
+   > ```
+   >
+   > `shl edx, 1` 是 `*= 2` 的优化写法（左移 1 位 = 乘以 2）。如果 C 代码写 `arr[i] += arr[i]`，编译器也会生成同样的 `shl`。

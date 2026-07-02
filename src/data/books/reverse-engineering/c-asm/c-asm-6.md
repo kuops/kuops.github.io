@@ -1,754 +1,359 @@
 ---
-title: 数组与字符串
-draft: true
-description: 数组在汇编里就是"基址 + 索引 × 元素大小"。字符串就是字符数组加一个 \0。认出这些模式，逆向就快了。
+title: 指针
+draft: false
+description: 指针就是地址。lea 取地址、mov [reg] 解引用，多级指针是指针的指针。逆向中到处都是指针链，搞懂这个才能追踪数据。
 order: 16
 ---
 
-## 动手目标
+上一章学了循环的汇编形态。这一章学**指针**：C 里写 `*p`、`&a`、`p++`、`**pp`，编译器翻译成什么。
 
-今天结束你会：
+和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留指针相关的核心指令，过滤掉 Debug 噪音（每步读写栈、临时变量复制等，前面讲过）。
 
-1. 理解数组在内存中的线性布局，从汇编还原出数组访问代码
-2. 认出 SIB 寻址 `[base + index*scale]` 模式
-3. 看懂二维数组的"一维展开"本质
-4. 识别字符串操作（strcpy、strcmp、strlen）的底层汇编实现
+核心认识：**指针 = 地址 = 一个整数**。`int *p` 里的 `p` 存的不是整数 42，而是某个内存地址。多级指针就是指针的指针，地址指向地址指向值。
 
-把下面这段代码编译成 Release x86，用 x64dbg 打开，对照看：
+## 指针基础：取地址和解引用
 
 ```c
-#include <stdio.h>
+void ptr_basic(void) {
+    int a = 42;
+    int *p = &a;
+    *p = 100;
+}
+```
 
-int sum(int arr[], int n) {
+核心汇编：
+
+```asm
+mov  dword ptr [ebp-12], 0x2A     ; a = 42，直接把立即数写到栈上
+lea  eax, [ebp-12]               ; 取 a 的地址到 eax
+mov  dword ptr [ebp-24], eax     ; p = &a，把地址值存到 p 的栈位置
+mov  eax, dword ptr [ebp-24]     ; 读取 p 的值（即 a 的地址）
+mov  dword ptr [eax], 0x64         ; 往那个地址写入 100 → a 被修改
+```
+
+两条关键指令：
+
+- **`lea eax, [ebp-12]`** — Load Effective Address，取 `[ebp-12]` 这个地址本身，不是取那个地址里的值。等同于 `eax = ebp - 0xC`，即 `&a`
+- **`mov dword ptr [eax], 0x64`** — `eax` 里存的是地址，`[eax]` 就是解引用，往那个地址写值。等同于 `*p = 100`
+
+> [!NOTE] lea 和 mov 的区别
+> `lea eax, [ebp-12]` 取的是**地址**（`ebp - 0xC` 这个值），`mov eax, [ebp-12]` 取的是**那个地址里的值**（42）。前者是 `&a`，后者是 `a`。一个字母之差，语义完全不同。
+
+### 指针变量本身也是变量
+
+`p` 是个指针，但 `p` 自己也占内存。上面 `p` 在 `[ebp-24]`，`a` 在 `[ebp-12]`，两个不同的栈位置。`&p` 是指针的指针——`int **` 类型，多级指针的根基就在这里。
+
+## 多级指针
+
+### 二级指针
+
+```c
+void ptr_address(void) {
+    int a = 42;
+    int *p = &a;
+    int **pp = &p;
+    **pp = 999;
+}
+```
+
+核心汇编：
+
+```asm
+mov  dword ptr [ebp-12], 0x2A     ; a = 42
+lea  eax, [ebp-12]               ; &a
+mov  dword ptr [ebp-24], eax     ; p = &a
+lea  eax, [ebp-24]               ; &p
+mov  dword ptr [ebp-36], eax     ; pp = &p
+mov  eax, dword ptr [ebp-36]     ; 第一次解引用：读 pp → 得到 p 的地址
+mov  ecx, dword ptr [eax]         ; 第二次解引用：读 p → 得到 a 的地址
+mov  dword ptr [ecx], 0x3E7        ; 往 a 的地址写 999
+```
+
+`**pp = 999` 拆成三步：
+
+1. `mov eax, [ebp-36]` — 从 pp 的位置读出 p 的地址
+2. `mov ecx, [eax]` — 从 p 的位置读出 a 的地址
+3. `mov [ecx], 999` — 往 a 的位置写入 999
+
+三次内存访问，两次读地址，最后一次写值。这就是**指针链**。
+
+### 三级指针
+
+```c
+void multi_ptr(void) {
+    int value = 42;
+    int *p = &value;
+    int **pp = &p;
+    int ***ppp = &pp;
+    ***ppp = 1234;
+}
+```
+
+核心汇编：
+
+```asm
+mov  eax, dword ptr [ebp-48]     ; 读 ppp → pp 的地址
+mov  ecx, dword ptr [eax]         ; 读 pp → p 的地址
+mov  edx, dword ptr [ecx]         ; 读 p → value 的地址
+mov  dword ptr [edx], 0x4D2        ; 写 value = 1234
+```
+
+四级指针就是五次访问，依此类推。每多一级指针，就多一次 `mov reg, [reg]` 的间接读取。
+
+> [!IMPORTANT] 指针链是逆向的核心模式
+> 逆向工程里到处都是指针链：游戏基址 → 一级偏移 → 二级偏移 → 目标值。你在逆向里看到连续好几行 `mov reg, [reg + offset]`，就是在追踪指针链：
+>
+> ```asm
+> mov  eax, [base + 0x12345]    ; 第一级
+> mov  ecx, [eax + 0x10]        ; 第二级
+> mov  edx, [ecx + 0x28]        ; 第三级
+> mov  eax, [edx + 4]          ; 目标值
+> ```
+>
+> 每一级都是先读出一个地址，加上偏移，再读下一个地址。
+
+## 指针运算
+
+### 按类型大小递增
+
+```c
+int ptr_arith(int *p, int n) {
+    int *end = p + n;
     int total = 0;
-    for (int i = 0; i < n; i++) {
-        total += arr[i];
+    while (p < end) {
+        total += *p;
+        p++;
     }
     return total;
 }
+```
 
-int main(void) {
-    int nums[] = {10, 20, 30, 40, 50};
-    printf("sum = %d\n", sum(nums, 5));
-    return 0;
+核心汇编：
+
+```asm
+mov  eax, dword ptr [ebp+12]     ; eax = n
+mov  ecx, dword ptr [ebp+8]       ; ecx = p
+lea  edx, [ecx+eax*4]             ; end = p + n（×4 因为 int 是 4 字节）
+mov  dword ptr [ebp-8], edx       ; 存 end
+mov  dword ptr [ebp-20], 0       ; total = 0
+check:
+mov  eax, dword ptr [ebp+8]       ; eax = p
+cmp  eax, dword ptr [ebp-8]       ; p < end ?
+jae  end
+mov  eax, dword ptr [ebp+8]       ; eax = p
+mov  ecx, dword ptr [ebp-20]     ; ecx = total
+add  ecx, dword ptr [eax]         ; total += *p
+mov  dword ptr [ebp-20], ecx
+mov  eax, dword ptr [ebp+8]       ; eax = p
+add  eax, 4                       ; p++（加 sizeof(int) = 4）
+mov  dword ptr [ebp+8], eax       ; 写回 p
+jmp  check
+end:
+mov  eax, dword ptr [ebp-20]     ; 返回 total
+```
+
+`p++` 不是让地址加 1。`int` 是 4 字节，所以 `add eax, 4`。`p + n` 用 `lea edx, [ecx+eax*4]`——n 乘以 4 再加到基址上。
+
+如果类型是 `char *`，`p++` 只加 1。如果是 `double *`，`p++` 加 8。编译器在编译时根据类型决定步长，不是运行时。
+
+### 指针减法
+
+两个同类型指针相减，结果是元素个数，不是字节数：
+
+```c
+int ptr_diff(int *p1, int *p2) {
+    return p2 - p1;
 }
 ```
 
-<!-- 📸 截图：x64dbg 中 sum 函数的反汇编代码 -->
-
-## 一维数组
-
-数组的核心就一句话：**连续内存，基址 + 偏移**。`int arr[5]` 在内存中就是 5 个连续的 4 字节（int 大小）。
-
-```
-地址        值
-arr+0x00    arr[0] = 10
-arr+0x04    arr[1] = 20
-arr+0x08    arr[2] = 30
-arr+0x0C    arr[3] = 40
-arr+0x10    arr[4] = 50
-```
-
-<!-- 🎨 画图：一维 int 数组内存布局——5 个连续格子，标注地址偏移和值 -->
-
-访问 `arr[i]` 的公式：`地址 = arr + i × sizeof(int) = arr + i × 4`。
-
-编译一个简单的数组求和，Debug 模式：
+核心汇编：
 
 ```asm
-push ebp
-mov  ebp, esp
-sub  esp, 8
-mov  dword ptr [ebp-4], 0          ; total = 0
-mov  dword ptr [ebp-8], 0          ; i = 0
-loop_start:
-mov  eax, dword ptr [ebp-8]        ; eax = i
-cmp  eax, dword ptr [ebp+0Ch]      ; i < n ?
-jge  loop_end                       ; 不满足则跳出
-mov  eax, dword ptr [ebp-8]        ; eax = i
-shl  eax, 2                         ; eax = i * 4
-mov  ecx, dword ptr [ebp+8]        ; ecx = arr（基址）
-mov  edx, dword ptr [ecx+eax]      ; edx = arr[i]  ← [base + offset]
-add  dword ptr [ebp-4], edx        ; total += arr[i]
-mov  eax, dword ptr [ebp-8]        ; i++
-add  eax, 1
-mov  dword ptr [ebp-8], eax
-jmp  loop_start
-loop_end:
-mov  eax, dword ptr [ebp-4]        ; 返回 total
-mov  esp, ebp
-pop  ebp
-ret
+mov  eax, dword ptr [ebp+12]     ; eax = p2（地址）
+sub  eax, dword ptr [ebp+8]       ; eax = p2 - p1（字节数）
+sar  eax, 2                       ; eax /= 4（除以 sizeof(int)）
 ```
 
-<!-- 📸 截图：x64dbg 中数组循环的反汇编，标注 shl 和 [ecx+eax] -->
+`sub` 算出字节差，`sar eax, 2` 除以 4 转换成元素个数。这就是 `p2 - p1` 返回 2 而不是 8 的原因。
 
-关键指令：
+> [!NOTE] 指针运算和 SIB 寻址用的是同一套硬件
+> `p + n` 编译成 `[base + index*4]`，`p++` 编译成 `add reg, 4`，`p2 - p1` 编译成 `sub` + `sar`。指针运算的本质就是"地址 ± 字节数"，编译器根据类型大小把逻辑上的"元素数"转换成物理上的"字节数"。
 
-- `shl eax, 2` — 左移 2 位 = 乘以 4，计算 `i × sizeof(int)`
-- `mov edx, dword ptr [ecx+eax]` — `ecx` 是数组基址，`eax` 是偏移量
+## 指针间接访问
 
-**看到 `shl/sal` 乘以元素大小 + `[base + offset]` 取值，基本就是数组访问。**
-
-### SIB 寻址
-
-上面的代码先用 `shl` 算偏移，再加基址取值。编译器在 Release 模式下会用更高效的方式——**SIB（Scale-Index-Base）寻址**，一条指令搞定：
+指针变量存在栈上，但它指向的数据可能在别处（堆、静态区、调用者的栈帧）。访问时先从栈上读出指针值，再用它做地址访问数据：
 
 ```asm
-; Release 优化后的 sum 函数
-sum PROC
-    xor     eax, eax                    ; total = 0
-    test    ecx, ecx                    ; n == 0 ?
-    jle     done
-    lea     edx, [ecx-1]               ; edx = n - 1
-    xor     ecx, ecx                    ; i = 0
-loop_top:
-    add     eax, dword ptr [edx+ecx]   ; total += arr[i]... 等等这不对
-    ; 实际是：
-    add     eax, dword ptr [edi+ecx*4] ; total += arr[i]
-    inc     ecx                         ; i++
-    cmp     ecx, dword ptr [ebp+0Ch]   ; i < n ?
-    jl      loop_top
-done:
-    ret
-sum ENDP
+mov  ecx, dword ptr [ebp-8]       ; 先读指针值
+mov  eax, dword ptr [ecx+8]       ; 再用指针做 base 间接访问
 ```
 
-<!-- 🎨 画图：SIB 寻址示意图——`[base + index*scale + displacement]`，base=数组基址，index=循环变量，scale=元素大小 -->
+这和直接用栈偏移访问局部变量不同——`[ebp-8]` 取的是指针本身的值，`[ecx+8]` 才是真正访问数据。多了一层间接。
 
-SIB 寻址格式：`[base + index × scale + disp]`
+> [!WARNING] 数组参数退化为指针
+> 当数组作为函数参数传递时，C 语言自动把它退化为指针。函数内部只能用指针访问，下一章讲数组时会展开。
 
-| 字段  | 含义          | 示例                |
-| ----- | ------------- | ------------------- |
-| base  | 数组起始地址  | `edi`（arr 指针）   |
-| index | 循环变量/索引 | `ecx`（i）          |
-| scale | 元素大小      | `4`（int = 4 字节） |
-| disp  | 额外偏移      | 0（省略）           |
-
-scale 只能是 1、2、4、8。对应常见类型：
-
-| scale | 对应类型          |
-| ----- | ----------------- |
-| 1     | char、byte        |
-| 2     | short、word       |
-| 4     | int、float、dword |
-| 8     | double、指针(x64) |
-
-**逆向时看到 `[reg1 + reg2*4]` 或 `[reg1 + reg2*2]`，这就是数组访问。** reg1 是基址，reg2 是索引，乘数是元素大小。
-
-### char 数组
-
-char 数组的 scale 是 1，编译器会省略乘法：
+## 动态内存
 
 ```c
-char msg[] = {'H', 'i', '!'};
-char c = msg[1];
-```
-
-```asm
-mov  al, byte ptr [edi+1]     ; msg[1]，scale=1 直接加偏移
-```
-
-int 数组的 scale 是 4，必须用 `shl 2` 或 `*4`：
-
-```c
-int nums[] = {10, 20, 30};
-int x = nums[1];
-```
-
-```asm
-mov  eax, dword ptr [edi+4]     ; nums[1]，偏移 = 1 * 4
-```
-
-<!-- 📸 截图：x64dbg 中 char 数组 vs int 数组的访问方式对比 -->
-
-## 二维数组
-
-二维数组 `int arr[3][4]` 在内存中仍然是**一维连续**的。C 语言按行优先存储：
-
-```
-逻辑视图：          内存布局：
-arr[0][0] [0][1] [0][2] [0][3]    ← 第 0 行
-arr[1][0] [1][1] [1][2] [1][3]    ← 第 1 行
-arr[2][0] [2][1] [2][2] [2][3]    ← 第 2 行
-
-地址偏移：
-+0   +4   +8   +12   ← 第 0 行（arr[0]）
-+16  +20  +24  +28   ← 第 1 行（arr[1]）
-+32  +36  +40  +44   ← 第 2 行（arr[2]）
-```
-
-<!-- 🎨 画图：二维数组内存布局——左侧是逻辑上的 3×4 矩阵，右侧是实际的一维连续内存，用颜色标注每一行 -->
-
-访问 `arr[i][j]` 的地址公式：
-
-```
-地址 = arr + (i × cols + j) × sizeof(int)
-     = arr + i × cols × 4 + j × 4
-```
-
-`cols` 是列数（第二维大小），编译时确定。
-
-```c
-#include <stdio.h>
-
-int get_element(int arr[][4], int i, int j) {
-    return arr[i][j];
-}
-
-int main(void) {
-    int matrix[3][4] = {
-        {1, 2, 3, 4},
-        {5, 6, 7, 8},
-        {9, 10, 11, 12}
-    };
-    printf("%d\n", get_element(matrix, 1, 2));
-    return 0;
+void heap_demo(void) {
+    int *p = (int *)malloc(4 * sizeof(int));
+    if (!p) return;
+    p[0] = 100;
+    p[1] = 200;
+    p[2] = 300;
+    p[3] = 400;
+    free(p);
 }
 ```
 
-Debug 汇编：
+核心汇编：
 
 ```asm
-push ebp
-mov  ebp, esp
-mov  eax, dword ptr [ebp+0Ch]      ; eax = i
-shl  eax, 4                         ; eax = i * 16（= i * 4cols * sizeof(int) = i * 4 * 4）
-mov  ecx, dword ptr [ebp+10h]      ; ecx = j
-shl  ecx, 2                         ; ecx = j * 4
-add  eax, ecx                       ; eax = i*16 + j*4
-mov  edx, dword ptr [ebp+8]        ; edx = arr（基址）
-mov  eax, dword ptr [edx+eax]      ; eax = arr[i][j]
-mov  esp, ebp
-pop  ebp
-ret
+push 0x10                           ; 参数：16 字节 = 4 × 4
+call dword ptr [__imp__malloc]     ; 调用 malloc
+add  esp, 4                        ; 清理参数
+mov  dword ptr [ebp-8], eax        ; p = 返回的堆地址
+cmp  dword ptr [ebp-8], 0          ; 检查是否分配成功
+je   fail
+; p[0] = 100
+mov  eax, 4
+imul ecx, eax, 0                   ; 偏移 = 0 × 4
+mov  edx, dword ptr [ebp-8]        ; 读 p
+mov  dword ptr [edx+ecx], 0x64      ; p[0] = 100
+; p[1] = 200
+mov  eax, 4
+shl  eax, 0                        ; 偏移 = 1 × 4 = 4
+mov  ecx, dword ptr [ebp-8]
+mov  dword ptr [ecx+eax], 0x0C8     ; p[1] = 200
+; free(p)
+mov  eax, dword ptr [ebp-8]        ; 读 p
+push eax                           ; 传给 free
+call dword ptr [__imp__free]
+add  esp, 4
 ```
 
-<!-- 📸 截图：x64dbg 中 get_element 函数，标注两个 shl 和 add -->
-
-要点：
-
-1. `shl eax, 4` — `i × 16`，因为一行有 4 个 int，4 × 4 = 16 字节
-2. `shl ecx, 2` — `j × 4`，一个 int 占 4 字节
-3. 两个偏移相加，再加基址取值
-
-**逆向技巧**：看到两个 `shl` 分别计算行偏移和列偏移，再加起来访问内存，就是二维数组。`shl` 的移位数告诉你列数：`shl eax, N` 意味着每行 `2^N / sizeof(element)` 个元素。上面 `shl 4` -> `16 / 4 = 4` 列。
-
-### 遍历二维数组
-
-```c
-void print_matrix(int arr[][4], int rows) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < 4; j++) {
-            printf("%d ", arr[i][j]);
-        }
-    }
-}
-```
-
-Release 模式下，编译器通常把嵌套循环展开成单循环，用指针递增遍历：
-
-```asm
-; 优化后可能变成：
-xor  ecx, ecx                    ; 计数器 = 0
-mov  edx, dword ptr [esp+4]      ; edx = arr 指针
-loop_top:
-mov  eax, dword ptr [edx+ecx*4]  ; 取 arr[count]
-push eax
-push offset fmt_str
-call printf
-add  esp, 8
-inc  ecx
-cmp  ecx, total_elements         ; rows * 4
-jl   loop_top
-```
-
-编译器知道第二维是 4，所以 `rows × 4` 是总元素数，直接线性遍历。**二维数组在汇编层面就是一维数组**，行/列只是编程时的逻辑概念。
-
-## 字符串
-
-C 语言的字符串就是**以 `'\0'`（字节 0）结尾的 char 数组**。没有长度字段，没有边界检查，就是一段连续字节最后一个 0。
-
-```c
-char str[] = "Hi!";
-```
-
-内存中：
-
-```
-地址    值    含义
-str+0   0x48  'H'
-str+1   0x69  'i'
-str+2   0x21  '!'
-str+3   0x00  '\0'  ← 结尾标记
-```
-
-<!-- 🎨 画图：字符串内存布局——每个字节标注十六进制值和对应字符，末尾 '\0' 用红色标注 -->
-
-### 字符串赋值
-
-字符串字面量赋值给局部数组：
-
-```c
-void func(void) {
-    char name[8] = "hello";
-}
-```
-
-编译器把 "hello\0" 放在 `.rdata` 段，运行时用 `rep movsb` 或逐字节复制到栈上。
-
-```asm
-push ebp
-mov  ebp, esp
-sub  esp, 8
-mov  eax, dword ptr [ebp-8]
-; 或者直接把立即数写入栈：
-mov  dword ptr [ebp-8], 00686568h  ; "hell"（小端：68 65 6c 6c -> "hell" 反过来存不对...）
-; 实际 MSVC 可能这样：
-mov  dword ptr [ebp-8], 6C6C6548h  ; "Hell" 的小端存储不太对...
-```
-
-等等，不要猜，直接看实际编译结果。MSVC Release 通常这样做：
-
-```asm
-; name[8] = "hello"
-mov  eax, dword ptr ["hello"]       ; 取 "hell" 四字节
-mov  dword ptr [ebp-8], eax         ; 写入栈
-mov  cx, word ptr ["hello"+4]       ; 取 "o\0" 两字节
-mov  word ptr [ebp-4], cx           ; 写入栈
-mov  dword ptr [ebp-6], 0           ; 清零剩余（或者用 xor）
-```
-
-<!-- 📸 截图：x64dbg 内存窗口显示栈上的字符串，逐字节标注 -->
-
-实际中不需要纠结具体的赋值方式。**关键是在 x64dbg 的内存窗口中，把显示格式切到 "ASCII" 或 "UTF-8"，直接看字符串内容。**
-
-### 字符串比较
-
-```c
-int str_equal(const char *a, const char *b) {
-    int i = 0;
-    while (a[i] != '\0' && a[i] == b[i]) {
-        i++;
-    }
-    return a[i] == b[i];
-}
-```
-
-Debug 汇编：
-
-```asm
-push ebp
-mov  ebp, esp
-sub  esp, 8
-mov  dword ptr [ebp-4], 0           ; i = 0
-loop_start:
-mov  eax, dword ptr [ebp-4]         ; eax = i
-mov  ecx, dword ptr [ebp+8]         ; ecx = a
-movsx edx, byte ptr [ecx+eax]       ; edx = a[i]（符号扩展）
-cmp  edx, 0
-je   loop_end                        ; a[i] == '\0' 跳出
-mov  eax, dword ptr [ebp-4]
-mov  ecx, dword ptr [ebp+8]         ; a
-movsx edx, byte ptr [ecx+eax]       ; a[i]
-mov  eax, dword ptr [ebp-4]
-mov  ecx, dword ptr [ebp+0Ch]       ; b
-movsx eax, byte ptr [ecx+eax]       ; b[i]
-cmp  edx, eax
-jne  loop_end                        ; a[i] != b[i] 跳出
-mov  eax, dword ptr [ebp-4]         ; i++
-add  eax, 1
-mov  dword ptr [ebp-4], eax
-jmp  loop_start
-loop_end:
-mov  eax, dword ptr [ebp-4]
-mov  ecx, dword ptr [ebp+8]
-movsx edx, byte ptr [ecx+eax]       ; a[i]
-mov  eax, dword ptr [ebp-4]
-mov  ecx, dword ptr [ebp+0Ch]
-movsx eax, byte ptr [ecx+eax]       ; b[i]
-xor  eax, edx                        ; a[i] ^ b[i]
-sete al                              ; al = (结果 == 0) ? 1 : 0
-movzx eax, al
-mov  esp, ebp
-pop  ebp
-ret
-```
-
-<!-- 🎨 画图：字符串比较流程——两个 char* 指针逐字节对比，遇到 '\0' 或不等就停止 -->
-
-关键识别点：
-
-- `movsx edx, byte ptr [ecx+eax]` — `byte ptr` 说明是 char（1 字节），`movsx` 做符号扩展
-- 逐字节访问 + 遇到 0 停止 = 字符串操作
-
-## 常见字符串操作
-
-C 标准库的字符串函数在底层有非常清晰的模式。Release 模式下，编译器可能内联这些函数，直接生成对应的汇编。
-
-### memcpy / strcpy — rep movsb
-
-`rep movsb` 是 x86 的块拷贝指令：把 `esi` 指向的内存逐字节复制到 `edi`，重复 `ecx` 次。
-
-```c
-void my_copy(char *dst, const char *src, int n) {
-    for (int i = 0; i < n; i++) {
-        dst[i] = src[i];
-    }
-}
-```
-
-编译器可能生成：
-
-```asm
-mov  ecx, dword ptr [n]      ; ecx = 字节数
-mov  esi, dword ptr [src]     ; esi = 源地址
-mov  edi, dword ptr [dst]     ; edi = 目标地址
-rep movsb                      ; 逐字节复制 esi -> edi，ecx 次
-```
-
-或者按 4 字节一次（dword）复制，更快：
-
-```asm
-mov  ecx, dword ptr [n]
-shr  ecx, 2                    ; ecx = n / 4（dword 数量）
-mov  esi, dword ptr [src]
-mov  edi, dword ptr [dst]
-rep movsd                      ; 每次 4 字节
-```
-
-<!-- 📸 截图：x64dbg 单步执行 rep movsb，观察 esi/edi 寄存器和内存变化 -->
-
-| 指令      | 含义                             | 常见场景       |
-| --------- | -------------------------------- | -------------- |
-| rep movsb | 逐字节复制，重复 ecx 次          | memcpy、strcpy |
-| rep movsd | 逐 dword(4字节)复制，重复 ecx 次 | memcpy 优化    |
-| rep stosb | 把 al 写入 edi，重复 ecx 次      | memset         |
-
-### strlen — repne scasb
-
-`strlen` 的本质：从字符串开头逐字节扫描，直到遇到 `'\0'`。
-
-```c
-int my_strlen(const char *s) {
-    int len = 0;
-    while (s[len] != '\0') {
-        len++;
-    }
-    return len;
-}
-```
-
-x86 有专门的指令 `repne scasb`：
-
-```asm
-mov  edi, dword ptr [s]       ; edi = 字符串起始地址
-xor  eax, eax                  ; eax = 0（要找的字节值）
-or   ecx, -1                   ; ecx = 0xFFFFFFFF（最大计数值）
-repne scasb                     ; 从 edi 开始找 al(0)，每次 edi++，ecx--
-; 此时 ecx = 0xFFFFFFFF - len - 1
-not  ecx                       ; ecx = len + 1
-dec  ecx                       ; ecx = len
-mov  eax, ecx                  ; 返回值
-```
-
-<!-- 🎨 画图：repne scasb 扫描过程——edi 从字符串头部开始，逐字节与 al(0) 比较，ecx 递减，遇到 0 停止 -->
-
-`repne scasb` 的工作流程：
-
-1. `al = 0`（要搜索的目标字节）
-2. `ecx = -1`（最大搜索次数）
-3. 每次执行：`edi` 指向的字节与 `al` 比较
-4. 不相等 -> `edi++`，`ecx--`，继续
-5. 相等 -> 停止
-6. `not ecx; dec ecx` 反算出长度
-
-**看到 `xor eax, eax` + `repne scasb` + `not ecx`，就是 strlen。**
-
-### strcmp — 逐字节比较
-
-```c
-int my_strcmp(const char *a, const char *b) {
-    int i = 0;
-    while (a[i] == b[i]) {
-        if (a[i] == '\0') return 0;
-        i++;
-    }
-    return (unsigned char)a[i] - (unsigned char)b[i];
-}
-```
-
-Release 内联后：
-
-```asm
-mov  esi, dword ptr [a]
-mov  edi, dword ptr [b]
-compare_loop:
-mov  al, byte ptr [esi]        ; 取 a 的当前字符
-mov  cl, byte ptr [edi]        ; 取 b 的当前字符
-cmp  al, cl
-jne  differ                     ; 不相等跳出
-test al, al
-jz   equal                      ; a[i] == '\0'，相等跳出
-inc  esi
-inc  edi
-jmp  compare_loop
-differ:
-movzx eax, al
-movzx ecx, cl
-sub  eax, ecx                   ; 返回差值
-ret
-equal:
-xor  eax, eax                   ; 返回 0
-ret
-```
-
-<!-- 📸 截图：x64dbg 中 strcmp 内联的反汇编 -->
-
-识别要点：
-
-- 两个指针（esi/edi）同时递增（`inc esi; inc edi`）
-- `byte ptr` 逐字节访问
-- 遇到 `'\0'`（`test al, al; jz`）停止
-
-## 识别数组 vs 指针
-
-C 语言里 `arr[i]` 和 `*(ptr+i)` 在汇编层面可能生成完全相同的代码。但它们的语义不同，逆向时需要从上下文判断。
-
-```c
-int arr_arr(void) {
-    int arr[] = {1, 2, 3, 4, 5};
-    return arr[2];
-}
-
-int arr_ptr(void) {
-    int *ptr = (int[]){1, 2, 3, 4, 5};
-    return ptr[2];
-}
-```
-
-Release 汇编几乎一样：
-
-```asm
-; arr_arr:
-mov  eax, dword ptr [esp+8]     ; 直接返回 [esp+8+2*4]
-ret
-
-; arr_ptr:
-mov  eax, dword ptr [esp+4]     ; 先取指针
-mov  eax, dword ptr [eax+8]     ; 再 [ptr+2*4]
-ret
-```
-
-<!-- 🎨 画图：数组 vs 指针的访问路径对比——数组：直接栈偏移；指针：先取指针值，再间接访问 -->
-
-区别在哪？
-
-- **数组**：地址在编译时确定（栈上固定偏移），不需要先加载指针
-- **指针**：先从内存读出指针值，再通过指针间接访问
-
-但在更复杂的场景下（比如数组作为参数传递），C 数组自动退化为指针，汇编完全相同。
-
-### 数组参数
-
-```c
-void process(int arr[], int n) {
-    for (int i = 0; i < n; i++) {
-        arr[i] *= 2;
-    }
-}
-```
-
-`arr[]` 参数实际上就是 `int *arr`，编译器生成指针代码：
-
-```asm
-process PROC
-    test    ecx, ecx                ; n == 0?
-    jle     done
-    lea     eax, [ecx-1]           ; 计数
-    xor     ecx, ecx
-loop_top:
-    shl     dword ptr [edx+ecx*4], 1   ; arr[i] *= 2
-    inc     ecx
-    cmp     ecx, dword ptr [ebp+...]
-    jl      loop_top
-done:
-    ret
-process ENDP
-```
-
-`shl dword ptr [edx+ecx*4], 1` — 左移 1 位 = 乘以 2。`[edx+ecx*4]` 是标准 SIB 数组访问。
-
-### 全局数组 vs 局部数组
-
-```c
-int global_arr[5] = {1, 2, 3, 4, 5};
-
-int func(void) {
-    int local_arr[5] = {1, 2, 3, 4, 5};
-    return global_arr[0] + local_arr[0];
-}
-```
-
-```asm
-; global_arr[0] — 用固定地址
-mov  eax, dword ptr [0x00407000]     ; 全局数组在 .data 段，地址固定
-
-; local_arr[0] — 用栈偏移
-mov  eax, dword ptr [ebp-14h]        ; 局部数组在栈上，用 ebp 偏移
-```
-
-<!-- 📸 截图：x64dbg 中全局数组和局部数组的地址对比 -->
-
-| 特征     | 全局数组                  | 局部数组              |
-| -------- | ------------------------- | --------------------- |
-| 地址     | 固定地址（.data/.bss 段） | 栈偏移（ebp/esp + N） |
-| 初始化   | 程序加载时自动完成        | 函数入口处复制/清零   |
-| 生命周期 | 整个程序运行期间          | 函数执行期间          |
-
-逆向时，如果你看到访问一个固定地址（如 `0x0040XXXX`），大概率是全局变量或全局数组。如果看到 `[ebp-N]` 或 `[esp-N]`，是局部数组。
+关键点：
+
+1. `malloc` 返回值在 `eax`，是堆上的地址。栈上的 `p` 存着这个地址
+2. `p[i]` 编译成 `[edx + i*4]`，本质就是指针加偏移再解引用
+3. `free` 传的是同一个地址值，告诉系统这块堆内存可以回收了
+4. `free` 之后 `p` 的值不变（还是那个地址），但那块内存已经不归你了。访问它就是未定义行为
+
+> [!WARNING] 释放后使用 (UAF)
+> `free(p)` 之后 `p` 的值还在栈上，没有自动清零。如果继续 `mov eax, [p]` 去读，就是 Use After Free——可能读到旧值，可能读到垃圾，可能直接崩溃。逆向时看到 crash 在 `free` 之后的内存访问，检查是不是 UAF。
+
+## 逆向识别清单
+
+| 特征                               | 含义                          |
+| ---------------------------------- | ----------------------------- |
+| `lea reg, [ebp-N]`                 | 取局部变量地址（`&var`）      |
+| `mov reg, [reg]` / `mov [reg], N`  | 解引用（`*p` 读 / `*p =` 写） |
+| 连续 `mov reg, [reg+offset]`       | 指针链追踪                    |
+| `add reg, 4` / `add reg, 2`        | 指针递增（按类型大小加）      |
+| `sub` + `sar`                      | 指针减法（算元素个数）        |
+| `mov reg, [ebp-N]` + `[reg+...]`   | 指针间接访问（先读指针值）    |
+| `call malloc` + `mov [ebp-N], eax` | 堆分配，地址存到局部变量      |
+| `call free` + 之后还访问同一地址   | 释放后使用 (UAF)              |
+
+**指针就是地址，`lea` 取地址，`mov [reg]` 解引用**。多级指针就是多次 `mov reg, [reg]` 的链式解引用。指针运算按类型大小递增（`int*` 加 4，`char*` 加 1）。
 
 ## 练习
 
-**练习 1：** 下面这段汇编访问的是什么类型的数组？元素大小是多少？循环几次？
+1. 下面这段汇编做了什么？`[ebp-4]` 最终的值是什么？
 
-```asm
-xor  eax, eax
-xor  ecx, ecx
-loop_top:
-movsx edx, word ptr [edi+ecx*2]
-add  eax, edx
-inc  ecx
-cmp  ecx, 5
-jl   loop_top
-```
+   ```asm
+   mov  dword ptr [ebp-4], 0x2A       ; [ebp-4] = 42
+   lea  eax, [ebp-4]
+   mov  dword ptr [ebp-8], eax       ; [ebp-8] = ?
+   mov  eax, dword ptr [ebp-8]
+   mov  dword ptr [eax], 0x63         ; [ebp-4] = ?
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > `[ebp-4]` 初始为 42（0x2A），最后变成 99（0x63）。`[ebp-8]` 存的是 `[ebp-4]` 的地址（即 `ebp-4`）。第三步通过 `[ebp-8]` 里的地址间接修改了 `[ebp-4]` 的值。
+   >
+   > ```c
+   > int a = 42;
+   > int *p = &a;
+   > *p = 99;
+   > ```
 
-`short`（或 `signed short`）数组。`word ptr` 表示 2 字节元素，`*2` 是 scale。循环 5 次（ecx 从 0 到 4）。
+2. 下面这段汇编通过几级指针修改了 `value`？写出对应的 C 代码。
 
-功能是对一个包含 5 个 short 的数组求和。
+   ```asm
+   mov  dword ptr [ebp-4], 0x64       ; value = 100
+   lea  eax, [ebp-4]
+   mov  dword ptr [ebp-8], eax       ; B
+   lea  eax, [ebp-8]
+   mov  dword ptr [ebp-12], eax     ; C
+   mov  eax, dword ptr [ebp-12]     ; 读 C
+   mov  ecx, dword ptr [eax]         ; 读 *C
+   mov  edx, dword ptr [ecx]         ; 读 **C
+   mov  dword ptr [edx], 0x309        ; ***C = 777
+   ```
 
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > 三级指针。链路：C (`[ebp-12]`) → B (`[ebp-8]`) → A/value (`[ebp-4]`)。三次 `mov reg, [reg]` 读取，最后 `mov [edx], 777` 写值。
+   >
+   > ```c
+   > int value = 100;       // [ebp-4]
+   > int *b = &value;       // [ebp-8]
+   > int **c = &b;          // [ebp-12]
+   > ***c = 777;
+   > ```
+   >
+   > `[ebp-4]` 最终值为 777（0x309）。
 
-**练习 2：** 下面这段汇编对应的 C 代码是什么？还原出完整的函数。
+3. 下面这段汇编中 `add eax, 0x0C` 是什么操作？假设 `arr` 是 `int` 数组 `{10, 20, 30, 40, 50}`，`*p` 读出什么？
 
-```asm
-push ebp
-mov  ebp, esp
-mov  eax, dword ptr [ebp+8]
-shl  eax, 3
-mov  ecx, dword ptr [ebp+0Ch]
-shl  ecx, 1
-add  eax, ecx
-mov  edx, dword ptr [ebp+10h]
-mov  eax, dword ptr [edx+eax]
-pop  ebp
-ret
-```
+   ```asm
+   lea  eax, [ebp-32]               ; arr 首地址
+   mov  dword ptr [ebp-40], eax     ; p = arr
+   mov  eax, dword ptr [ebp-40]     ; 读 p
+   add  eax, 0x0C                     ; p += ?
+   mov  dword ptr [ebp-40], eax     ; 写回 p
+   mov  ecx, dword ptr [ebp-40]     ; 读 p
+   mov  eax, dword ptr [ecx]         ; *p = ?
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > `*p` 读出 40。`add eax, 0x0C` 即 `p += 12`，但因为 `int` 是 4 字节，这等于 `p += 3`（偏移 3 个元素）。`arr[3] = 40`。
+   >
+   > 这是指针运算——`p + 3` 编译成地址加 `3 × sizeof(int) = 12`。逆向时看到 `add reg, N` 且 N 是 4 的倍数（或 2、8），要联想到指针递增。
 
-```c
-int get(int arr[][4], int i, int j) {
-    return arr[i][j];
-}
-```
+4. 下面这段汇编有什么问题？
 
-`shl eax, 3` = i × 8，但一行 4 个 int = 16 字节，应该是 `shl eax, 4`... 再看：
+   ```asm
+   push 8
+   call _malloc
+   add  esp, 4
+   mov  dword ptr [ebp-4], eax       ; p = malloc(8)
+   mov  ecx, dword ptr [ebp-4]       ; 读 p
+   mov  dword ptr [ecx], 0x6F         ; p[0] = 111
+   mov  edx, dword ptr [ebp-4]
+   mov  dword ptr [edx+4], 0x0DE      ; p[1] = 222
+   mov  eax, dword ptr [ebp-4]
+   push eax
+   call _free
+   add  esp, 4
+   mov  ecx, dword ptr [ebp-4]       ; p 还在吗？
+   mov  eax, dword ptr [ecx]         ; 这行能执行吗？
+   ```
 
-实际上这里的数组列数是 2，不是 4。`shl eax, 3` 是 i × 8（但不太对）。
-
-重新分析：`shl eax, 3` = i × 8，`shl ecx, 1` = j × 2。元素大小是 2 字节（word）。每行元素数 = 8 / 2 = 4。
-
-```c
-short get(short arr[][4], int i, int j) {
-    return arr[i][j];
-}
-```
-
-偏移 = i × 8 + j × 2 = i × (4 × 2) + j × 2，列数 4，short 类型。
-
-</details>
-
-**练习 3：** 下面这段汇编在做什么？
-
-```asm
-mov  edi, dword ptr [ebp+8]
-xor  eax, eax
-or   ecx, -1
-repne scasb
-not  ecx
-dec  ecx
-```
-
-<details>
-<summary>答案</summary>
-
-这是 `strlen` 的实现。
-
-1. `edi = 字符串指针`（参数）
-2. `eax = 0`（搜索目标：`'\0'`）
-3. `ecx = -1`（最大搜索次数）
-4. `repne scasb` — 逐字节扫描，直到找到 0
-5. `not ecx; dec ecx` — 反算出字符串长度
-
-函数返回值在 ecx 里，如果调用者需要，会再 `mov eax, ecx`。
-
-</details>
-
-**练习 4：** 下面这段汇编是一个字符串操作函数。它实现了什么功能？
-
-```asm
-push ebp
-mov  ebp, esp
-mov  esi, dword ptr [ebp+8]
-mov  edi, dword ptr [ebp+0Ch]
-xor  ecx, ecx
-loop_top:
-mov  al, byte ptr [esi+ecx]
-cmp  al, byte ptr [edi+ecx]
-jne  differ
-test al, al
-jz   done
-inc  ecx
-jmp  loop_top
-differ:
-movzx eax, byte ptr [esi+ecx]
-movzx edx, byte ptr [edi+ecx]
-sub  eax, edx
-jmp  end
-done:
-xor  eax, eax
-end:
-pop  ebp
-ret
-```
-
-<details>
-<summary>答案</summary>
-
-```c
-int my_strcmp(const char *a, const char *b) {
-    int i = 0;
-    while (a[i] == b[i]) {
-        if (a[i] == '\0') return 0;
-        i++;
-    }
-    return (unsigned char)a[i] - (unsigned char)b[i];
-}
-```
-
-识别要点：
-
-1. 两个参数 esi 和 edi 分别是两个字符串指针
-2. `byte ptr` 逐字节访问
-3. 循环比较，相等则继续
-4. `test al, al; jz done` — 遇到 `'\0'` 停止，返回 0
-5. 不相等时 `movzx` 做无符号扩展后相减，返回差值
-
-和标准库 `strcmp` 的行为完全一致。
-
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > 这是**释放后使用**（Use After Free）。`free(p)` 之后，`p` 的值（栈上 `[ebp-4]`）没变，还是那个堆地址。但那块堆内存已经被释放，不再属于这个程序。最后两行去读已释放的内存，是未定义行为——可能读到旧值，可能读到垃圾，可能直接崩溃。
+   >
+   > ```c
+   > int *p = malloc(8);
+   > p[0] = 111;
+   > p[1] = 222;
+   > free(p);
+   > int x = p[0];  // 危险！释放后使用
+   > ```
+   >
+   > 逆向分析时，如果看到程序 crash 在 `free` 之后的内存访问，检查是不是 UAF。
