@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">int* 指针运算: 元素索引与字节偏移对照</text>
+
+  <!-- ========== Table ========== -->
+  <g transform="translate(40, 55)">
+
+    <!-- Row 1: element index -->
+    <text x="0" y="20" font-size="12" font-weight="bold" fill="#64748b">元素索引</text>
+    <rect x="90" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="140" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[0]</text>
+    <rect x="190" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="240" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[1]</text>
+    <rect x="290" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="340" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[2]</text>
+    <rect x="390" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="440" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[3]</text>
+    <rect x="490" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="540" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[4]</text>
+
+    <!-- Row 2: byte offset -->
+    <text x="0" y="65" font-size="12" font-weight="bold" fill="#64748b">字节偏移</text>
+    <rect x="90" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="140" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0</text>
+    <rect x="190" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="240" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+4</text>
+    <rect x="290" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="340" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+8</text>
+    <rect x="390" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="440" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+12</text>
+    <rect x="490" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="540" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+16</text>
+
+    <!-- Row 3: value -->
+    <text x="0" y="110" font-size="12" font-weight="bold" fill="#64748b">值</text>
+    <rect x="90" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="140" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">10</text>
+    <rect x="190" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="240" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">20</text>
+    <rect x="290" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="340" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">30</text>
+    <rect x="390" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="440" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">40</text>
+    <rect x="490" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="540" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">50</text>
+
+  </g>
+
+  <!-- ========== Annotation ========== -->
+  <g transform="translate(40, 200)">
+    <text x="0" y="0" font-size="12" font-weight="bold" fill="#94a3b8">p + n → 地址加 n × 4 (lea [ecx+eax*4])</text>
+    <text x="0" y="18" font-size="12" font-weight="bold" fill="#94a3b8">p2 - p1 → 字节差 ÷ 4 = 元素个数 (sub + sar 2)</text>
+    <text x="0" y="36" font-size="11" font-weight="bold" fill="#64748b">char* 步长 1, double* 步长 8 — 编译时按类型写死</text>
+  </g>
+
+</svg>

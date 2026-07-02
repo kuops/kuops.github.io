@@ -21,6 +21,14 @@ void ptr_basic(void) {
 }
 ```
 
+三行 C 代码对应三个动作：
+
+1. `int a = 42` — 在栈上开 4 字节，写入 42
+2. `int *p = &a` — 在栈上再开 4 字节给 `p`，把 `a` 的地址存进去
+3. `*p = 100` — 通过 `p` 里存的地址，间接修改 `a`
+
+注意 `int *p = &a` 里的 `*` 是**类型声明**（声明 p 是 `int*` 类型），不是解引用。这行拆开读就是：声明一个 `int*` 类型的变量 p，用 `&a` 初始化它。`&a` 存到的是 `p` 本身，不是 `*p`。`*p`（解引用）是第三行才做的事。
+
 核心汇编：
 
 ```asm
@@ -30,6 +38,8 @@ mov  dword ptr [ebp-18], eax     ; p = &a，把地址值存到 p 的栈位置
 mov  eax, dword ptr [ebp-18]     ; 读取 p 的值（即 a 的地址）
 mov  dword ptr [eax], 0x64         ; 往那个地址写入 100 → a 被修改
 ```
+
+![指针基础: lea 取地址 + mov [reg] 解引用](c-asm-6-images/ptr-basic.png)
 
 两条关键指令：
 
@@ -77,6 +87,8 @@ mov  dword ptr [ecx], 0x3E7        ; 往 a 的地址写 999
 
 三次内存访问，两次读地址，最后一次写值。这就是**指针链**。
 
+![二级指针: **pp = 999 的三次内存访问](c-asm-6-images/ptr-chain-2level.png)
+
 ### 三级指针
 
 ```c
@@ -97,6 +109,8 @@ mov  ecx, dword ptr [eax]         ; 读 pp → p 的地址
 mov  edx, dword ptr [ecx]         ; 读 p → value 的地址
 mov  dword ptr [edx], 0x4D2        ; 写 value = 1234
 ```
+
+![三级指针: ***ppp = 1234 的四次内存访问](c-asm-6-images/ptr-chain-3level.png)
 
 四级指针就是五次访问，依此类推。每多一级指针，就多一次 `mov reg, [reg]` 的间接读取。
 
@@ -176,6 +190,8 @@ sar  eax, 2                       ; eax /= 4（除以 sizeof(int)）
 
 `sub` 算出字节差，`sar eax, 2` 除以 4 转换成元素个数。这就是 `p2 - p1` 返回 2 而不是 8 的原因。
 
+![指针运算: 地址按字节跳, 逻辑按元素跳](c-asm-6-images/ptr-arith.png)
+
 > [!NOTE] 指针运算和 SIB 寻址用的是同一套硬件
 > `p + n` 编译成 `[base + index*4]`，`p++` 编译成 `add reg, 4`，`p2 - p1` 编译成 `sub` + `sar`。指针运算的本质就是"地址 ± 字节数"，编译器根据类型大小把逻辑上的"元素数"转换成物理上的"字节数"。
 
@@ -239,6 +255,8 @@ add  esp, 4
 2. `p[i]` 编译成 `[edx + i*4]`，本质就是指针加偏移再解引用
 3. `free` 传的是同一个地址值，告诉系统这块堆内存可以回收了
 4. `free` 之后 `p` 的值不变（还是那个地址），但那块内存已经不归你了。访问它就是未定义行为
+
+![动态内存: malloc 申请, p[i] 偏移访问, free 释放](c-asm-6-images/heap-demo.png)
 
 > [!WARNING] 释放后使用 (UAF)
 > `free(p)` 之后 `p` 的值还在栈上，没有自动清零。如果继续 `mov eax, [p]` 去读，就是 Use After Free——可能读到旧值，可能读到垃圾，可能直接崩溃。逆向时看到 crash 在 `free` 之后的内存访问，检查是不是 UAF。

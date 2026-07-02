@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 420" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">三级指针: ***ppp = 1234 的四次内存访问</text>
+
+  <!-- ========== Left: Stack layout ========== -->
+  <text x="60" y="62" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">栈布局</text>
+
+  <text x="20" y="88" font-family="monospace" font-size="12" font-weight="bold" fill="#64748b">ebp</text>
+  <line x1="20" y1="93" x2="200" y2="93" stroke="#64748b" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- ppp: [ebp-30] -->
+  <g transform="translate(40, 100)">
+    <rect x="0" y="0" width="160" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="80" y="16" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">ppp = &amp;pp</text>
+    <text x="80" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-30]</text>
+  </g>
+
+  <!-- pp: [ebp-24] -->
+  <g transform="translate(40, 148)">
+    <rect x="0" y="0" width="160" height="40" rx="4" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="80" y="16" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#f59e0b">pp = &amp;p</text>
+    <text x="80" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-24]</text>
+  </g>
+
+  <!-- p: [ebp-18] -->
+  <g transform="translate(40, 196)">
+    <rect x="0" y="0" width="160" height="40" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="80" y="16" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">p = &amp;value</text>
+    <text x="80" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-18]</text>
+  </g>
+
+  <!-- value: [ebp-C] -->
+  <g transform="translate(40, 244)">
+    <rect x="0" y="0" width="160" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="80" y="16" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">value = 42</text>
+    <text x="80" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">[ebp-C]</text>
+  </g>
+
+  <!-- ========== Right: Four dereference steps ========== -->
+
+  <!-- Step 1: mov eax, [ebp-30] -->
+  <g transform="translate(420, 55)">
+    <rect x="0" y="0" width="390" height="48" rx="6" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#fbbf24">第 1 步: mov eax, [ebp-30]</text>
+    <text x="10" y="38" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">读 ppp → 得到 pp 的地址</text>
+  </g>
+
+  <!-- Step 2: mov ecx, [eax] -->
+  <g transform="translate(420, 115)">
+    <rect x="0" y="0" width="390" height="48" rx="6" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#f59e0b">第 2 步: mov ecx, [eax]</text>
+    <text x="10" y="38" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">读 pp → 得到 p 的地址</text>
+  </g>
+
+  <!-- Step 3: mov edx, [ecx] -->
+  <g transform="translate(420, 175)">
+    <rect x="0" y="0" width="390" height="48" rx="6" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#3b82f6">第 3 步: mov edx, [ecx]</text>
+    <text x="10" y="38" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">读 p → 得到 value 的地址</text>
+  </g>
+
+  <!-- Step 4: mov [edx], 0x4D2 -->
+  <g transform="translate(420, 235)">
+    <rect x="0" y="0" width="390" height="48" rx="6" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="20" font-size="13" font-weight="bold" fill="#10b981">第 4 步: mov [edx], 0x4D2</text>
+    <text x="10" y="38" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">写 value = 1234</text>
+  </g>
+
+  <!-- ========== Arrows: stack -> steps ========== -->
+
+  <!-- ppp -> step1 -->
+  <path d="M 200 120 L 310 120 Q 320 120 320 79 L 416 79" fill="none" stroke="#fbbf24" stroke-width="2"/>
+  <polygon points="412,75 416,79 412,83" fill="#fbbf24"/>
+
+  <!-- step1 -> step2 -->
+  <line x1="615" y1="103" x2="615" y2="115" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="611,109 615,115 619,109" fill="#fbbf24"/>
+  <text x="625" y="112" font-size="10" font-weight="bold" fill="#fbbf24">eax = &amp;pp</text>
+
+  <!-- pp -> step2 -->
+  <path d="M 200 168 L 320 168 Q 330 168 330 139 L 416 139" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="412,135 416,139 412,143" fill="#f59e0b"/>
+
+  <!-- step2 -> step3 -->
+  <line x1="615" y1="163" x2="615" y2="175" stroke="#f59e0b" stroke-width="1.5"/>
+  <polygon points="611,169 615,175 619,169" fill="#f59e0b"/>
+  <text x="625" y="172" font-size="10" font-weight="bold" fill="#f59e0b">ecx = &amp;p</text>
+
+  <!-- p -> step3 -->
+  <path d="M 200 216 L 330 216 Q 340 216 340 199 L 416 199" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="412,195 416,199 412,203" fill="#3b82f6"/>
+
+  <!-- step3 -> step4 -->
+  <line x1="615" y1="223" x2="615" y2="235" stroke="#3b82f6" stroke-width="1.5"/>
+  <polygon points="611,229 615,235 619,229" fill="#3b82f6"/>
+  <text x="625" y="232" font-size="10" font-weight="bold" fill="#3b82f6">edx = &amp;value</text>
+
+  <!-- step4 -> value (write 1234) -->
+  <path d="M 420 259 L 340 259 Q 330 259 330 264 L 200 264" fill="none" stroke="#10b981" stroke-width="2"/>
+  <polygon points="204,260 200,264 204,268" fill="#10b981"/>
+  <text x="230" y="284" font-size="11" font-weight="bold" fill="#10b981">value: 42 → 1234</text>
+
+  <!-- ========== Bottom: summary ========== -->
+  <g transform="translate(40, 320)">
+    <rect x="0" y="0" width="770" height="80" rx="6" fill="#94a3b8" fill-opacity="0.05" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="10" y="22" font-size="13" font-weight="bold" fill="#94a3b8">指针链: ppp → pp → p → value → 1234</text>
+    <text x="10" y="45" font-size="12" font-weight="bold" fill="#94a3b8">每多一级指针, 就多一次 mov reg, [reg] 间接读取</text>
+    <text x="10" y="65" font-size="11" font-weight="bold" fill="#64748b">N 级指针 = N 次读地址 + 1 次写值 = N+1 次内存访问</text>
+  </g>
+
+</svg>
