@@ -1,6 +1,6 @@
 # 《逆向工程实战入门》写作计划
 
-> 最后更新：2026-07-02
+> 最后更新：2026-07-03
 
 ## 一、全书结构
 
@@ -19,7 +19,7 @@ src/data/books/reverse-engineering/
 | 分类 | 章节数 | 已发布 (draft: false) | 草稿 (draft: true) | 完成度 |
 |------|--------|----------------------|---------------------|--------|
 | 入门篇 | 3 章 | 3 章 | 0 | 100% |
-| 汇编基础 | 8 章 | 8 章 | 0 | 100% |
+| 汇编基础 | 9 章 | 9 章 | 0 | 100% |
 | C 与汇编 | 11 章 | 8 章 | 3 章 | 73% |
 | 破解篇 | 0 章 | 0 | 0 | 未开始 |
 | 游戏篇 | 0 章 | 0 | 0 | 未开始 |
@@ -46,6 +46,7 @@ src/data/books/reverse-engineering/
 | 9 | asm-stack.md | 栈与 push/pop |
 | 10 | asm-function-call.md | 函数调用与栈帧 |
 | 11 | asm-string.md | 字符串指令与 REP 前缀 |
+| 12 | asm-float-sse.md | 浮点数与 SSE 指令 |
 
 ### 待完成分类详情
 
@@ -65,37 +66,74 @@ src/data/books/reverse-engineering/
 | 20 | c-asm-10.md | 结构体 | 草稿 | 旧草稿，待重构 |
 | 21 | asm-memory.md | 字符串、内存与交叉引用 | 草稿 | 逆向实战入手点，非 C 语法对照 |
 
-> **章节顺序说明**：先指针后数组（order 16→17），因为数组访问的 SIB 寻址 `[base+index*scale]` 里 base 本质是指针，需要先建立"指针=地址、间接访问"的概念。
->
-> **字符串内容归属**：汇编指令层在 asm-string.md（汇编基础分类），逆向入手点层在 asm-memory.md（c-asm 分类收尾章），c-asm-6/7 不含独立字符串内容。
-
 **c-asm 章节的待办事项：**
 - [x] 逐一审查内容质量、技术准确性（c-asm-1~7 已完成）
 - [x] 统一风格（callout 格式、代码块语言标签、练习用 `> [!NOTE]-` 折叠）
 - [x] 补充 SVG 图表（c-asm-3~5 已有流程图）
 - [x] 将 draft: true 改为 draft: false 逐章发布（c-asm-1~7 已发布）
 - [x] 确认 c-asm-6 与 asm-string 的字符串内容不重复（c-asm-6 改为指针，已消解）
-- [ ] 重构 c-asm-8（函数调用）— 旧草稿风格不符，需按前 7 章风格重写
-- [ ] 重构 c-asm-9（结构体）— 旧草稿风格不符，需按前 7 章风格重写
+- [ ] 重构 c-asm-9（函数调用）— 旧草稿风格不符，需按前 8 章风格重写
+- [ ] 重构 c-asm-10（结构体）— 旧草稿风格不符，需按前 8 章风格重写
 - [ ] 审查 asm-memory.md — 确认定位和内容完整度
 
-#### 破解篇 — 未开始
+#### 破解篇 — 待开始
 
-v3 计划了 7 章 (keygen-easy / keygen-advanced / ida-basics / cpp-reversing / pe-analysis / ida-x64dbg-combo / unpacking)，但目录只有 `_index.md`。
+> 2026-07-03 调研后规划，基于 FLARE Malware Analysis Crash Course (Ch6 调试技巧 / Ch9 Windows 逆向) 和 kovidomi/game-reversing 资源。
 
-**待规划：**
-- [ ] 确定章节列表和顺序
-- [ ] 确定每章的 CrackMe 目标
-- [ ] 是否需要调整 v3 计划中的案例选题
+| Order | 文件 | 标题 | 内容要点 |
+|---|---|---|---|
+| 22 | cracking-1.md | 破解方法论与工具链 | 三入手点（字符串/API/算法）；IDA Pro 入门（反汇编/交叉引用/函数图/伪代码 F5）；x64dbg 进阶（条件/内存/硬件断点/trace）；010 Editor 模板；静态+动态配合 |
+| 23 | cracking-2.md | PE 文件格式 | PE 结构总览（DOS头/PE头/节表/节数据）；节区（.text/.data/.rdata/.bss）；导入表/导出表；入口点与 OEP；010 Editor 模板解析；IDA Imports 窗口 |
+| 24 | cracking-3.md | 脱壳 | 壳原理（压缩/加密代码段，运行时解压）；常见壳（UPX/ASPack/Themida）；脱壳三法（单步到 OEP/内存断点/ESP 定律）；Dump + 修复 IAT；Scylla |
+| 25 | cracking-4.md | 注册算法逆向 | 追注册码流程（找验证函数→理解算法→逆推）；常见算法（异或/查表/CRC32/hash）；用户名绑定 vs 机器码绑定；写 Keygen；反调试（IsDebuggerPresent/PEB/时间检测）与绕过 |
+| 26 | cracking-5.md | Shellcode 与 Patch | shellcode 约束（位置无关/无导入表）；x64dbg 直接写 shellcode 字节；GetProcAddress+LoadLibrary 自动解析 API；Patch 技术（改跳转/NOP 填充/改返回值）；实战 Patch CrackMe |
 
-#### 游戏篇 — 未开始
+#### 游戏篇 — 待开始
 
-v3 计划了 5 章 (ce-pvz / external-trainer / dll-inject / inline-hook / full-tool)，全部围绕植物大战僵尸。目录只有 `_index.md`。
+> 2026-07-03 调研后规划，基于 kovidomi/game-reversing 学习路径和工具链。全程围绕植物大战僵尸。
 
-**待规划：**
-- [ ] 确定游戏版本和可用性
-- [ ] 确认 CE → 外部修改器 → DLL 注入 → Hook → 全功能工具的渐进路线
-- [ ] 是否需要调整章节拆分
+| Order | 文件 | 标题 | 内容要点 |
+|---|---|---|---|
+| 27 | game-1.md | Cheat Engine 入门 | CE 内存扫描原理（首次扫描→改变→再扫描→缩小范围）；精确 vs 模糊扫描；数据类型选择；找阳光值；CE 内存视图；指针扫描找静态基址 |
+| 28 | game-2.md | 静态地址与指针链 | ASLR；静态基址 vs 动态地址；指针链（基址+多级偏移）；CE 指针扫描器；IDA 里找静态基址（特征搜索+交叉引用）；PvZ 阳光指针链实例 |
+| 29 | game-3.md | Windows 进程内存与 API | Win32 API（OpenProcess/RPM/WPM）；进程内存布局（.text/.data/堆/栈/PEB/TEB）；句柄概念；匈牙利命名；IDA 导入表定位 API；外部修改器原型 |
+| 30 | game-4.md | 外部修改器开发 | C++ 写外部修改器（OpenProcess+RPM+WPM）；定时读游戏数据；一键功能（满阳光/无冷却/自动收集）；SeDebugPrivilege |
+| 31 | game-5.md | DLL 注入 | 内部 vs 外部辅助；注入三法（CreateRemoteThread/SetWindowsHookEx/手动映射）；CreateRemoteThread 全流程（VirtualAllocEx→WPM→CreateRemoteThread）；注入后 DLL 生命周期；x64dbg 调试注入的 DLL |
+| 32 | game-6.md | Hook 与代码注入 | Hook 原理（替换前几字节跳转）；IAT Hook vs Inline Hook；Detours/MinHook；Hook 游戏函数（阳光扣减/冷却计时）；调用原函数（保存原始指令） |
+| 33 | game-7.md | 游戏实体逆向 | ReClass.NET 还原实体结构体；从阳光地址反推 Plant/Zombie/Lawn 结构；指针链遍历（对象管理器→实体列表→单个实体）；vtable 识别（C++ 多态调用）；遍历所有植物/僵尸 |
+
+### C 与汇编篇 — 后续补章
+
+> 2026-07-03 调研后新增。c-asm 1-10 覆盖了 C 语言层，但游戏逆向的实践目标是 C++ 游戏引擎，以下为明确缺口。
+
+| Order | 文件 | 标题 | 内容要点 |
+|---|---|---|---|
+| 34 | c-asm-11.md | 位域与联合体 | 位域（游戏状态标志位高频用法，呼应 asm-logic）；union（同内存多种解读，reinterpret cast）；取/设/清状态位 |
+| 35 | c-asm-12.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；看懂 Release 反汇编的策略 |
+| 36 | c-asm-13.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
+| 37 | c-asm-14.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
+| 38 | c-asm-15.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |
+| 39 | c-asm-16.md | STL 与 C++ 逆向实战 | std::string/vector/map 内存布局；迭代器汇编形态；异常处理(try/catch)结构；模板实例化；综合实战（逆向 C++ 程序 + ReClass.NET 还原类结构） |
+
+> **优先级**：c-asm-14 (this 指针) 最高 — 这是从"看得懂 C"到"看得懂游戏"的分水岭，FLARE 和 kovidomi 都强调 C++ 是游戏逆向必学。
+
+### 工具穿插策略
+
+三大工具 (IDA Pro / x64dbg / CE) 在不同篇章各有侧重，穿插引入，首次出现时给完整界面介绍，后续只讲新功能：
+
+| 篇 | 主力工具 | 辅助工具 |
+|---|---|---|
+| 入门篇 | x64dbg | — |
+| 汇编基础篇 | x64dbg | — |
+| C 与汇编篇 | x64dbg | IDA（伪代码对照） |
+| 破解篇 | IDA Pro（静态）+ x64dbg（动态） | 010 Editor（PE/二进制模板）、Scylla（IAT 修复） |
+| 游戏篇 | Cheat Engine（内存扫描） | IDA Pro（静态基址）、ReClass.NET（结构体还原）、x64dbg（DLL 调试） |
+
+### 暂不纳入
+
+- **游戏文件格式逆向** — 磁盘资产格式逆向（模型/纹理/存档），与本书内存逆向方向不同
+- **Windows internals 深入** — 超出"实战入门"定位，需要时引用即可
+- **网络逆向 / 封包** — 本书游戏篇以单机 PvZ 为主，暂不需要
 
 ## 三、已完成的关键工作
 
@@ -128,11 +166,15 @@ v3 计划了 5 章 (ce-pvz / external-trainer / dll-inject / inline-hook / full-
 
 ## 四、下一步优先级
 
-1. **c-asm-8 函数调用** — 旧草稿重构（order:19），按前 8 章风格重写
-2. **c-asm-9 结构体** — 旧草稿重构（order:20），按前 8 章风格重写
+1. **c-asm-9 函数调用** — 旧草稿重构（order:19），按前 8 章风格重写
+2. **c-asm-10 结构体** — 旧草稿重构（order:20），按前 8 章风格重写
 3. **asm-memory.md 审查** — 确认定位和内容完整度（order:21）
-4. **破解篇规划与写作** — v3 已有详细计划，需要确认案例选题后开始
-5. **游戏篇规划与写作** — 最后一个分类，依赖破解篇完成
+4. **c-asm-14 C++ this 指针** — 最大缺口，游戏逆向门槛
+5. **c-asm-15 虚函数表** — 紧接 this，C++ 逆向核心
+6. **c-asm-13 x86-64** — 补全 64 位
+7. **cracking-1/2** — 破解篇地基（方法论 + PE）
+8. **game-1 CE 入门** — 游戏篇起点
+9. 其余按篇内顺序推进
 
 ## 五、写作规范参考
 

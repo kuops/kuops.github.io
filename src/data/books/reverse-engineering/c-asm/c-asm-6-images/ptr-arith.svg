@@ -1,56 +1,109 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 250" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 470" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
 
-  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">int* 指针运算: 元素索引与字节偏移对照</text>
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">指针运算: 逻辑元素与物理字节的换算</text>
 
-  <!-- ========== Table ========== -->
+  <!-- ========== 对照表 ========== -->
   <g transform="translate(40, 55)">
 
-    <!-- Row 1: element index -->
+    <!-- 行标签列宽 90, 5 格各 100, 总宽 590 -->
+
+    <!-- Row 1: 元素索引 (中性灰, C 概念层) -->
     <text x="0" y="20" font-size="12" font-weight="bold" fill="#64748b">元素索引</text>
-    <rect x="90" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="140" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[0]</text>
-    <rect x="190" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="240" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[1]</text>
-    <rect x="290" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="340" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[2]</text>
-    <rect x="390" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="440" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[3]</text>
-    <rect x="490" y="5" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="540" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p[4]</text>
+    <rect x="90" y="5" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="140" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">p[0]</text>
+    <rect x="190" y="5" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="240" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">p[1]</text>
+    <rect x="290" y="5" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="340" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">p[2]</text>
+    <rect x="390" y="5" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="440" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">p[3]</text>
+    <rect x="490" y="5" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="540" y="25" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">p[4]</text>
 
-    <!-- Row 2: byte offset -->
-    <text x="0" y="65" font-size="12" font-weight="bold" fill="#64748b">字节偏移</text>
-    <rect x="90" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="140" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0</text>
-    <rect x="190" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="240" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+4</text>
-    <rect x="290" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="340" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+8</text>
-    <rect x="390" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="440" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+12</text>
-    <rect x="490" y="50" width="100" height="30" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="540" y="70" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">+16</text>
+    <!-- ×4 系数连接区: 在元素索引和字节偏移之间, 视觉化 "×4" -->
+    <!-- 左侧标注 -->
+    <text x="70" y="62" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
+    <!-- 每格下方一条短竖线 + 系数标注, 用蓝色强调这是地址运算 -->
+    <line x1="140" y1="35" x2="140" y2="50" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="140" y="62" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
+    <line x1="240" y1="35" x2="240" y2="50" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="240" y="62" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
+    <line x1="340" y1="35" x2="340" y2="50" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="340" y="62" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
+    <line x1="440" y1="35" x2="440" y2="50" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="440" y="62" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
+    <line x1="540" y1="35" x2="540" y2="50" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="540" y="62" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">×4</text>
 
-    <!-- Row 3: value -->
-    <text x="0" y="110" font-size="12" font-weight="bold" fill="#64748b">值</text>
-    <rect x="90" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="140" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">10</text>
-    <rect x="190" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="240" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">20</text>
-    <rect x="290" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="340" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">30</text>
-    <rect x="390" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="440" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">40</text>
-    <rect x="490" y="95" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <text x="540" y="115" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">50</text>
+    <!-- Row 2: 字节偏移 (蓝色, 地址/物理层) -->
+    <text x="0" y="85" font-size="12" font-weight="bold" fill="#64748b">字节偏移</text>
+    <rect x="90" y="70" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="140" y="90" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">+0</text>
+    <rect x="190" y="70" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="240" y="90" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">+4</text>
+    <rect x="290" y="70" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="340" y="90" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">+8</text>
+    <rect x="390" y="70" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="440" y="90" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">+12</text>
+    <rect x="490" y="70" width="100" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="540" y="90" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">+16</text>
+
+    <!-- Row 3: 值 (绿色, 最终数据, 和写值同语义) -->
+    <text x="0" y="135" font-size="12" font-weight="bold" fill="#64748b">值</text>
+    <rect x="90" y="120" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="140" y="140" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">10</text>
+    <rect x="190" y="120" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="240" y="140" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">20</text>
+    <rect x="290" y="120" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="340" y="140" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">30</text>
+    <rect x="390" y="120" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="440" y="140" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">40</text>
+    <rect x="490" y="120" width="100" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="540" y="140" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">50</text>
 
   </g>
 
-  <!-- ========== Annotation ========== -->
-  <g transform="translate(40, 200)">
-    <text x="0" y="0" font-size="12" font-weight="bold" fill="#94a3b8">p + n → 地址加 n × 4 (lea [ecx+eax*4])</text>
-    <text x="0" y="18" font-size="12" font-weight="bold" fill="#94a3b8">p2 - p1 → 字节差 ÷ 4 = 元素个数 (sub + sar 2)</text>
-    <text x="0" y="36" font-size="11" font-weight="bold" fill="#64748b">char* 步长 1, double* 步长 8 — 编译时按类型写死</text>
+  <!-- 分割线 -->
+  <line x1="20" y1="225" x2="820" y2="225" stroke="#64748b" stroke-opacity="0.15" stroke-width="1"/>
+
+  <!-- ========== 底部三个指令对照块 ========== -->
+  <!-- 每块宽 250, 间距 20, 起始 x=40: 40 + 250 + 20 + 250 + 20 + 250 = 830 -->
+
+  <!-- 块1: p + n (蓝色, 地址运算) -->
+  <g transform="translate(40, 245)">
+    <rect x="0" y="0" width="240" height="190" rx="6" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="120" y="25" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p + n</text>
+    <line x1="15" y1="38" x2="225" y2="38" stroke="#3b82f6" stroke-opacity="0.2" stroke-width="1"/>
+    <text x="15" y="68" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">lea edx, [ecx+eax*4]</text>
+    <text x="15" y="105" font-size="11" font-weight="bold" fill="#64748b">逻辑: 跨 n 个元素</text>
+    <text x="15" y="125" font-size="11" font-weight="bold" fill="#64748b">物理: n × 4 字节</text>
+    <text x="15" y="155" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">ecx=p  eax=n  edx=end</text>
+    <text x="15" y="175" font-size="11" font-weight="bold" fill="#94a3b8">编译时按类型写死 ×4</text>
+  </g>
+
+  <!-- 块2: p++ (蓝色, 地址递增) -->
+  <g transform="translate(300, 245)">
+    <rect x="0" y="0" width="240" height="190" rx="6" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="120" y="25" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">p++</text>
+    <line x1="15" y1="38" x2="225" y2="38" stroke="#3b82f6" stroke-opacity="0.2" stroke-width="1"/>
+    <text x="15" y="60" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">add eax, 4</text>
+    <text x="15" y="105" font-size="11" font-weight="bold" fill="#64748b">逻辑: 前进 1 个元素</text>
+    <text x="15" y="125" font-size="11" font-weight="bold" fill="#64748b">物理: +4 字节</text>
+    <text x="15" y="155" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">步长 = sizeof(int) = 4</text>
+    <text x="15" y="175" font-size="11" font-weight="bold" fill="#94a3b8">char* 加 1, double* 加 8</text>
+  </g>
+
+  <!-- 块3: p2 - p1 (黄色, 反向换算) -->
+  <g transform="translate(560, 245)">
+    <rect x="0" y="0" width="240" height="190" rx="6" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="120" y="25" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">p2 - p1</text>
+    <line x1="15" y1="38" x2="225" y2="38" stroke="#fbbf24" stroke-opacity="0.2" stroke-width="1"/>
+    <text x="15" y="60" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">sub eax, p1</text>
+    <text x="15" y="78" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">sar eax, 2</text>
+    <text x="15" y="105" font-size="11" font-weight="bold" fill="#64748b">字节差 ÷ 4 = 元素数</text>
+    <text x="15" y="125" font-size="11" font-weight="bold" fill="#64748b">逻辑: 跨几个元素</text>
+    <text x="15" y="155" font-family="monospace" font-size="11" font-weight="bold" fill="#fbbf24">sub 算字节, sar 转 element</text>
+    <text x="15" y="175" font-size="11" font-weight="bold" fill="#94a3b8">÷4 是 ×4 的逆运算</text>
   </g>
 
 </svg>
