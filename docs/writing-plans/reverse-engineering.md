@@ -109,7 +109,7 @@ src/data/books/reverse-engineering/
 | Order | 文件 | 标题 | 内容要点 |
 |---|---|---|---|
 | 34 | c-asm-11.md | 位域与联合体 | 位域（游戏状态标志位高频用法，呼应 asm-logic）；union（同内存多种解读，reinterpret cast）；取/设/清状态位 |
-| 35 | c-asm-12.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；看懂 Release 反汇编的策略 |
+| 35 | c-asm-12.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；sizeof 是编译期消除（不产生指令）；看懂 Release 反汇编的策略 |
 | 36 | c-asm-13.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
 | 37 | c-asm-14.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
 | 38 | c-asm-15.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |

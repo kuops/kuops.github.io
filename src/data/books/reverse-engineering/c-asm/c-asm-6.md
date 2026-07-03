@@ -227,6 +227,8 @@ mov  eax, dword ptr [ecx+8]       ; 再用指针做 base 间接访问
 
 ## 动态内存
 
+前面讲的指针都指向栈上的变量（`int a = 42; int *p = &a;`）。但很多数据在编译时大小未知，需要运行时才分配——这就是堆内存。
+
 ```c
 void heap_demo(void) {
     int *p = (int *)malloc(4 * sizeof(int));
@@ -238,6 +240,16 @@ void heap_demo(void) {
     free(p);
 }
 ```
+
+先拆解 `int *p = (int *)malloc(4 * sizeof(int))` 这行：
+
+1. `sizeof(int)` — `sizeof` 是编译期运算符，算出 `int` 占多少字节。`int` 是 4 字节，所以 `sizeof(int)` 在编译时直接替换成常量 `4`，不产生任何指令
+2. `4 * sizeof(int)` — 编译器算出 `4 × 4 = 16`，也是个常量
+3. `malloc(16)` — 向系统申请 16 字节堆内存，返回这块内存的起始地址。`malloc` 的返回类型是 `void *`（无类型指针），意味着"这是一块内存，你自己决定怎么解读"
+4. `(int *)` — 强制类型转换，告诉编译器"把这个地址当成 `int *` 来用"。不产生指令，只影响编译器的类型检查
+5. `int *p = ...` — 把返回的堆地址存到栈上的 `p` 里
+
+合起来就是：申请 16 字节堆内存，拿到地址，存到 `p`，按 `int` 数组用。
 
 核心汇编：
 
@@ -365,22 +377,22 @@ add  esp, 4
    push 8
    call _malloc
    add  esp, 4
-   mov  dword ptr [ebp-4], eax       ; p = malloc(8)
-   mov  ecx, dword ptr [ebp-4]       ; 读 p
+   mov  dword ptr [ebp-8], eax       ; p = malloc(8)
+   mov  ecx, dword ptr [ebp-8]       ; 读 p
    mov  dword ptr [ecx], 0x6F         ; p[0] = 111
-   mov  edx, dword ptr [ebp-4]
+   mov  edx, dword ptr [ebp-8]
    mov  dword ptr [edx+4], 0x0DE      ; p[1] = 222
-   mov  eax, dword ptr [ebp-4]
+   mov  eax, dword ptr [ebp-8]
    push eax
    call _free
    add  esp, 4
-   mov  ecx, dword ptr [ebp-4]       ; p 还在吗？
+   mov  ecx, dword ptr [ebp-8]       ; p 还在吗？
    mov  eax, dword ptr [ecx]         ; 这行能执行吗？
    ```
 
    > [!NOTE]- 参考答案
    >
-   > 这是**释放后使用**（Use After Free）。`free(p)` 之后，`p` 的值（栈上 `[ebp-4]`）没变，还是那个堆地址。但那块堆内存已经被释放，不再属于这个程序。最后两行去读已释放的内存，是未定义行为，可能读到旧值，可能读到垃圾，可能直接崩溃。
+   > 这是**释放后使用**（Use After Free）。`free(p)` 之后，`p` 的值（栈上 `[ebp-8]`）没变，还是那个堆地址。但那块堆内存已经被释放，不再属于这个程序。最后两行去读已释放的内存，是未定义行为，可能读到旧值，可能读到垃圾，可能直接崩溃。
    >
    > ```c
    > int *p = malloc(8);
