@@ -286,6 +286,9 @@ add  esp, 4
 
 ![动态内存: malloc 申请, p[i] 偏移访问, free 释放](c-asm-6-images/heap-demo.png)
 
+> [!NOTE] malloc 之后的空指针检查
+> 上面 Debug 模式先把返回值存到 `[ebp-8]` 再用 `cmp [ebp-8], 0` 检查。但 Release 优化下，编译器直接在 `eax` 上检查，变成 `test eax, eax` + `je fail`——和第 3 章讲的函数返回值检查是同一个模式。逆向时看到 `call _malloc` 后面紧跟 `test eax, eax` + `jcc`，就是在检查分配是否成功。
+
 > [!WARNING] 释放后使用 (UAF)
 > `free(p)` 之后 `p` 的值还在栈上，没有自动清零。如果继续 `mov eax, [p]` 去读，就是 Use After Free，可能读到旧值，可能读到垃圾，可能直接崩溃。逆向时看到 crash 在 `free` 之后的内存访问，检查是不是 UAF。
 
