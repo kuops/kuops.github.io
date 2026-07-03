@@ -26,7 +26,7 @@ str+1   0x69  'i'
 str+2   0x00  '\0'  ← 结尾标记
 ```
 
-访问 `str[i]` 和上一章的 char 数组完全一样——SIB 寻址 scale=1，`byte ptr` 取值。字符串唯一的特征是**末尾有 `\0`**，所有字符串操作都靠扫描到 `\0` 来判断结束。
+访问 `str[i]` 和上一章的 char 数组完全一样，SIB 寻址 scale=1，`byte ptr` 取值。字符串唯一的特征是**末尾有 `\0`**，所有字符串操作都靠扫描到 `\0` 来判断结束。
 
 ## ASCII 和编码
 
@@ -114,7 +114,7 @@ char *p = "hello";
 mov  dword ptr [ebp-8], offset "hello"  ; p = 字符串地址（.rdata 段）
 ```
 
-`p` 指向 `.rdata` 段，不是栈上的数组。如果写成 `char arr[] = "hello"`，编译器会把 `"hello"` 从 `.rdata` 复制到栈上——运行时逐个 `mov` 写入。
+`p` 指向 `.rdata` 段，不是栈上的数组。如果写成 `char arr[] = "hello"`，编译器会把 `"hello"` 从 `.rdata` 复制到栈上，运行时逐个 `mov` 写入。
 
 逆向时看到 `offset "xxx"` 或指向 `.rdata` 段地址的指针，就是字符串字面量引用。
 
@@ -197,7 +197,7 @@ end:
 mov  eax, dword ptr [ebp-8]         ; 返回 len
 ```
 
-`test reg, reg` + `jz` 是检查 `\0` 的标准模式——`\0` 就是 0，`test` 检查零值，为零则跳出。
+`test reg, reg` + `jz` 是检查 `\0` 的标准模式，`\0` 就是 0，`test` 检查零值，为零则跳出。
 
 ## 逆向识别清单
 

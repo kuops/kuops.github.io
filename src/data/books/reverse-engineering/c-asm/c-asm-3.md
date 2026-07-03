@@ -7,7 +7,7 @@ order: 13
 
 上一章学了运算和位操作的汇编形态。这一章学**分支**：C 里写 `if`、`else if`、`else`、`&&`、`||`、`?:`，编译器翻译成什么。
 
-第 8 章你已经学了 `cmp`/`test` 和条件跳转指令的工作原理。这一章不重复那些内容，重点放在：**从 C 代码到汇编的对照**——看到一段汇编，怎么还原出 if/else 结构。
+第 8 章你已经学了 `cmp`/`test` 和条件跳转指令的工作原理。这一章不重复那些内容，重点放在：**从 C 代码到汇编的对照**，看到一段汇编，怎么还原出 if/else 结构。
 
 和前两章一样，编译 Debug x86，用 x64dbg 断到 `main` 对照。
 
@@ -43,12 +43,12 @@ skip:
 mov  eax, dword ptr [ebp-4]        ; 返回值放 eax
 ```
 
-注意 `jle` 的逻辑：C 写的是 `a > 0`（满足条件就执行），汇编用的却是 `jle`（a <= 0 就跳走）。**编译器把 if 条件取反，不满足时跳过 if 体。** 这是逆向时的思维转换——第 8 章讲过这个"取反"心法。
+注意 `jle` 的逻辑：C 写的是 `a > 0`（满足条件就执行），汇编用的却是 `jle`（a <= 0 就跳走）。**编译器把 if 条件取反，不满足时跳过 if 体。** 这是逆向时的思维转换，第 8 章讲过这个"取反"心法。
 
 没有 else 时，条件跳转跳过的就是 if 体，末尾不需要额外 `jmp`。
 
 > [!NOTE] Debug 直接在栈上比较
-> 你可能注意到 `cmp dword ptr [ebp+8], 0` 直接拿内存操作数和立即数比较，没有先 `mov eax, [ebp+8]` 再 `cmp eax, 0`。这是 MSVC Debug 模式（`/Od`）的风格——能对内存操作就不过寄存器。但**两个操作数都是内存变量**时（如 `a < b`），x86 不允许内存对内存，编译器必须先 `mov` 一个到寄存器，后面会看到。
+> 你可能注意到 `cmp dword ptr [ebp+8], 0` 直接拿内存操作数和立即数比较，没有先 `mov eax, [ebp+8]` 再 `cmp eax, 0`。这是 MSVC Debug 模式（`/Od`）的风格，能对内存操作就不过寄存器。但**两个操作数都是内存变量**时（如 `a < b`），x86 不允许内存对内存，编译器必须先 `mov` 一个到寄存器，后面会看到。
 
 ## if/else
 
@@ -83,7 +83,7 @@ mov  eax, dword ptr [ebp-4]        ; 返回值
 2. if 体末尾一条无条件跳转（`jmp`）跳过 else 到汇合
 3. 两条路径最终汇合到同一个地方
 
-看到这个模式——条件跳转跳到中间某处，前面又有一个 `jmp` 跳过那段代码——就可以确定是 if/else 结构。
+看到这个模式，条件跳转跳到中间某处，前面又有一个 `jmp` 跳过那段代码，就可以确定是 if/else 结构。
 
 ![if/else 分支流程](c-asm-3-images/if-else-flow.png)
 
@@ -195,7 +195,7 @@ if (!flag)          // 标志是否为零
 if (count)          // count 是否非零
 ```
 
-这些在 Debug 模式下编译成 `cmp dword ptr [ebp-X], 0` + `je`/`jne`——和 `if (a > 0)` 用 `cmp` 一样，只是把 0 换成跳转条件：
+这些在 Debug 模式下编译成 `cmp dword ptr [ebp-X], 0` + `je`/`jne`，和 `if (a > 0)` 用 `cmp` 一样，只是把 0 换成跳转条件：
 
 ```c
 int a = getValue();
@@ -247,7 +247,7 @@ skip4:
 
 ### 函数返回值检查：test eax, eax
 
-上面是对局部变量做 `cmp`。但**函数返回值**在 `eax` 寄存器里，检查返回值是否为零时，编译器用 `test eax, eax` 而不是 `cmp eax, 0`。第 1 章的 CrackMe 里你已经见过这个模式——`strcmp` 比较密码，返回 0 表示匹配：
+上面是对局部变量做 `cmp`。但**函数返回值**在 `eax` 寄存器里，检查返回值是否为零时，编译器用 `test eax, eax` 而不是 `cmp eax, 0`。第 1 章的 CrackMe 里你已经见过这个模式，`strcmp` 比较密码，返回 0 表示匹配：
 
 ```c
 char *input = getUserInput();
@@ -271,13 +271,13 @@ xor  eax, eax                      ; return 0（xor eax,eax 等价于 mov eax,0 
 end:
 ```
 
-为什么函数返回值用 `test eax, eax` 而局部变量用 `cmp dword ptr [ebp-X], 0`？因为返回值已经在 `eax` 里了，`test eax, eax` 只需 2 字节。而局部变量要先决定要不要加载到寄存器——Debug 模式（`/Od`）选择直接对内存做 `cmp`，不过寄存器。
+为什么函数返回值用 `test eax, eax` 而局部变量用 `cmp dword ptr [ebp-X], 0`？因为返回值已经在 `eax` 里了，`test eax, eax` 只需 2 字节。而局部变量要先决定要不要加载到寄存器，Debug 模式（`/Od`）选择直接对内存做 `cmp`，不过寄存器。
 
 > [!NOTE] 为什么逆向中到处是 test eax, eax
 > 几乎所有 API 调用、字符串函数、内存分配都返回 0 或非零表示成功/失败。`strcmp` 返回 0 表示相等、`malloc` 返回 NULL(0) 表示失败、Windows API 返回非零表示成功。逆向时看到 `call xxx` + `test eax, eax` + `je/jne`，就是在检查函数调用的结果。
 
 > [!NOTE] 为什么参数是逆序 push
-> `strcmp("hello", input)` 编译成先 `push input` 再 `push "hello"`——**参数从右往左压栈**。这是 `cdecl` 调用约定（第 10 章讲过）。逆向时看到 `push` + `push` + `call`，把参数倒过来读就是 C 的参数顺序。
+> `strcmp("hello", input)` 编译成先 `push input` 再 `push "hello"`，**参数从右往左压栈**。这是 `cdecl` 调用约定（第 10 章讲过）。逆向时看到 `push` + `push` + `call`，把参数倒过来读就是 C 的参数顺序。
 >
 > 字符串字面量（`"hello"`）存在 exe 的 `.rdata` 段，编译期固定地址，所以用 `push offset "hello"` 直接传地址。局部变量（`input`）在栈上，用 `push dword ptr [ebp-X]` 传值。
 
@@ -302,7 +302,7 @@ movss  dword ptr [ebp-4], xmm0
 skip:
 ```
 
-`comiss` 比较 XMM 寄存器和内存中的 float，结果写入 EFLAGS——和 `cmp` 一样，后面的 `jcc` 读取标志位决定是否跳转。但跳转条件**看起来是反的**：`a > b` 取反后应该是 `a <= b`，整数用 `jle`，浮点却用 `jbe`。
+`comiss` 比较 XMM 寄存器和内存中的 float，结果写入 EFLAGS，和 `cmp` 一样，后面的 `jcc` 读取标志位决定是否跳转。但跳转条件**看起来是反的**：`a > b` 取反后应该是 `a <= b`，整数用 `jle`，浮点却用 `jbe`。
 
 因为 `comiss` 只设置 CF 和 ZF（不设 OF/SF），后面只能用无符号跳转（`ja`/`jb`/`jbe` 等），不能用 `jg`/`jl`。第 12 章讲过这个细节。
 
@@ -316,7 +316,7 @@ skip:
 | `a <= b` | `jbe` | CF=1 或 ZF=1 |
 
 > [!NOTE] movss 是什么
-> `movss`（Move Scalar Single-Precision）在内存和 XMM 寄存器之间搬移 4 字节 float。第 12 章讲过 SSE 指令——浮点赋值用 `movss`，浮点加法用 `addss`，浮点比较用 `comiss`。看到 `ss` 后缀就知道在操作 float（Scalar Single-precision）。double 用 `sd` 后缀（如 `comisd`、`movsd`）。
+> `movss`（Move Scalar Single-Precision）在内存和 XMM 寄存器之间搬移 4 字节 float。第 12 章讲过 SSE 指令，浮点赋值用 `movss`，浮点加法用 `addss`，浮点比较用 `comiss`。看到 `ss` 后缀就知道在操作 float（Scalar Single-precision）。double 用 `sd` 后缀（如 `comisd`、`movsd`）。
 
 ## 逻辑与 && 和逻辑或 ||
 
@@ -376,7 +376,7 @@ skip:
 mov  eax, dword ptr [ebp-4]
 ```
 
-`||` 的结构：第一个条件用**正向跳转**（`jg` = a > 0 就跳到 if 体），第二个条件改回**取反跳转**（`jle` = b <= 0 就跳走）。为什么不一样？因为 `a` 满足时短路，直接进 if 体；`a` 不满足时才检查 `b`，这时 `b` 不满足就跳走，满足就掉进紧跟的 if 体——不需要额外跳转。
+`||` 的结构：第一个条件用**正向跳转**（`jg` = a > 0 就跳到 if 体），第二个条件改回**取反跳转**（`jle` = b <= 0 就跳走）。为什么不一样？因为 `a` 满足时短路，直接进 if 体；`a` 不满足时才检查 `b`，这时 `b` 不满足就跳走，满足就掉进紧跟的 if 体，不需要额外跳转。
 
 > [!NOTE] 区分 && 和 ||
 >
@@ -415,7 +415,7 @@ skip:
 mov  eax, dword ptr [ebp-4]
 ```
 
-先检查 `a > 0`：不满足就跳到 `check_c`（短路跳过 `b` 的检查）。满足再检查 `b > 0`：满足就跳进 if 体（`a && b` 为真，整个 `||` 为真）。到了 `check_c`，说明 `a && b` 整体为假，只剩 `c > 0` 这一条路——`c` 不满足就 `jle skip` 跳走，满足就掉进紧跟的 if 体。
+先检查 `a > 0`：不满足就跳到 `check_c`（短路跳过 `b` 的检查）。满足再检查 `b > 0`：满足就跳进 if 体（`a && b` 为真，整个 `||` 为真）。到了 `check_c`，说明 `a && b` 整体为假，只剩 `c > 0` 这一条路，`c` 不满足就 `jle skip` 跳走，满足就掉进紧跟的 if 体。
 
 ## 条件表达式（三目运算符）
 
@@ -539,7 +539,7 @@ ret
    > }
    > ```
    >
-   > `0xFFFFFFFF` 是 -1 的补码。`jle` 取反得到 `a > 0`，if 体在前，else 体在后——和正文里的 if/else 结构完全一样。
+   > `0xFFFFFFFF` 是 -1 的补码。`jle` 取反得到 `a > 0`，if 体在前，else 体在后，和正文里的 if/else 结构完全一样。
 
 3. 以下汇编还原成什么 C 代码？
 
@@ -597,7 +597,7 @@ ret
    > }
    > ```
    >
-   > 两个条件检查后都是 `jle` 跳到同一个 `skip`——"失败就跳走"是 `&&` 的特征。
+   > 两个条件检查后都是 `jle` 跳到同一个 `skip`，"失败就跳走"是 `&&` 的特征。
 
 5. 以下汇编做了什么？
 

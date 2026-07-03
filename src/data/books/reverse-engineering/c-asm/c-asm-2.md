@@ -123,7 +123,7 @@ imul eax, eax, 0x25               ; eax = a * 37
 
 `0x25` 就是十进制 37。`imul` 有三种形式，逆向中最常见的是三操作数 `imul dest, src, imm`。
 
-为什么 37 用 `imul` 而不是 `lea`+`shl` 组合？因为 37 是质数，拆成 2 的幂次组合需要 `(a*32) + (a*4) + a`——多条 `shl` + `add` 才能搞定，编译器权衡后一条 `imul` 更划算。但 `a * 64` 虽然数字更大，编译器会用 `shl eax, 6` 一条搞定。
+为什么 37 用 `imul` 而不是 `lea`+`shl` 组合？因为 37 是质数，拆成 2 的幂次组合需要 `(a*32) + (a*4) + a`，多条 `shl` + `add` 才能搞定，编译器权衡后一条 `imul` 更划算。但 `a * 64` 虽然数字更大，编译器会用 `shl eax, 6` 一条搞定。
 
 **N 能拆成 lea/shl 组合（如 3、5、9）→ `lea`**
 
@@ -136,7 +136,7 @@ mov  eax, dword ptr [ebp+8]       ; eax = a
 lea  eax, dword ptr [eax+eax*2]   ; eax = eax + eax*2 = eax*3
 ```
 
-`lea` 设计初衷是算内存地址，但编译器拿它做乘法——地址计算格式 `[base + index*scale + displacement]` 刚好能表达 `base + index*scale`，一条指令搞定小乘数，比 `imul` 更短更快。
+`lea` 设计初衷是算内存地址，但编译器拿它做乘法，地址计算格式 `[base + index*scale + displacement]` 刚好能表达 `base + index*scale`，一条指令搞定小乘数，比 `imul` 更短更快。
 
 **N 是 2 的幂（如 2、4、8）→ `shl`**
 
@@ -199,7 +199,7 @@ shl  eax, 2                       ; eax = a * 3 * 4 = a * 12
 > mov  dword ptr [ebp-8], edx      ; 写回 ll 高 32 位
 > ```
 >
-> `__allmul` 内部用多条 `mul` 指令实现 64 位乘法。Debug 版有符号能看到 `call __allmul`，Release 或脱壳后可能只剩 `call 0x005D1FE0`，这时需要跟进去看——函数体很短，特征明显：多条 `mul` + `add` 累加 + `ret 0x10`（清理 16 字节参数 = 两个 64 位操作数）。类似的还有 `__allshl`（64 位左移）、`__allshr`（64 位右移）、`__aullrem`（64 位取模）等编译器 helper。
+> `__allmul` 内部用多条 `mul` 指令实现 64 位乘法。Debug 版有符号能看到 `call __allmul`，Release 或脱壳后可能只剩 `call 0x005D1FE0`，这时需要跟进去看，函数体很短，特征明显：多条 `mul` + `add` 累加 + `ret 0x10`（清理 16 字节参数 = 两个 64 位操作数）。类似的还有 `__allshl`（64 位左移）、`__allshr`（64 位右移）、`__aullrem`（64 位取模）等编译器 helper。
 
 ### 除法：Debug 老实，Release 投机
 
@@ -451,7 +451,7 @@ permissions = permissions & 0xFFFFFFFE
   0100  (结果 = 0x04)
 ```
 
-最低位被清零，其他位不变——这就是"清除标志位"。
+最低位被清零，其他位不变，这就是"清除标志位"。
 
 ```asm
 and  dword ptr [ebp-4], 0xFFFFFFFE   ; 清除最低位
@@ -556,7 +556,7 @@ mov  dword ptr [result], eax
 
 `SHL` (Shift Left) 左移，空位补 0。右移有两种：`SHR` (Shift Right) 逻辑右移，高位补 0；`SAR` (Shift Arithmetic Right) 算术右移，高位补符号位。
 
-选 `shr` 还是 `sar` 取决于**被移位的变量类型**——不是赋值目标类型。`a >> 1` 中如果 `a` 是 `int`，无论赋给 `int` 还是 `unsigned`，都用 `sar`；要让编译器生成 `shr`，`a` 本身必须是 `unsigned`。Debug 和 Release 都一样，因为这是类型语义决定的，不是优化。
+选 `shr` 还是 `sar` 取决于**被移位的变量类型**，不是赋值目标类型。`a >> 1` 中如果 `a` 是 `int`，无论赋给 `int` 还是 `unsigned`，都用 `sar`；要让编译器生成 `shr`，`a` 本身必须是 `unsigned`。Debug 和 Release 都一样，因为这是类型语义决定的，不是优化。
 
 为什么必须区分？看 `0x80000000`（最高位是 1）：
 

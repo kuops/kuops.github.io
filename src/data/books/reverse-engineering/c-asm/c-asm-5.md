@@ -11,7 +11,7 @@ order: 15
 
 ## for 循环
 
-for 是结构最完整的循环——有独立的初始化、条件检查、循环体、递增四个部分。先看 C 代码：
+for 是结构最完整的循环，有独立的初始化、条件检查、循环体、递增四个部分。先看 C 代码：
 
 ```c
 int sum_to(int n) {
@@ -49,14 +49,14 @@ for 循环在汇编里的固定结构：
 
 ![for 循环汇编结构 (实际内存布局)](c-asm-5-images/for-loop-flow.png)
 
-注意实际布局中 `increment` 在 `check` 之前，`loop_body` 在 `check` 之后。条件检查通过后 fall-through 进入循环体，循环体末尾 `jmp increment` 跳回递增，递增后 fall-through 到 check，形成环。**初始化之后的那条 `jmp check` 是 for 循环最明显的标志**——因为 for 的语义是"先检查条件，再决定是否执行循环体"，第一轮要先跳到 check，不能直接进循环体。
+注意实际布局中 `increment` 在 `check` 之前，`loop_body` 在 `check` 之后。条件检查通过后 fall-through 进入循环体，循环体末尾 `jmp increment` 跳回递增，递增后 fall-through 到 check，形成环。**初始化之后的那条 `jmp check` 是 for 循环最明显的标志**，因为 for 的语义是"先检查条件，再决定是否执行循环体"，第一轮要先跳到 check，不能直接进循环体。
 
 > [!NOTE] 为什么先 jmp 到 check
-> for 的语义是"条件满足才执行循环体"。如果初始化后直接进循环体，那条件不满足时第一轮也会执行——这就变成 do-while 了。所以编译器在初始化后插一条 `jmp check`，先做条件检查，通过才 fall-through 进入循环体。
+> for 的语义是"条件满足才执行循环体"。如果初始化后直接进循环体，那条件不满足时第一轮也会执行，这就变成 do-while 了。所以编译器在初始化后插一条 `jmp check`，先做条件检查，通过才 fall-through 进入循环体。
 
 ## while 循环
 
-while 和 for 都是"先检查后执行"，但 MSVC 生成的结构不同——while 没有独立的递增部分，所以不需要 `jmp check` 前置跳转：
+while 和 for 都是"先检查后执行"，但 MSVC 生成的结构不同，while 没有独立的递增部分，所以不需要 `jmp check` 前置跳转：
 
 ```c
 int count_bits(int n) {
@@ -92,7 +92,7 @@ mov  eax, dword ptr [ebp-4]     ; 返回 count
 
 ![while 循环汇编结构 (无前置 jmp)](c-asm-5-images/while-loop-flow.png)
 
-while 的结构和 for 不同——**没有初始化后的 `jmp check` 前置跳转**。因为 while 没有独立的递增部分，编译器直接把条件检查放在循环入口，`je end` 跳出，循环体末尾 `jmp check` 跳回。相比之下 for 有独立的递增部分（`i++`），递增在 check 之前，所以需要先 `jmp check` 跳过递增直达检查。
+while 的结构和 for 不同，**没有初始化后的 `jmp check` 前置跳转**。因为 while 没有独立的递增部分，编译器直接把条件检查放在循环入口，`je end` 跳出，循环体末尾 `jmp check` 跳回。相比之下 for 有独立的递增部分（`i++`），递增在 check 之前，所以需要先 `jmp check` 跳过递增直达检查。
 
 > [!NOTE] while 和 for 的结构差异
 > 虽然都是"先检查后执行"，但 MSVC 生成的结构不同：
@@ -102,7 +102,7 @@ while 的结构和 for 不同——**没有初始化后的 `jmp check` 前置跳
 >
 > 原因是 for 有独立的递增（`i++`），必须放在 check 之前但又不能第一轮就执行，所以需要 `jmp check` 跳过它。while 没有递增部分，直接 cmp + je 就行。
 
-逆向时靠循环体末尾的跳转目标和递增操作来区分 for 和 while：**循环末尾有"取出变量→加 1→存回"这种纯计数操作、且跳到 check 之前的多半是 for；循环体只有业务逻辑、末尾直接跳回 check 的多半是 while。** 但这只是经验，不是绝对——编译器不关心你写的是哪种，只关心逻辑。
+逆向时靠循环体末尾的跳转目标和递增操作来区分 for 和 while：**循环末尾有"取出变量→加 1→存回"这种纯计数操作、且跳到 check 之前的多半是 for；循环体只有业务逻辑、末尾直接跳回 check 的多半是 while。** 但这只是经验，不是绝对，编译器不关心你写的是哪种，只关心逻辑。
 
 ## do-while 循环
 
@@ -141,9 +141,9 @@ mov  eax, dword ptr [ebp+8]     ; 返回 a
 
 ![do-while 循环汇编结构 (末尾检查)](c-asm-5-images/dowhile-loop-flow.png)
 
-**do-while 最显著的特征：没有条件检查的前置跳转。** 循环代码从 `loop_body` 标签开始直接执行，条件检查在末尾。这是和 for/while 的关键区别——for/while 是"先检查后执行"，条件检查在循环体之前；do-while 是"先执行后检查"，直接进循环体，末尾 `jne` 跳回。
+**do-while 最显著的特征：没有条件检查的前置跳转。** 循环代码从 `loop_body` 标签开始直接执行，条件检查在末尾。这是和 for/while 的关键区别，for/while 是"先检查后执行"，条件检查在循环体之前；do-while 是"先执行后检查"，直接进循环体，末尾 `jne` 跳回。
 
-这也解释了为什么 for/while 的条件跳转需要一个 `end` 标签，而 do-while 不需要。for/while 在循环体**之前**检查，检查失败时要跳到循环体之后——必须有 `end` 标记目标。do-while 在循环体**之后**检查，检查失败时不跳，fall-through 自然到了循环体后面，不需要专门的退出标签。
+这也解释了为什么 for/while 的条件跳转需要一个 `end` 标签，而 do-while 不需要。for/while 在循环体**之前**检查，检查失败时要跳到循环体之后，必须有 `end` 标记目标。do-while 在循环体**之后**检查，检查失败时不跳，fall-through 自然到了循环体后面，不需要专门的退出标签。
 
 三种循环的对比如下：
 
@@ -156,7 +156,7 @@ mov  eax, dword ptr [ebp+8]     ; 返回 a
 | 汇编标志     | 初始化后有 `jmp check`       | 没有 `jmp`，直接 `cmp` | 没有 `jmp`，直接进循环体 |
 
 > [!WARNING] Release 下 do-while 特征不一定可靠
-> Release 模式下，编译器如果**能证明循环至少执行一次**，会把 for 和 while 也优化成 do-while 的形式（条件检查移到循环末尾，省掉一次 `jmp`）。所以逆向 Release 版本时，"没有前置 jmp"不能作为判定 do-while 的依据——你只能确定"这是一个循环"，具体是哪种语法要看循环体逻辑。
+> Release 模式下，编译器如果**能证明循环至少执行一次**，会把 for 和 while 也优化成 do-while 的形式（条件检查移到循环末尾，省掉一次 `jmp`）。所以逆向 Release 版本时，"没有前置 jmp"不能作为判定 do-while 的依据，你只能确定"这是一个循环"，具体是哪种语法要看循环体逻辑。
 
 ## 三种循环的 Release 形态
 
@@ -454,7 +454,7 @@ end:
 ```
 
 > [!NOTE] Debug 重复加载同一个变量
-> swap 部分每次用 `arr` 或 `j` 都重新从栈上 `mov` 出来（`mov ecx, dword ptr [ebp+8]` 出现了 5 次）。这是 Debug（`/Od`）的机械行为——每步都从栈读写，寄存器只做临时打工。Release 会把 `arr` 和 `j` 固定在寄存器里，这些重复加载全部消失。
+> swap 部分每次用 `arr` 或 `j` 都重新从栈上 `mov` 出来（`mov ecx, dword ptr [ebp+8]` 出现了 5 次）。这是 Debug（`/Od`）的机械行为，每步都从栈读写，寄存器只做临时打工。Release 会把 `arr` 和 `j` 固定在寄存器里，这些重复加载全部消失。
 
 嵌套循环的结构：
 
@@ -630,7 +630,7 @@ end:
 
    > [!NOTE]- 参考答案
    >
-   > 是 **break**。`jne increment` 不满足条件时跳到递增（继续循环），满足条件时 fall-through 到 `after_loop`（循环之后）。等价于 `jmp after_loop`——跳过整个循环。
+   > 是 **break**。`jne increment` 不满足条件时跳到递增（继续循环），满足条件时 fall-through 到 `after_loop`（循环之后）。等价于 `jmp after_loop`，跳过整个循环。
    >
    > ```c
    > int first_zero(int* arr, int len) {

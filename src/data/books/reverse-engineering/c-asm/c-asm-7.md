@@ -58,7 +58,7 @@ end:
 mov  eax, dword ptr [ebp-8]      ; 返回 total
 ```
 
-关键指令是 `add edx, dword ptr [ecx+eax*4]`——这就是数组访问。`ecx` 是数组基址（`arr`），`eax` 是下标 `i`，`*4` 是因为 `int` 占 4 字节。这条指令一步完成了"基址 + 索引 × 元素大小"的计算和取值。
+关键指令是 `add edx, dword ptr [ecx+eax*4]`，这就是数组访问。`ecx` 是数组基址（`arr`），`eax` 是下标 `i`，`*4` 是因为 `int` 占 4 字节。这条指令一步完成了"基址 + 索引 × 元素大小"的计算和取值。
 
 > [!NOTE] `[ecx+eax*4]` 是 SIB 寻址
 > SIB = Scale-Index-Base，格式是 `[base + index × scale + disp]`。CPU 硬件直接支持这种寻址，不需要先算偏移再取值。`ecx` 是 base（数组基址），`eax` 是 index（下标），`4` 是 scale（元素大小）。
