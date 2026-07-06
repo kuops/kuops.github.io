@@ -145,7 +145,7 @@ URL 反映完整目录路径：`/books/astro-guide/basics/intro`。
 
 ### 写入代码
 
-代码文件写到 WSL 路径 `/mnt/c/Code/Cpp/Demo/`（对应 Windows 路径 `C:\Code\Cpp\Demo`）。直接写入或覆盖 `Demo.cpp`，无需手动建工程——该目录已有现成的 VS 项目文件（`.vcxproj` / `.slnx`）。
+代码文件写到 WSL 路径 `/mnt/c/Code/Cpp/Demo/`（对应 Windows 路径 `C:\Code\Cpp\Demo`）。直接写入或覆盖 `Demo.cpp`，无需手动建工程，该目录已有现成的 VS 项目文件（`.vcxproj` / `.slnx`）。
 
 ### 编译
 
@@ -177,5 +177,14 @@ MSBuild.exe 'C:\Code\Cpp\Demo' /p:Configuration=Debug /p:Platform=x86 /p:Optimiz
 
 教程里写的每一段汇编都必须和实际反汇编结果吻合，不吻合就修教程。
 
-> [!NOTE]
 > 逆向章节默认 32 位 Debug 模式。不要切到 Release 或 x64，否则汇编输出和教程对不上。
+
+### 汇编十六进制写法（Assembly hex notation）
+
+教程中汇编代码块的十六进制写法遵循以下规则：
+
+- **方括号内**（内存地址/偏移）：裸 hex，不加前缀也不加后缀。如 `[ebp-44]`、`[ebp+C]`、`[ebp+eax-58]`、`[ebp-0C]`
+- **方括号外**（立即数）：用 `0x` 前缀。如 `0x30`、`0x60`、`0x14`、`0xCCCCCCCC`
+- **值 ≤ 9** 的数字：直接写十进制，不加任何前缀/后缀。如 `mov eax, 4`、`shl eax, 1`、`[ebp+8]`、`[ebp-4]`
+
+注意：dumpbin 原始输出用 `h` 后缀（如 `10h`、`[ebp-38h]`），抄进教程时需转换：方括号内的去掉 `h`，方括号外的改成 `0x` 前缀。

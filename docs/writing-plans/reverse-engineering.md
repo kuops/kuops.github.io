@@ -1,6 +1,6 @@
 # 《逆向工程实战入门》写作计划
 
-> 最后更新：2026-07-03
+> 最后更新：2026-07-06
 
 ## 一、全书结构
 
@@ -20,7 +20,7 @@ src/data/books/reverse-engineering/
 |------|--------|----------------------|---------------------|--------|
 | 入门篇 | 3 章 | 3 章 | 0 | 100% |
 | 汇编基础 | 9 章 | 9 章 | 0 | 100% |
-| C 与汇编 | 11 章 | 8 章 | 3 章 | 73% |
+| C 与汇编 | 17 章 | 8 章 | 9 章 | 47% |
 | 破解篇 | 0 章 | 0 | 0 | 未开始 |
 | 游戏篇 | 0 章 | 0 | 0 | 未开始 |
 
@@ -50,13 +50,13 @@ src/data/books/reverse-engineering/
 
 ### 待完成分类详情
 
-#### C 与汇编 (order 11-21) — 7/11 已发布
+#### C 与汇编 (order 11-21) — 8/17 已发布
 
 | Order | 文件 | 标题 | 状态 | 备注 |
 |-------|------|------|------|------|
 | 11 | c-asm-1.md | 变量与赋值 | ✅ 已发布 | 原 binary-file-basics 已并入此章 |
 | 12 | c-asm-2.md | 运算与位操作 | ✅ 已发布 | |
-| 13 | c-asm-3.md | if/else 分支 | ✅ 已发布 | |
+| 13 | c-asm-3.md | if/Else 分支 | ✅ 已发布 | |
 | 14 | c-asm-4.md | switch 与跳转表 | ✅ 已发布 | |
 | 15 | c-asm-5.md | 循环 | ✅ 已发布 | 4 张流程图 SVG |
 | 16 | c-asm-6.md | 指针 | ✅ 已发布 | 原计划"数组与字符串"，改为指针 |
@@ -65,6 +65,13 @@ src/data/books/reverse-engineering/
 | 19 | c-asm-9.md | 函数调用 | 草稿 | 旧草稿，待重构 |
 | 20 | c-asm-10.md | 结构体 | 草稿 | 旧草稿，待重构 |
 | 21 | asm-memory.md | 字符串、内存与交叉引用 | 草稿 | 逆向实战入手点，非 C 语法对照 |
+| 34 | c-asm-11.md | 枚举与类型转换 | 待写 | 新增章，枚举/隐式转换/强转/指针强转/函数指针强转/UB |
+| 35 | c-asm-12.md | 位域与联合体 | 待写 | 位域/联合体，呼应 asm-logic 与强转章 |
+| 36 | c-asm-13.md | 编译器优化与 Release 形态 | 待写 | |
+| 37 | c-asm-14.md | x86-64 汇编形态 | 待写 | |
+| 38 | c-asm-15.md | C++ this 指针与成员访问 | 待写 | 游戏逆向门槛，最高优先级 |
+| 39 | c-asm-16.md | 虚函数表与多态 | 待写 | |
+| 40 | c-asm-17.md | STL 与 C++ 逆向实战 | 待写 | |
 
 **c-asm 章节的待办事项：**
 - [x] 逐一审查内容质量、技术准确性（c-asm-1~7 已完成）
@@ -108,14 +115,15 @@ src/data/books/reverse-engineering/
 
 | Order | 文件 | 标题 | 内容要点 |
 |---|---|---|---|
-| 34 | c-asm-11.md | 位域与联合体 | 位域（游戏状态标志位高频用法，呼应 asm-logic）；union（同内存多种解读，reinterpret cast）；取/设/清状态位 |
-| 35 | c-asm-12.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；sizeof 是编译期消除（不产生指令）；看懂 Release 反汇编的策略 |
-| 36 | c-asm-13.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
-| 37 | c-asm-14.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
-| 38 | c-asm-15.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |
-| 39 | c-asm-16.md | STL 与 C++ 逆向实战 | std::string/vector/map 内存布局；迭代器汇编形态；异常处理(try/catch)结构；模板实例化；综合实战（逆向 C++ 程序 + ReClass.NET 还原类结构） |
+| 34 | c-asm-11.md | 枚举与类型转换 | 枚举（汇编层面就是整数，编译后和 #define 无区别）；隐式转换（整数提升、int↔double、char↔int）；显式强转语法；指针强转（int*↔char*、int(*)[N] 切行宽）；int 与字符串互转（reinterpret/union 两种路子）；函数指针强转；严格别名与 UB 边界 |
+| 35 | c-asm-12.md | 位域与联合体 | 位域（游戏状态标志位高频用法，呼应 asm-logic）；联合体（同内存多种解读，呼应强转章 union 路子）；取/设/清状态位 |
+| 36 | c-asm-13.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；sizeof 是编译期消除（不产生指令）；看懂 Release 反汇编的策略 |
+| 37 | c-asm-14.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
+| 38 | c-asm-15.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
+| 39 | c-asm-16.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |
+| 40 | c-asm-17.md | STL 与 C++ 逆向实战 | std::string/vector/map 内存布局；迭代器汇编形态；异常处理(try/catch)结构；模板实例化；综合实战（逆向 C++ 程序 + ReClass.NET 还原类结构） |
 
-> **优先级**：c-asm-14 (this 指针) 最高 — 这是从"看得懂 C"到"看得懂游戏"的分水岭，FLARE 和 kovidomi 都强调 C++ 是游戏逆向必学。
+> **优先级**：c-asm-15 (this 指针) 最高 — 这是从"看得懂 C"到"看得懂游戏"的分水岭，FLARE 和 kovidomi 都强调 C++ 是游戏逆向必学。
 
 ### 工具穿插策略
 
@@ -169,12 +177,14 @@ src/data/books/reverse-engineering/
 1. **c-asm-9 函数调用** — 旧草稿重构（order:19），按前 8 章风格重写
 2. **c-asm-10 结构体** — 旧草稿重构（order:20），按前 8 章风格重写
 3. **asm-memory.md 审查** — 确认定位和内容完整度（order:21）
-4. **c-asm-14 C++ this 指针** — 最大缺口，游戏逆向门槛
-5. **c-asm-15 虚函数表** — 紧接 this，C++ 逆向核心
-6. **c-asm-13 x86-64** — 补全 64 位
-7. **cracking-1/2** — 破解篇地基（方法论 + PE）
-8. **game-1 CE 入门** — 游戏篇起点
-9. 其余按篇内顺序推进
+4. **c-asm-11 枚举与类型转换** — 新增章
+5. **c-asm-12 位域与联合体** — 新增章
+6. **c-asm-15 C++ this 指针** — 最大缺口，游戏逆向门槛
+7. **c-asm-16 虚函数表** — 紧接 this，C++ 逆向核心
+8. **c-asm-14 x86-64** — 补全 64 位
+9. **cracking-1/2** — 破解篇地基（方法论 + PE）
+10. **game-1 CE 入门** — 游戏篇起点
+11. 其余按篇内顺序推进
 
 ## 五、写作规范参考
 

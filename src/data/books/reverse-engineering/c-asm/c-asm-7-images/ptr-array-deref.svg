@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 292" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <!-- 标题 -->
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">指针数组: 两次解引用访问 *arr[2]</text>
+
+  <!-- ========== 左: arr 指针数组 ========== -->
+  <text x="153" y="62" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">arr[] 指针数组</text>
+
+  <g transform="translate(78, 78)">
+    <text x="-8" y="18" font-family="monospace" font-size="11" font-weight="bold" text-anchor="end" fill="#64748b">[ebp-44]</text>
+    <rect x="0" y="0" width="150" height="26" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="75" y="18" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">arr[4] → &amp;e</text>
+
+    <text x="-8" y="48" font-family="monospace" font-size="11" font-weight="bold" text-anchor="end" fill="#64748b">[ebp-48]</text>
+    <rect x="0" y="30" width="150" height="26" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="75" y="48" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">arr[3] → &amp;d</text>
+
+    <text x="-8" y="78" font-family="monospace" font-size="11" font-weight="bold" text-anchor="end" fill="#fbbf24">[ebp-50]</text>
+    <rect x="0" y="60" width="150" height="26" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="75" y="78" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">arr[2] → &amp;c</text>
+
+    <text x="-8" y="108" font-family="monospace" font-size="11" font-weight="bold" text-anchor="end" fill="#64748b">[ebp-54]</text>
+    <rect x="0" y="90" width="150" height="26" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="75" y="108" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">arr[1] → &amp;b</text>
+
+    <text x="-8" y="138" font-family="monospace" font-size="11" font-weight="bold" text-anchor="end" fill="#64748b">[ebp-58]</text>
+    <rect x="0" y="120" width="150" height="26" rx="4" fill="none" stroke="#64748b" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="75" y="138" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">arr[0] → &amp;a</text>
+  </g>
+
+  <!-- ========== 中: ecx (第一次取出的是地址) ========== -->
+  <g transform="translate(290, 138)">
+    <rect x="0" y="0" width="140" height="26" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="70" y="18" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">ecx = &amp;c</text>
+    <text x="70" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">mov ecx, [ebp+eax-58]</text>
+  </g>
+
+  <!-- 步骤 ① 水平箭头: arr[2] 右侧 → ecx 左侧 -->
+  <line x1="228" y1="151" x2="286" y2="151" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.5"/>
+  <polygon points="282,148 288,151 282,154" fill="#fbbf24" fill-opacity="0.5"/>
+  <text x="257" y="143" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">①</text>
+
+  <!-- ========== 右: eax (第二次取出的是值) ========== -->
+  <g transform="translate(500, 138)">
+    <rect x="0" y="0" width="140" height="26" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="70" y="18" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">eax = 30</text>
+    <text x="70" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#64748b">mov eax, [ecx]</text>
+  </g>
+
+  <!-- 步骤 ② 水平箭头: ecx 右侧 → eax 左侧 -->
+  <line x1="430" y1="151" x2="496" y2="151" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.5"/>
+  <polygon points="492,148 498,151 492,154" fill="#3b82f6" fill-opacity="0.5"/>
+  <text x="463" y="143" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">②</text>
+
+  <!-- 底部: 汇编指令说明 -->
+  <line x1="20" y1="230" x2="820" y2="230" stroke="#64748b" stroke-opacity="0.15" stroke-width="1"/>
+
+  <text x="40" y="250" font-family="monospace" font-size="11" font-weight="bold" fill="#fbbf24">①</text>
+  <text x="60" y="250" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">mov ecx, [ebp+eax-58]</text>
+  <text x="280" y="250" font-size="11" font-weight="bold" fill="#94a3b8">SIB 取指针: 从 arr[2] 取出地址 &amp;c</text>
+
+  <text x="40" y="268" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">②</text>
+  <text x="60" y="268" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">mov eax, [ecx]</text>
+  <text x="280" y="268" font-size="11" font-weight="bold" fill="#94a3b8">解引用: 按地址 &amp;c 读出值 30</text>
+
+</svg>
