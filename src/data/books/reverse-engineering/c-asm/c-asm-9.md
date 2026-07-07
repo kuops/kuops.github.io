@@ -1,310 +1,74 @@
 ---
 title: 函数调用
-draft: true
-description: 函数调用在汇编里是一套固定流程：push 参数->call->push ebp->执行->eax 返回->ret。搞懂这套流程，就能追踪任何函数。
+draft: false
+description: 从 C 函数签名反推汇编：参数个数、返回类型、调用约定怎么从汇编里看出来。返回值走 EAX 还是 EDX:EAX，递归怎么叠加栈帧，可变参数为什么必须 cdecl。
 order: 19
 ---
 
-## 动手目标
+上一章学了字符串的汇编形态。这一章学**函数调用**：C 里写 `int add(int a, int b)`、`long long mul(int a, int b)`、`int fib(int n)`，编译器翻译成什么。
 
-今天结束你会：
+汇编基础篇已经讲过 `call`/`ret`、prologue/epilogue、三种调用约定的识别方法。本章不再重复这些基础，而是从 **C 代码视角**切入：给定一段 C 函数，它的签名（参数个数、返回类型、调用约定）怎么映射到汇编？反过来，给定一段汇编，怎么反推出 C 函数签名？
 
-1. 完整走一遍函数调用的汇编流程：参数传递 -> call -> 栈帧建立 -> 执行 -> 返回值 -> 栈帧销毁 -> ret
-2. 说出 prologue 和 epilogue 各做了什么
-3. 区分 cdecl、stdcall、fastcall 三种调用约定
-4. 看到一段函数调用的汇编，能在脑子里画出栈的变化
+和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留函数调用相关的核心指令，过滤掉 Debug 噪音。
 
-<!-- 🎨 画图：函数调用的完整生命周期，调用者视角（push 参数、call）-> 被调者视角（prologue、执行、epilogue、ret）-> 调用者视角（清理栈） -->
+## 返回值
 
-## 调用流程详解
+汇编基础篇讲过函数的栈帧结构和调用约定，但有一个关键问题没展开：**返回值怎么传回调用者**？C 函数的返回类型千差万别，汇编层面怎么处理？
 
-写一个最简单的函数，跟踪它从调用到返回的每一步：
+### 32 位整数返回
+
+最常见的 `int`、`char`、`short`、指针，返回值都放在 **EAX**：
 
 ```c
-#include <stdio.h>
-
 int add(int a, int b) {
     int sum = a + b;
     return sum;
 }
-
-int main(void) {
-    int result = add(3, 5);
-    printf("%d\n", result);
-    return 0;
-}
 ```
-
-用 MSVC 32 位编译（`cl /O2 /Fa`），逐行分析 `main` 调用 `add` 的过程：
-
-<!-- 🎨 画图：函数调用全过程的栈变化，从左到右 6 个阶段的栈状态，标注每一步 push/mov/sub 后栈指针和栈内容的变化。这是全章最重要的图。 -->
-
-### 第一步：调用者准备参数（push 从右到左）
 
 ```asm
-; main 中调用 add(3, 5) 的部分
-push    5                           ; 参数 b（从右到左，先压第二个）
-push    3                           ; 参数 a（再压第一个）
-call    add                         ; 把返回地址压栈，跳转到 add
-add     esp, 8                      ; cdecl：调用者清理栈（两个 int = 8 字节）
+mov  eax, dword ptr [ebp+8]     ; eax = a
+add  eax, dword ptr [ebp+C]     ; eax = a + b
+mov  dword ptr [ebp-4], eax     ; sum = eax（存到局部变量）
+mov  eax, dword ptr [ebp-4]     ; 返回值放 eax（重新读出来）
 ```
 
-参数入栈顺序是**从右到左**。先 push 5（第二个参数），再 push 3（第一个参数）。这样 `esp+4` 指向第一个参数，`esp+8` 指向第二个参数，访问顺序和声明顺序一致。
+最后那条 `mov eax, [ebp-4]` 看起来多余：明明 eax 已经是 `a + b` 了，为什么要存回去再读出来？因为 MSVC Debug 模式不优化，C 代码写了 `return sum`，编译器就老老实实从 `sum` 的栈位置读一遍。Release 模式会直接用 eax 里的值，省掉这两条指令。
 
-call 指令做了两件事：
+逆向时看到函数末尾 `mov eax, <某个值>` 后面紧跟 epilogue，就是返回值。
 
-1. 把 call 的下一条指令地址压入栈（返回地址）
-2. 跳转到 add 函数的入口
+### 64 位整数返回
 
-<!-- 📸 截图：x64dbg 中 main 函数调用 add 前后的反汇编，标注 push、call、add esp -->
-
-此时的栈（地址从高到低）：
-
-```
-高地址
-┌─────────────┐
-│     ...      │
-├─────────────┤
-│      5       │  ← [esp+8]（参数 b）
-├─────────────┤
-│      3       │  ← [esp+4]（参数 a）
-├─────────────┤
-│  返回地址    │  ← [esp]（call 压入）
-└─────────────┘
-低地址 ← ESP 指向这里
-```
-
-### 第二步：被调函数 prologue（建立栈帧）
-
-```asm
-add PROC
-    push    ebp                         ; 保存调用者的 ebp
-    mov     ebp, esp                    ; ebp 指向当前栈顶，作为栈帧基址
-    sub     esp, 4                      ; 为局部变量 sum 分配 4 字节空间
-```
-
-<!-- 🎨 画图：prologue 执行后的栈布局，标注各层的含义和偏移 -->
-
-这三条指令叫 **prologue（序言）**，每个函数开头都有。它的工作：
-
-1. `push ebp` — 把调用者的 ebp 保存到栈上，函数返回前要恢复
-2. `mov ebp, esp` — 用 ebp 记住当前栈位置，之后不管 esp 怎么变，都能通过 ebp 访问参数和局部变量
-3. `sub esp, 4` — 在栈上开空间给局部变量
-
-prologue 之后的栈：
-
-```
-高地址
-┌─────────────┐
-│     ...      │
-├─────────────┤
-│      5       │  ← [ebp+12]（参数 b，注意 ebp 偏移变了）
-├─────────────┤
-│      3       │  ← [ebp+8]（参数 a）
-├─────────────┤
-│  返回地址    │  ← [ebp+4]
-├─────────────┤
-│  旧 ebp     │  ← [ebp]（push ebp 保存的）
-├─────────────┤
-│   sum       │  ← [ebp-4]（sub esp, 4 开出的空间）
-└─────────────┘
-低地址 ← ESP 指向这里
-```
-
-记住这个偏移模板：
-
-| 位置       | 内容           | 说明                 |
-| ---------- | -------------- | -------------------- |
-| `[ebp+12]` | 第二个参数     | 从右到左入栈的第二个 |
-| `[ebp+8]`  | 第一个参数     | 从右到左入栈的第一个 |
-| `[ebp+4]`  | 返回地址       | call 指令自动压入    |
-| `[ebp]`    | 旧 ebp         | push ebp 保存        |
-| `[ebp-4]`  | 第一个局部变量 | sub esp 分配的空间   |
-| `[ebp-8]`  | 第二个局部变量 | 更多局部变量继续往下 |
-
-### 第三步：函数体执行
-
-```asm
-    mov     eax, dword ptr [ebp+8]     ; eax = a
-    add     eax, dword ptr [ebp+C]     ; eax = a + b
-    mov     dword ptr [ebp-4], eax     ; sum = eax
-```
-
-通过 `[ebp+8]` 访问第一个参数，`[ebp+C]`（即 `[ebp+12]`）访问第二个参数，`[ebp-4]` 访问局部变量。ebp 就像锚点，不管栈上还有多少东西，参数和局部变量的偏移始终固定。
-
-### 第四步：设置返回值 + epilogue（销毁栈帧）
-
-```asm
-    mov     eax, dword ptr [ebp-4]     ; 返回值放 eax
-    mov     esp, ebp                    ; 恢复 esp（释放局部变量空间）
-    pop     ebp                         ; 恢复调用者的 ebp
-    ret                                 ; 弹出返回地址，跳回去
-```
-
-<!-- 📸 截图：x64dbg 中 add 函数的 epilogue 部分，标注 mov esp, ebp 和 pop ebp -->
-
-最后三条指令叫 **epilogue（尾声）**，和 prologue 完全对称：
-
-1. `mov esp, ebp` — 把 esp 拉回 ebp 的位置，局部变量空间直接丢弃
-2. `pop ebp` — 恢复调用者的 ebp
-3. `ret` — 弹出栈顶的返回地址，跳转回调用者
-
-MSVC 有时用一条 `leave` 指令替代 `mov esp, ebp` + `pop ebp`，效果完全一样。`leave` 就是这两条指令的简写。
-
-### 第五步：调用者清理栈
-
-```asm
-    add     esp, 8                      ; cdecl 约定：调用者负责清理参数
-```
-
-回到 main 后，`add esp, 8` 把栈指针加 8（两个 int 参数的大小），栈恢复到调用 add 之前的状态。
-
-**整个调用流程一句话：** push 参数 -> call（压返回地址）-> push ebp -> mov ebp, esp -> sub esp, N -> 执行 -> mov eax, 返回值 -> mov esp, ebp -> pop ebp -> ret -> add esp, N。
-
-## 调用约定
-
-上面的例子用的是 **cdecl** 约定（C declaration），x86 C 语言的默认约定。但还有其他约定：
-
-### cdecl
-
-- 参数从右到左入栈
-- **调用者清理栈**（`add esp, N`）
-- 可变参数函数（如 printf）必须用 cdecl，因为只有调用者知道传了多少参数
-
-```asm
-; 调用者
-push    5
-push    3
-call    add_cdecl
-add     esp, 8                      ; 调用者清理
-
-; 被调者
-add_cdecl PROC
-    push    ebp
-    mov     ebp, esp
-    ; ... 函数体 ...
-    mov     eax, dword ptr [ebp-4]
-    pop     ebp
-    ret                                 ; 无参数，不清理栈
-add_cdecl ENDP
-```
-
-### stdcall
-
-- 参数从右到左入栈
-- **被调者清理栈**（`ret N`）
-- Windows API 几乎全部用 stdcall（WINAPI 宏）
-
-```asm
-; 调用者
-push    5
-push    3
-call    add_stdcall
-; 没有 add esp，被调者已经清理了
-
-; 被调者
-add_stdcall PROC
-    push    ebp
-    mov     ebp, esp
-    ; ... 函数体 ...
-    mov     eax, dword ptr [ebp-4]
-    pop     ebp
-    ret     8                           ; ret 8：弹出返回地址并 add esp, 8
-add_stdcall ENDP
-```
-
-`ret 8` 等价于：先弹出返回地址跳转，再 `add esp, 8`。一条指令完成两件事。
-
-### fastcall
-
-- 前两个参数通过 ECX 和 EDX 传递（不走栈）
-- 剩余参数从右到左入栈
-- 被调者清理栈
-- 速度快，因为少了内存访问
-
-```asm
-; 调用者
-mov     ecx, 3                          ; 第一个参数 -> ecx
-mov     edx, 5                          ; 第二个参数 -> edx
-call    add_fastcall
-; 栈上没有参数，不需要清理
-
-; 被调者
-add_fastcall PROC
-    push    ebp
-    mov     ebp, esp
-    mov     dword ptr [ebp-4], ecx      ; 保存第一个参数（从 ecx）
-    mov     dword ptr [ebp-8], edx      ; 保存第二个参数（从 edx）
-    ; ... 函数体 ...
-    pop     ebp
-    ret
-add_fastcall ENDP
-```
-
-如果函数有 3 个参数，前两个走 ecx/edx，第三个还是走栈：
-
-```asm
-; add3_fast(a, b, c)
-mov     ecx, 1                          ; a -> ecx
-mov     edx, 2                          ; b -> edx
-push    3                               ; c -> 栈
-call    add3_fastcall
-; 被调者 ret 4（清理栈上的 1 个参数）
-```
-
-<!-- 🎨 画图：三种调用约定的对比，cdecl（调用者 add esp）、stdcall（被调者 ret N）、fastcall（ecx/edx 传参）-->
-
-### 对比表
-
-| 特性       | cdecl             | stdcall      | fastcall                    |
-| ---------- | ----------------- | ------------ | --------------------------- |
-| 参数入栈   | 右->左            | 右->左       | 前 2 个走寄存器，其余右->左 |
-| 栈清理     | 调用者            | 被调者       | 被调者                      |
-| 栈清理指令 | `add esp, N`      | `ret N`      | `ret N`                     |
-| 可变参数   | 支持              | 不支持       | 不支持                      |
-| 典型用途   | C/C++ 函数        | Windows API  | 性能敏感函数、COM           |
-| 识别特征   | call 后有 add esp | ret 后带数字 | 函数开头 mov ecx/edx        |
-
-逆向时看到 `ret` 不带数字 -> cdecl（调用者清理）；`ret N` -> stdcall 或 fastcall。再检查调用前有没有 `mov ecx` / `mov edx` 来区分后两者。
-
-## 返回值
-
-函数返回值通过寄存器传回调用者：
-
-### 整数（32 位以下）
-
-用 **EAX** 返回。前面所有例子都是 `mov eax, 结果` 然后 ret。
-
-### 64 位整数
-
-用 **EAX + EDX** 返回，EDX 存高 32 位，EAX 存低 32 位：
+`long long` 是 64 位，一个寄存器放不下，用 **EDX:EAX** 两个寄存器：EAX 存低 32 位，EDX 存高 32 位。
 
 ```c
-#include <stdio.h>
-
 long long bigmul(int a, int b) {
-    return (long long)a * b;
-}
-
-int main(void) {
-    printf("%lld\n", bigmul(100000, 200000));
-    return 0;
+    return (long long)a * (long long)b;
 }
 ```
 
 ```asm
-bigmul PROC
-    mov     eax, dword ptr [esp+4]     ; a
-    imul    dword ptr [esp+8]          ; a * b，结果在 edx:eax
-    ret
-bigmul ENDP
+mov  eax, dword ptr [ebp+8]     ; eax = a
+cdq                              ; edx = a 的符号扩展（a 扩展到 64 位）
+mov  ecx, eax                    ; ecx = a 的低位
+mov  esi, edx                    ; esi = a 的高位
+mov  eax, dword ptr [ebp+C]     ; eax = b
+cdq                              ; edx = b 的符号扩展
+push edx                         ; b 的高位入栈
+push eax                         ; b 的低位入栈
+push esi                         ; a 的高位入栈
+push ecx                         ; a 的低位入栈
+call __allmul                    ; 调用运行时库的 64 位乘法
+; 结果在 edx:eax，直接就是返回值
 ```
 
-`imul` 把 64 位结果放在 EDX:EAX，刚好是返回值的约定位置，不用额外移动。
+MSVC Debug 模式不直接用 `imul` 做 64 位乘法，而是调用运行时库的 `__allmul` 函数。`__allmul` 的返回值在 `edx:eax`，刚好是 64 位返回值的约定位置，不用再移动。
 
-### 浮点数
+逆向时看到 `call __allmul` / `__aullshr` / `__allshl` 这类运行时库函数，就知道是 64 位运算。看到函数末尾 `edx` 和 `eax` 都有值，返回类型大概率是 `long long`。
 
-32 位 x87 FPU 用 **ST(0)**（浮点寄存器栈顶）返回：
+### 浮点数返回
+
+浮点数返回分两种情况，取决于编译器用 x87 还是 SSE：
 
 ```c
 float square(float x) {
@@ -313,316 +77,402 @@ float square(float x) {
 ```
 
 ```asm
-square PROC
-    fld     dword ptr [esp+4]          ; 把 x 压入浮点栈
-    fmul    st(0), st(0)               ; st(0) = st(0) * st(0)
-    ret
-square ENDP
+movss xmm0, dword ptr [ebp+8]    ; xmm0 = x（SSE 指令取参数）
+mulss xmm0, dword ptr [ebp+8]    ; xmm0 = x * x
+movss dword ptr [ebp-0C4], xmm0  ; 结果存到栈上临时变量
+fld  dword ptr [ebp-0C4]         ; fld 把结果压入 x87 浮点栈
+; 返回值在 ST(0)
 ```
 
-SSE/SSE2 用 **XMM0** 返回（现代编译器默认）：
+MSVC Debug 即使用 SSE 指令（`movss`/`mulss`）做计算，返回时还是用 `fld` 把结果转到 x87 浮点寄存器栈顶 **ST(0)**。这是 32 位的约定：浮点返回值走 `ST(0)`，不走 `XMM0`。
+
+逆向时看到函数末尾有 `fld` 把值压入浮点栈，返回类型是 `float` 或 `double`。
+
+> [!NOTE] x64 下的浮点返回值
+> 上面说的是 32 位程序的约定。64 位程序（x64）的浮点返回值走 **XMM0**，不走 ST(0)。如果你在分析 64 位程序，看到函数末尾把结果放在 `xmm0` 里，那就是浮点返回值。详见后面的 x86-64 章节。
+
+### void 返回值
+
+`void` 函数不返回值，函数末尾不会特意设置 eax。但实战中要注意一个陷阱：eax 可能残留着上一次运算的结果，看起来像"设置了返回值"。
+
+```c
+void log_message(const char *msg) {
+    printf("LOG: %s\n", msg);
+}
+```
 
 ```asm
-square PROC
-    mulss   xmm0, xmm0                 ; xmm0 = xmm0 * xmm0
-    ret
-square ENDP
+push dword ptr [ebp+8]          ; 参数 msg
+push offset ??_C@...@LOG?3?5?$CFs?6@  ; "LOG: %s\n"
+call _printf
+add  esp, 8
+; 没有 mov eax, <值>，直接 epilogue
 ```
 
-<!-- 🎨 画图：返回值寄存器速查，int->EAX，long long->EDX:EAX，float/double->ST(0) 或 XMM0 -->
+识别 void 函数的关键：函数末尾**没有对 eax 赋新值**，且调用者后续**没有使用 eax**。如果调用者调用后直接 `add esp, N` 清理栈，没有 `mov [ebp-X], eax` 之类的保存操作，那被调函数大概率是 void。
 
-| 返回类型       | 寄存器        | 说明                           |
-| -------------- | ------------- | ------------------------------ |
-| char/short/int | EAX           | 小类型零扩展或符号扩展到 32 位 |
-| long long      | EDX:EAX       | EDX 高位，EAX 低位             |
-| float/double   | ST(0) 或 XMM0 | x87 用 ST(0)，SSE 用 XMM0      |
-| 指针           | EAX           | 和 int 一样                    |
-| void           | 无            | 不返回值                       |
+### 返回值速查表
+
+| 返回类型       | 寄存器  | 识别特征                              |
+| -------------- | ------- | ------------------------------------- |
+| char/short/int | EAX     | 函数末尾 `mov eax, <值>`              |
+| long long      | EDX:EAX | `call __allmul` 等，edx 和 eax 都有值 |
+| float/double   | ST(0)   | 函数末尾 `fld`                        |
+| 指针           | EAX     | 和 int 一样                           |
+| void           | 无      | 函数末尾没有设置返回值                |
+
+## 可变参数
+
+C 语言的 `printf` 可以接受任意数量的参数：`printf("a")`、`printf("a %d", 1)`、`printf("a %d %d", 1, 2)`。这种函数叫**可变参数函数**，它有一个硬性约束：**必须用 cdecl 调用约定**。
+
+原因在于栈清理。stdcall 和 fastcall 由被调者清理栈（`ret N`），但被调者怎么知道调用者压了几个参数？`printf` 的参数个数是调用者决定的，被调者根本不知道。只有调用者知道，所以只能由调用者清理（`add esp, N`），这就是 cdecl。
+
+```c
+// printf 的声明，... 表示可变参数
+int printf(const char *format, ...);
+```
+
+```asm
+; printf("a %d %d\n", 1, 2) 的调用
+push 2                           ; 第四个参数
+push 1                           ; 第三个参数
+push offset ??_C@...@a?$CFd?$CFd?6@  ; format 字符串
+call _printf
+add  esp, 0xC                    ; cdecl：调用者清理 3 个参数（12 字节）
+```
+
+每次调用 `printf`，`add esp` 的数字都不同，取决于压了几个参数。如果是 stdcall，`ret N` 的 N 写死在函数里，没法适应不同参数个数。
+
+> [!NOTE] 为什么 Windows API 用 stdcall 而不用 cdecl
+> Windows API 函数的参数个数是固定的（如 `MessageBoxA` 永远是 4 个参数），不存在可变参数的问题。stdcall 让被调者清理栈，调用方不用每次写 `add esp`，代码更紧凑。Windows 系统 DLL 里有大量 API 调用，省下几条指令累积起来是很可观的体积节省。所以 Windows API 选了 stdcall，而 C 语言的 `printf` 之类可变参数函数只能用 cdecl。
+
+## fastcall 被调者内部
+
+汇编基础篇讲 fastcall 时，重点在调用方怎么传参数（`mov ecx` / `mov edx`）。这里看被调者内部怎么处理：
+
+```c
+int __fastcall add_fastcall(int a, int b, int c) {
+    int sum = a + b + c;
+    return sum;
+}
+```
+
+```asm
+push ebp
+mov  ebp, esp
+push ecx                         ; 临时保存 ecx（后面要用）
+mov  dword ptr [ebp-14], edx    ; 把 edx（参数 b）存到栈上
+mov  dword ptr [ebp-8], ecx     ; 把 ecx（参数 a）存到栈上
+; ... Debug 噪音 ...
+mov  eax, dword ptr [ebp-8]     ; eax = a
+add  eax, dword ptr [ebp-14]    ; eax += b
+add  eax, dword ptr [ebp+8]     ; eax += c（第三个参数在栈上）
+mov  dword ptr [ebp-20], eax    ; sum = eax
+mov  eax, dword ptr [ebp-20]    ; 返回值
+pop  ebp
+ret  4                           ; 清理栈上的 1 个参数（c）
+```
+
+两个关键细节：
+
+1. **ecx/edx 落栈**：fastcall 的前两个参数走寄存器，但函数体里要用 ecx/edx 做别的事，所以开头先把它们存到栈上（`mov [ebp-8], ecx`、`mov [ebp-14], edx`）。之后通过 `[ebp-8]` 和 `[ebp-14]` 访问 a 和 b，和普通局部变量一样。
+
+2. **栈布局不同**：前两个参数在 `[ebp-8]` 和 `[ebp-14]`（局部变量区），第三个参数 c 在 `[ebp+8]`（参数区）。和 cdecl/stdcall 的 `[ebp+8]`/`[ebp+C]`/`[ebp+10]` 布局完全不同。`ret 4` 只清理 1 个参数，因为只有 c 在栈上。
+
+## 间接调用
+
+前面所有例子都是 `call <函数名>`，目标地址在编译时就确定了。但 C 语言有**函数指针**，调用哪个函数要等运行时才知道：
+
+```c
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+
+int apply(int (*op)(int, int), int x, int y) {
+    return op(x, y);
+}
+```
+
+`int (*op)(int, int)` 是函数指针的声明，读法是从里往外：
+
+- `op` 是变量名
+- `(*op)` 表示 op 是指针
+- `(int, int)` 表示指针指向的函数接受两个 int 参数
+- 最前面的 `int` 表示函数返回 int
+
+合起来：`op` 是一个指针，指向接受 `(int, int)` 且返回 `int` 的函数。调用 `op(x, y)` 时，程序先从 `op` 读出函数地址，再跳过去执行。`add` 和 `sub` 的函数名就是它们的地址（C 语言里函数名就是函数指针），可以把 `add` 传给 `apply`，也可以传 `sub`，运行时 `op` 指向哪个就调哪个。
+
+`op` 是函数指针，`op(x, y)` 在汇编里是**间接调用**：
+
+```asm
+; apply 函数，op 在 [ebp+8]，x 在 [ebp+C]，y 在 [ebp+10]
+push dword ptr [ebp+10]          ; 参数 y
+push dword ptr [ebp+C]           ; 参数 x
+call dword ptr [ebp+8]           ; 间接调用：从 [ebp+8] 读出函数地址，调用它
+add  esp, 8                      ; cdecl 清理
+```
+
+`call dword ptr [ebp+8]` 不是跳到一个固定地址，而是先从 `[ebp+8]` 读出一个地址，再跳过去。这就是函数指针调用的汇编形态。
+
+间接调用在逆向中非常常见，几种典型场景：
+
+| 汇编形式                      | 含义                           |
+| ----------------------------- | ------------------------------ |
+| `call eax`                    | eax 里存着函数地址（函数指针） |
+| `call dword ptr [ebp-X]`      | 从栈上读函数地址               |
+| `call dword ptr [eax+N]`      | 从结构体里读函数地址（虚函数） |
+| `call dword ptr [0x00XXXXXX]` | 从固定地址读函数地址（IAT）    |
+
+最后一行是 Windows 程序里最常见的模式：`call dword ptr [__imp__MessageBoxA]` 就是调用 IAT（导入地址表）里的 API。程序运行时，Windows 加载器把 API 的真实地址填进 IAT，程序通过间接调用跳过去。逆向时看到 `call dword ptr ds:[固定地址]`，跳过去看那个地址存的是什么，通常就是某个 API 函数指针。
+
+> [!NOTE] C++ 的 thiscall
+> 如果看到一个函数在调用前总是 `mov ecx, <某个地址>`，但又不是 fastcall（没有第二个参数走 edx），那大概率是 C++ 的成员函数调用。`ecx` 存的是 `this` 指针，指向对象本身。这种约定叫 thiscall，是 C++ 特有的。详见后面的 C++ 章节。
 
 ## 递归
 
-递归是理解函数调用栈的最佳场景，每递归一次，就在栈上叠加一层完整的栈帧。
-
-斐波那契递归：
+递归是函数调用栈叠加的最佳场景。每递归一次，就在栈上叠加一层完整的栈帧。
 
 ```c
-#include <stdio.h>
-
 int fib(int n) {
     if (n <= 1) {
         return n;
     }
     return fib(n - 1) + fib(n - 2);
 }
-
-int main(void) {
-    printf("%d\n", fib(5));
-    return 0;
-}
 ```
-
-MSVC 32 位 Debug 编译（关掉优化才能看到完整栈帧操作）：
 
 ```asm
-fib PROC
-    push    ebp
-    mov     ebp, esp
-    sub     esp, 8                      ; 局变量空间
-    mov     dword ptr [ebp-4], 0        ; 结果初始化为 0
-    cmp     dword ptr [ebp+8], 1        ; n <= 1?
-    jg      recurse                     ; 大于 1 则递归
-    mov     eax, dword ptr [ebp+8]      ; 返回 n 本身
-    jmp     done
+cmp  dword ptr [ebp+8], 1        ; n <= 1 ?
+jg   recurse                     ; 大于 1 则递归
+mov  eax, dword ptr [ebp+8]      ; 返回 n 本身
+jmp  done
 recurse:
-    mov     eax, dword ptr [ebp+8]
-    sub     eax, 1
-    push    eax                         ; 参数 n-1
-    call    fib                         ; fib(n-1)
-    add     esp, 4                      ; cdecl 清理
-    mov     dword ptr [ebp-4], eax      ; 保存 fib(n-1)
-    mov     eax, dword ptr [ebp+8]
-    sub     eax, 2
-    push    eax                         ; 参数 n-2
-    call    fib                         ; fib(n-2)
-    add     esp, 4                      ; cdecl 清理
-    add     eax, dword ptr [ebp-4]      ; fib(n-1) + fib(n-2)
+mov  eax, dword ptr [ebp+8]      ; eax = n
+sub  eax, 1                      ; eax = n - 1
+push eax                         ; 参数 n-1
+call fib                         ; fib(n-1)
+add  esp, 4                      ; cdecl 清理
+mov  esi, eax                    ; esi = fib(n-1)（保存第一个结果）
+mov  ecx, dword ptr [ebp+8]     ; ecx = n
+sub  ecx, 2                      ; ecx = n - 2
+push ecx                         ; 参数 n-2
+call fib                         ; fib(n-2)
+add  esp, 4                      ; cdecl 清理
+add  eax, esi                    ; eax = fib(n-2) + fib(n-1)
 done:
-    mov     esp, ebp
-    pop     ebp
-    ret
-fib ENDP
 ```
 
-<!-- 🎨 画图：fib(4) 的递归调用树，每个节点是一个 fib 调用，标注栈帧层数，展示栈的增长过程 -->
+这里有个重要细节：第一次调用 `fib(n-1)` 的结果存在 **esi** 里，而不是栈上。因为第二次调用 `fib(n-2)` 会覆盖 eax，必须先把第一个结果保存到别的地方。MSVC Debug 选择了 esi 寄存器（Release 可能用栈或直接优化掉）。
 
-调用 `fib(4)` 时的栈变化（简化版，只看关键帧）：
+调用 `fib(4)` 时的栈叠加（简化版）：
 
 ```
-调用 fib(4):
 ┌──────────────────┐  ← main 的栈帧
 │  main: ebp, ...  │
 ├──────────────────┤
-│  fib(4): ebp     │  ← 第 1 层
-│  [ebp-4] = ?     │
+│  fib(4): ebp     │  ← 第 1 层，n=4
+│  esi = ?         │
 ├──────────────────┤
-│  fib(3): ebp     │  ← 第 2 层（fib(4) 调用 fib(n-1)）
-│  [ebp-4] = ?     │
+│  fib(3): ebp     │  ← 第 2 层，n=3（fib(4) 调用 fib(n-1)）
+│  esi = ?         │
 ├──────────────────┤
-│  fib(2): ebp     │  ← 第 3 层
-│  [ebp-4] = ?     │
+│  fib(2): ebp     │  ← 第 3 层，n=2
+│  esi = ?         │
 ├──────────────────┤
-│  fib(1): ebp     │  ← 第 4 层
+│  fib(1): ebp     │  ← 第 4 层，n=1
 │  n=1, return 1   │  ← 基准条件，开始返回
 └──────────────────┘
 ```
 
-<!-- 📸 截图：x64dbg 中断点在 fib 函数入口，调用栈窗口显示多层 fib 嵌套调用 -->
+每一层的 `[ebp]` 都指向上一层的 ebp，形成 **ebp 链**。调试器的调用栈窗口就是沿这条链回溯的：从当前 ebp 出发，`[ebp]` 是上一层 ebp，`[ebp+4]` 是返回地址，一层一层往上就能遍历整个调用链。
 
-关键观察：
+> [!WARNING] 栈溢出
+> 递归没有终止条件或递归深度过大时，栈不断增长，最终超出栈空间限制就会栈溢出崩溃。Windows 默认栈大小 1MB，每个函数栈帧几百字节，理论上能递归几千层，但如果栈帧大或递归深度失控，很容易触发。逆向时看到程序崩溃在大量重复的 `push ebp` / `call` 序列上，要怀疑是递归导致的栈溢出。
 
-1. 每一层递归都有独立的 `[ebp-4]` 存自己的中间结果，互不干扰
-2. `push ebp` / `mov ebp, esp` 形成链表，每个 ebp 指向上一层的 ebp，这就是**栈帧链**
-3. 递归越深，栈越高，最终可能**栈溢出**（Stack Overflow），栈空间有限，Windows 默认 1MB
+> [!NOTE] 递归 vs 迭代的汇编识别
+> 递归在汇编里的特征是**函数内部 call 自身**（函数地址和入口地址相同）。迭代（循环）则是 `jmp` 回到函数内部某个标签，没有额外的 call 和栈帧叠加。看到一个函数内部有 `call <自身地址>`，就是递归；看到 `jmp <函数内标签>`，就是循环。递归的代价是每层都要 prologue/epilogue，比循环慢得多，Release 模式编译器可能会把尾递归优化成循环。
 
-**栈帧链的妙用：** 调试器的"调用栈"功能就是沿着 ebp 链回溯的。从当前 ebp 出发，`[ebp]` 是上一层 ebp，`[ebp+4]` 是返回地址，再从上一层 ebp 继续，就能遍历整个调用链。
+> [!NOTE] 尾调用优化
+> 当一个函数的最后一步是调用另一个函数（尾调用），编译器在 Release 模式下可能不生成 `call` + `ret`，而是直接生成一条 `jmp` 指令跳到目标函数。因为反正当前函数后面什么都不做了，不需要保存返回地址回来，直接让目标函数返回到当前函数的调用者就行。这叫尾调用优化（Tail Call Optimization）。逆向时单步调试（Step Over）看到 `jmp` 跳进另一个函数，而不是 `call`，不要奇怪，这就是尾调用优化。Debug 模式不优化，看到的还是正常的 `call`。
 
-## 实战追踪
+> [!NOTE] Security Cookie（栈保护）
+> 本章的汇编都是 Debug 模式输出。如果你切到 **Release 模式**，有栈缓冲区的函数（局部变量含数组）会多出一串"看起来多余"的代码：函数开头 `mov eax, <security_cookie>` 把一个随机值存到 `[ebp-4]`，函数结尾 `mov ecx, [ebp-4]` + `xor ecx, ebp` + `call __security_check_cookie` 检查这个值有没有被篡改。这是 MSVC 的 `/GS` 栈保护机制：如果发生缓冲区溢出覆盖了返回地址，cookie 也会被改掉，检查不通过就终止程序，防止攻击者利用溢出执行恶意代码。Debug 模式用 RTC 检查代替，所以看不到 cookie。详见后面的编译器优化章节。
 
-现在用 x64dbg 手动跟踪一次函数调用，亲眼看到栈和寄存器的变化。
+## 从汇编反推函数签名
 
-### 准备
+前面分别讲了返回值、调用约定、参数个数的识别。实际逆向时需要综合判断，从一个函数的汇编反推出完整的 C 函数签名。
 
-用下面的代码编译（Debug x86，关掉优化）：
+### 看什么
+
+1. **参数个数**：数 `push` 的次数（cdecl/stdcall）或 `mov ecx/edx` + `push` 的次数（fastcall），再看 `[ebp+8]` 到 `[ebp+?]` 用了哪些偏移
+2. **调用约定**：`ret` 带不带数字、call 后有没有 `add esp`、调用前有没有 `mov ecx/edx`
+3. **返回类型**：函数末尾 eax 还是 edx:eax 还是 ST(0)
+4. **参数类型**：`dword ptr` 是 int/指针，`word ptr` 是 short，`byte ptr` 是 char，`movss` 是 float，`movsd` 是 double
+
+### 综合示例
+
+```asm
+push ebp
+mov  ebp, esp
+mov  eax, dword ptr [ebp+8]
+imul eax, dword ptr [ebp+C]
+pop  ebp
+ret  8
+```
+
+逐步分析：
+
+- `[ebp+8]` 和 `[ebp+C]` 各用一次：2 个参数
+- `imul eax, [ebp+C]`：两个参数相乘，是 int
+- `ret 8`：被调者清理 8 字节（2 个 int），stdcall
+- `mov eax, ...`：返回值在 EAX，是 int
+
+还原出：
 
 ```c
-#include <stdio.h>
-
-int multiply(int a, int b) {
-    int result = a * b;
-    return result;
-}
-
-int main(void) {
-    int x = multiply(7, 6);
-    printf("%d\n", x);
-    return 0;
+int __stdcall func(int a, int b) {
+    return a * b;
 }
 ```
 
-```
-cl /Od /Zi multiply.c
-```
+### 常见模式速查
 
-`/Od` 关闭优化，`/Zi` 生成调试符号。
+| 汇编特征                       | 函数签名推断                               |
+| ------------------------------ | ------------------------------------------ |
+| `ret` + call 后 `add esp, N`   | cdecl，参数个数 = N/4                      |
+| `ret N`                        | stdcall，参数个数 = N/4                    |
+| `mov ecx/edx` + `ret N`        | fastcall，栈上参数 = N/4，总参数 = 2 + N/4 |
+| 函数末尾 `mov eax, <值>`       | 返回 int/指针                              |
+| `call __allmul` + edx:eax 有值 | 返回 long long                             |
+| 函数末尾 `fld`                 | 返回 float/double                          |
+| 函数内 `call <自身>`           | 递归函数                                   |
+| `[ebp+8]` 用 `dword ptr` 访问  | 第一个参数是 int/指针                      |
+| `[ebp+8]` 用 `movss` 访问      | 第一个参数是 float                         |
 
-### 跟踪步骤
+## 逆向识别清单
 
-1. x64dbg 打开编译出的 exe，在 `multiply` 函数入口设断点
-2. 运行到断点停下，观察寄存器和栈
+| 特征                          | 含义                            |
+| ----------------------------- | ------------------------------- |
+| `mov eax, <值>` 后 ret        | 32 位返回值在 EAX               |
+| `call __allmul` 等            | 64 位运算，返回值在 EDX:EAX     |
+| 函数末尾 `fld`                | 浮点返回值在 ST(0)              |
+| 函数末尾没设置 eax            | void 返回值                     |
+| `ret`（不带数字）             | cdecl，调用者清理栈             |
+| `ret N`                       | stdcall 或 fastcall，被调者清理 |
+| `call` 后有 `add esp, N`      | cdecl，参数个数 = N/4           |
+| `mov ecx` / `mov edx` 后 call | fastcall，前两个参数走寄存器    |
+| `call eax` / `call [ebp-X]`   | 间接调用（函数指针）            |
+| `call dword ptr [固定地址]`   | IAT 调用（Windows API）         |
+| `mov ecx` 后 call（无 edx）   | C++ thiscall，ecx = this 指针   |
+| 函数内 `call <自身>`          | 递归                            |
+| 函数内 `jmp <另一函数>`       | 尾调用优化（Release 模式）      |
+| `esi`/`edi` 保存 call 结果    | 多次调用之间保存中间值          |
 
-<!-- 📸 截图：x64dbg 断在 multiply 入口，寄存器窗口和栈窗口 -->
-
-3. **单步执行 `push ebp`**（按 F7）— 栈窗口中看到旧 ebp 被压入，ESP 减 4
-4. **单步执行 `mov ebp, esp`** — EBP 和 ESP 现在指向同一位置
-5. **单步执行 `sub esp, 4`** — ESP 减 4，栈窗口多出 4 字节空间（局部变量 result）
-6. **观察参数：** 在栈窗口看 `[ebp+8]` = 7，`[ebp+C]` = 6
-7. **单步到 `mov eax, dword ptr [ebp-4]`** — EAX 变成 42（7 × 6）
-8. **单步执行 `mov esp, ebp`** — ESP 回到 EBP 的位置，局部变量空间消失
-9. **单步执行 `pop ebp`** — 旧 ebp 恢复，ESP 加 4
-10. **单步执行 `ret`** — 返回地址弹出，EIP 跳回 main
-11. **回到 main 后** — 观察 `add esp, 8`（如果没优化），EAX = 42
-
-<!-- 📸 截图：x64dbg 栈窗口，标注每一步操作后 ESP 和栈内容的变化 -->
-
-**一定要亲手做一遍。** 看文字十遍不如在调试器里走一遍。你会对"函数调用就是栈的操作"这句话有身体层面的理解。
-
-### 检查点
-
-跟踪过程中确认以下事实：
-
-- [ ] 参数在 `[ebp+8]`、`[ebp+C]` 能正确读到 7 和 6
-- [ ] `push ebp` 后 ESP 减了 4，旧 ebp 出现在栈顶
-- [ ] `sub esp, 4` 后 ESP 又减了 4，`[ebp-4]` 是未初始化的随机值
-- [ ] 乘法后 EAX = 0x2A（42 的十六进制）
-- [ ] `pop ebp` 后 EBP 恢复为调用者的值
-- [ ] `ret` 后 EIP 跳回到 main 中 call 的下一条指令
+**函数调用逆向的核心**：看 `ret` 带不带数字判断调用约定，看函数末尾用什么寄存器判断返回类型，数 push 次数和 `[ebp+X]` 偏移判断参数个数。三者综合，就能还原出完整的 C 函数签名。
 
 ## 练习
 
-**练习 1：** 下面这段汇编，还原出 C 函数。它有几个参数？返回值是什么？
+1. 下面这段汇编的返回类型是什么？为什么？
 
-```asm
-func PROC
-    push    ebp
-    mov     ebp, esp
-    mov     eax, dword ptr [ebp+8]
-    add     eax, dword ptr [ebp+0Ch]
-    add     eax, dword ptr [ebp+10]
-    pop     ebp
-    ret     0Ch
-func ENDP
-```
+   ```asm
+   mov  eax, dword ptr [ebp+8]
+   cdq
+   mov  ecx, eax
+   mov  esi, edx
+   mov  eax, dword ptr [ebp+C]
+   cdq
+   push edx
+   push eax
+   push esi
+   push ecx
+   call __allmul
+   pop  ebp
+   ret
+   ```
 
-<details>
-<summary>答案</summary>
+   > [!NOTE]- 参考答案
+   >
+   > 返回 `long long`。`call __allmul` 是运行时库的 64 位乘法，结果在 `edx:eax`。函数末尾没有额外的 `mov eax`，直接用 `__allmul` 的返回值。`cdq` 把 32 位符号扩展到 64 位，说明两个参数是 `int`，返回值是 `long long`。
+   >
+   > ```c
+   > long long mul(int a, int b) {
+   >     return (long long)a * (long long)b;
+   > }
+   > ```
 
-3 个参数（`[ebp+8]`、`[ebp+C]`、`[ebp+10]`）。`ret 0Ch`（ret 12）说明被调者清理 12 字节（3 个 int），是 stdcall 约定。
+2. 下面这段汇编用了哪种调用约定？有几个参数？还原出 C 函数。
 
-```c
-int __stdcall func(int a, int b, int c) {
-    return a + b + c;
-}
-```
+   ```asm
+   push ebp
+   mov  ebp, esp
+   mov  eax, dword ptr [ebp+8]
+   add  eax, dword ptr [ebp+C]
+   add  eax, dword ptr [ebp+10]
+   pop  ebp
+   ret  0xC
+   ```
 
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > stdcall，3 个参数。`ret 0xC`（ret 12）说明被调者清理 12 字节（3 个 int）。`[ebp+8]`、`[ebp+C]`、`[ebp+10]` 各用一次，3 个参数都是 `int`。返回值在 eax。
+   >
+   > ```c
+   > int __stdcall func(int a, int b, int c) {
+   >     return a + b + c;
+   > }
+   > ```
 
-**练习 2：** 下面这段汇编用了哪种调用约定？为什么？
+3. 下面这段汇编用了 fastcall 约定，还原出 C 函数。注意栈布局和普通 cdecl 的区别。
 
-```asm
-; 调用点
-push    3
-push    2
-push    1
-call    mystery
-add     esp, 0Ch
+   ```asm
+   push ebp
+   mov  ebp, esp
+   mov  eax, ecx
+   add  eax, edx
+   add  eax, dword ptr [ebp+8]
+   pop  ebp
+   ret  4
+   ```
 
-; 函数
-mystery PROC
-    push    ebp
-    mov     ebp, esp
-    mov     eax, dword ptr [ebp+8]
-    imul    eax, dword ptr [ebp+0Ch]
-    add     eax, dword ptr [ebp+10]
-    pop     ebp
-    ret
-mystery ENDP
-```
+   > [!NOTE]- 参考答案
+   >
+   > fastcall，3 个参数。ECX 是第一个参数 a，EDX 是第二个参数 b，`[ebp+8]` 是第三个参数 c（在栈上）。`ret 4` 清理栈上的 1 个参数。注意 fastcall 的 `[ebp+8]` 是第三个参数而不是第一个，因为前两个走寄存器。
+   >
+   > ```c
+   > int __fastcall add3(int a, int b, int c) {
+   >     return a + b + c;
+   > }
+   > ```
 
-<details>
-<summary>答案</summary>
+4. 下面是一个递归函数的汇编，还原出 C 代码。它的功能是什么？
 
-cdecl。`ret` 不带参数（被调者不清理栈），调用点有 `add esp, 0Ch`（调用者清理 12 字节 = 3 个 int）。
+   ```asm
+   push ebp
+   mov  ebp, esp
+   cmp  dword ptr [ebp+8], 1
+   jle  base_case
+   mov  eax, dword ptr [ebp+8]
+   sub  eax, 1
+   push eax
+   call factorial
+   add  esp, 4
+   imul eax, dword ptr [ebp+8]
+   jmp  done
+   base_case:
+   mov  eax, 1
+   done:
+   pop  ebp
+   ret
+   ```
 
-```c
-int mystery(int a, int b, int c) {
-    return a * b + c;
-}
-```
-
-</details>
-
-**练习 3：** 下面这段汇编用了 fastcall 约定，还原出 C 函数：
-
-```asm
-fast_add PROC
-    push    ebp
-    mov     ebp, esp
-    mov     eax, ecx
-    add     eax, edx
-    add     eax, dword ptr [ebp+8]
-    pop     ebp
-    ret     4
-fast_add ENDP
-```
-
-<details>
-<summary>答案</summary>
-
-fastcall：ECX 是第一个参数，EDX 是第二个参数，栈上还有一个参数（`[ebp+8]`）。`ret 4` 说明被调者清理栈上的 1 个参数（4 字节）。
-
-```c
-int __fastcall fast_add(int a, int b, int c) {
-    return a + b + c;
-}
-```
-
-注意这里 `[ebp+8]` 不是返回地址后面的第一个参数，因为 fastcall 的前两个参数走寄存器，只有第三个参数在栈上。`[ebp+8]` 就是第三个参数 c。
-
-</details>
-
-**练习 4：** 下面是一个递归函数的汇编，还原出 C 代码。它的功能是什么？
-
-```asm
-factorial PROC
-    push    ebp
-    mov     ebp, esp
-    cmp     dword ptr [ebp+8], 1
-    jle     base_case
-    mov     eax, dword ptr [ebp+8]
-    sub     eax, 1
-    push    eax
-    call    factorial
-    add     esp, 4
-    imul    eax, dword ptr [ebp+8]
-    jmp     done
-base_case:
-    mov     eax, 1
-done:
-    pop     ebp
-    ret
-factorial ENDP
-```
-
-<details>
-<summary>答案</summary>
-
-阶乘函数。基准条件是 `n <= 1` 时返回 1。递归调用 `factorial(n-1)`，结果乘以 `n`。
-
-```c
-int factorial(int n) {
-    if (n <= 1) {
-        return 1;
-    }
-    return n * factorial(n - 1);
-}
-```
-
-关键识别点：
-
-1. 函数内部 `call factorial`（调用自身）-> 递归
-2. `cmp [ebp+8], 1` + `jle base_case` -> 基准条件 n <= 1
-3. `sub eax, 1` + `push eax` + `call factorial` -> 递归调用 factorial(n-1)
-4. `imul eax, [ebp+8]` -> 结果 × n
-5. `add esp, 4` + `ret` 不带参数 -> cdecl 约定
-
-</details>
+   > [!NOTE]- 参考答案
+   >
+   > 阶乘函数，cdecl 约定。函数内部 `call factorial`（调用自身）是递归。`cmp [ebp+8], 1` + `jle base_case` 是基准条件 `n <= 1`。`sub eax, 1` + `push eax` + `call` 是递归调用 `factorial(n-1)`。`imul eax, [ebp+8]` 是结果乘以 n。`add esp, 4` + `ret` 不带参数是 cdecl。
+   >
+   > ```c
+   > int factorial(int n) {
+   >     if (n <= 1) {
+   >         return 1;
+   >     }
+   >     return n * factorial(n - 1);
+   > }
+   > ```
