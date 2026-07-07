@@ -249,8 +249,14 @@ mov  eax, dword ptr [ebp-D0]         ; eax = 返回值
 - 两个指针（`[ebp+8]` 和 `[ebp+C]`）同时推进
 - `end` 标签后还有一次 `cmp`：循环退出时 `a[i] != b[i]` 或 `a[i] == '\0'`，最终返回值由 `a[i] == b[i]` 决定
 
-> [!NOTE] 汇编基础章的字符串指令
-> 汇编基础章讲了 `repne scasb`、`rep movsb` 等 x86 字符串指令。这些是 CPU 硬件提供的批量操作，编译器在 Release 模式或内联 `strcmp`/`memcpy` 时可能用到。但 Debug 模式下 MSVC 通常生成上面的循环形式，逐字节操作。
+> [!NOTE] Debug vs Release
+> 本章的 `strlen`、`strcmp`、`strcpy` 汇编都是 **Debug 模式**的输出，逐字节循环。切到 **Release 模式**后，编译器会大幅优化：
+>
+> - `strcpy` 的循环可能变成一条 `rep movsb`（CPU 硬件批量拷贝指令）
+> - `strlen` 可能变成 `repne scasb` 或更激进的 SIMD 向量化扫描
+> - `strcmp` 可能被内联展开，根本不调用函数
+>
+> 这些指令在汇编基础章讲过。逆向 Release 程序时看到 `rep movsb` / `repne scasb`，要想起来它们就是优化后的字符串拷贝/扫描。
 
 ### 字符串长度
 
@@ -285,6 +291,9 @@ mov  eax, dword ptr [ebp-8]         ; 返回 len
 `test reg, reg` + `je` 是检查 `\0` 的标准模式，`\0` 就是 0，`test` 检查零值，为零则跳出。
 
 注意这里用的是 `movsx`（符号扩展）而不是 `movzx`（零扩展）。对于 `\0` 检测两者效果一样（0 扩展完还是 0），但 MSVC Debug 模式默认用 `movsx`，因为 `char` 在 C 里可以是有符号的。
+
+> [!TIP] 实战中的 strlen 不是这样的
+> 上面这段逐字节循环只是原理演示。真实的 CRT（C Runtime）实现会一次检查 4 字节甚至更多，用 `0x7EFEFEFF` 等魔法数字配合位运算快速判断这 4 字节里有没有 `\0`。逆向时如果看到 `0x7EFEFEFF`、`0x01010101` 这类常量，那是高度优化的字符串扫描代码，不是逐字节的循环。
 
 ### 字符串拷贝
 
@@ -328,6 +337,9 @@ mov  byte ptr [eax], 0              ; dst[i] = '\0'
 和 `strlen`、`strcmp` 相比，`strcpy` 多了一步**写回**：读 `src[i]` 用 `movsx` 符号扩展到 32 位（因为要 `test` 检查零值），但拷贝时用 `mov dl, byte ptr [ecx]` + `mov byte ptr [eax], dl` 逐字节搬运。循环退出后还要补一个 `mov byte ptr [eax], 0` 写结尾的 `\0`。
 
 识别要点：**两个指针交替读写**，一个 `byte ptr` 读、另一个 `byte ptr` 写，就是字符串拷贝。
+
+> [!WARNING] 缓冲区溢出
+> 注意上面的汇编里，循环只检查 `src[i] == '\0'` 决定何时停止，**完全不知道 `dst` 有多大**。如果 `src` 比 `dst` 的缓冲区长，写操作会越过 `dst` 的边界，覆盖相邻的栈变量、返回地址甚至其他函数的数据。这就是经典的**缓冲区溢出**漏洞，很多 CTF Pwn 题和真实 CVE 的根源。逆向时看到 `strcpy` 的循环模式，要留意调用方是否检查了长度，有没有用 `strncpy` 等带长度限制的版本。
 
 ## 逆向识别清单
 
