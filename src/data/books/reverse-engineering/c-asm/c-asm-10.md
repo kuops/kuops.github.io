@@ -5,7 +5,7 @@ description: 结构体在内存里就是一段连续空间，字段按声明顺�
 order: 20
 ---
 
-上一章学了函数调用的汇编形态。这一章学**结构体**：C 里写 `struct Player { int hp; int mp; int level; };`、`p.hp = 100;`、`p->mp = 50;`，编译器翻译成什么。
+上一章学了函数调用的汇编形态。这一章学**结构体**：C 里写 `struct Player { int hp; int mp; int level; };`、`p.hp = 100;`、`p->mp` 用指针访问字段，编译器翻译成什么。
 
 和前几章一样，编译 Debug x86，用 x64dbg 断到函数对照。汇编只保留结构体访问相关的核心指令，过滤掉 Debug 噪音。
 
@@ -27,7 +27,40 @@ void fill_player(struct Player *p) {
 }
 ```
 
-`struct Player { ... };` 只是定义类型模板，告诉编译器"Player 由三个 int 组成"，不分配内存。只有声明变量时才分配，比如 `struct Player p;` 在栈上分 12 字节，`static struct Player g;` 在全局区分 12 字节。汇编里不会出现类型名 `Player`，编译器只关心变量的大小和偏移。
+`struct Player { ... };` 只是定义类型模板，告诉编译器"Player 由三个 int 组成"，不分配内存。只有声明变量时才分配。结构体变量和结构体指针是两种常见用法：
+
+```c
+// 结构体变量: 在栈上分 12 字节, 用 . 访问字段
+struct Player p;
+p.hp = 100;           // 直接写值
+
+// 结构体指针: 不分配结构体, 只存一个地址, 用 -> 访问字段
+struct Player *ptr = &p;
+ptr->hp = 200;        // 通过地址写值, 等价于 (*ptr).hp = 200
+
+// 也可以在堆上分配, 用完要 free
+struct Player *heap = (struct Player *)malloc(sizeof(struct Player));
+heap->hp = 300;
+free(heap);
+```
+
+`p.hp`（点号）和 `ptr->hp`（箭头）在 C 里是两种不同的写法，但汇编层面都是 `[基地址 + 偏移]`，区别只在基地址怎么来：
+
+```c
+// 结构体变量，p 在栈上，基地址是 lea 计算出的栈地址
+struct Player p;
+p.hp = 100;        // mov dword ptr [ebp-X], 0x64
+
+// 结构体指针，p 是参数，基地址从参数读出来
+void fill(struct Player *p) {
+    p->hp = 100;   // mov eax, [ebp+8]; mov dword ptr [eax], 0x64
+}
+```
+
+逆向中更常见的是指针形式，因为结构体通常通过指针传递给函数。汇编里不会出现类型名 `Player`，编译器只关心变量的大小和偏移。
+
+> [!NOTE] `*` 写在哪里
+> `struct Player *ptr` 和 `struct Player* ptr` 完全等价，C 不区分 `*` 靠左还是靠右。本书统一用 `struct Player *ptr`（`*` 靠变量名），和大部分 C 代码风格一致。
 
 ```asm
 ; fill_player 函数，p 在 [ebp+8]
@@ -49,28 +82,6 @@ mov  dword ptr [eax+8], 1        ; p->level = 1（偏移 8）
 
 > [!NOTE] Debug 模式反复读 [ebp+8]
 > 上面每条赋值前都有一条 `mov eax, dword ptr [ebp+8]`，看起来多余。Release 模式会只读一次 `eax = p`，后续直接用 eax。Debug 模式不做优化，所以每步都重新从栈上读参数。
-
-### 点号访问和箭头访问
-
-C 里有两种访问结构体字段的方式：
-
-- `p.hp`：p 是结构体变量（直接在栈上或全局区）
-- `p->hp`：p 是结构体指针，`->` 的意思是"先解引用取内容，再访问字段"，等价于 `(*p).hp`
-
-汇编层面两者都是 `[基地址 + 偏移]`，区别只在基地址怎么来：
-
-```c
-// 结构体变量，p 在栈上，基地址是 lea 计算出的栈地址
-struct Player p;
-p.hp = 100;        // mov dword ptr [ebp-X], 0x64
-
-// 结构体指针，p 是参数，基地址从参数读出来
-void fill(struct Player *p) {
-    p->hp = 100;   // mov eax, [ebp+8]; mov dword ptr [eax], 0x64
-}
-```
-
-逆向中更常见的是指针形式，因为结构体通常通过指针传递给函数。
 
 ## 内存对齐
 
@@ -294,6 +305,69 @@ struct Entity {
 > [!TIP] IDA 的结构体功能
 > IDA Pro 支持 Shift+F1 打开结构体窗口，创建自定义结构体定义，然后把指针变量 Retype 为 `struct_name *`，Hex-Rays 伪代码里的 `*(DWORD*)(a1+8)` 会立刻变成 `a1->field_name`。详见后面的破解篇。
 
+## 柔性数组
+
+C99 允许结构体最后一个字段写成 `char data[]`，不指定大小。这叫**柔性数组**（Flexible Array Member）。它不占 `sizeof`，栈上声明时 `data` 没有空间，必须用 `malloc` 多分一段挂在尾部：
+
+```c
+struct Packet {
+    int  length;    // 偏移 0, 4 字节
+    char data[];    // 柔性数组, sizeof 不算它
+};
+
+// sizeof(struct Packet) == 4
+
+// 柔性数组必须用堆: malloc 多分 N 字节给 data
+struct Packet *pkt = (struct Packet *)malloc(sizeof(struct Packet) + 5);
+// pkt->length 在偏移 0, pkt->data[0] 到 data[4] 在偏移 4-8
+```
+
+栈上只分 `sizeof`（4 字节，不含 `data`），堆上可以 `malloc(sizeof + N)` 多分。柔性数组必须用堆。
+
+看一个完整的例子：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void fill_packet(struct Packet *pkt, const char *payload, int len) {
+    pkt->length = len;
+    for (int i = 0; i < len; i++) {
+        pkt->data[i] = payload[i];
+    }
+}
+
+int main() {
+    struct Packet *pkt = (struct Packet *)malloc(sizeof(struct Packet) + 5);
+    fill_packet(pkt, "Hello", 5);
+    printf("length=%d data=%c%c%c%c%c\n",
+           pkt->length, pkt->data[0], pkt->data[1],
+           pkt->data[2], pkt->data[3], pkt->data[4]);
+    free(pkt);
+    return 0;
+}
+```
+
+`fill_packet` 往 `data` 里逐字节拷贝：
+
+```asm
+; fill_packet 函数, pkt 在 [ebp+8], payload 在 [ebp+C], len 在 [ebp+10]
+mov  eax, dword ptr [ebp+8]       ; eax = pkt
+mov  ecx, dword ptr [ebp+10]      ; ecx = len
+mov  dword ptr [eax], ecx         ; pkt->length = len (偏移 0)
+; ... 循环 ...
+mov  eax, dword ptr [ebp+8]       ; eax = pkt
+add  eax, dword ptr [ebp-8]       ; eax = pkt + i
+mov  ecx, dword ptr [ebp+C]       ; ecx = payload
+add  ecx, dword ptr [ebp-8]       ; ecx = payload + i
+mov  dl, byte ptr [ecx]           ; dl = payload[i]
+mov  byte ptr [eax+4], dl         ; pkt->data[i] = dl (偏移 4+i)
+```
+
+关键看 `mov byte ptr [eax+4], dl`。`eax` 是 `pkt + i`，加 4 是因为 `data` 从偏移 4 开始（`length` 占了前 4 字节）。`i=0` 时写 `[pkt+4]`，`i=4` 时写 `[pkt+8]`。`sizeof(struct Packet)` 只有 4，但访问到了偏移 8。这就是柔性数组的特征：**访问偏移超出 `sizeof`**。逆向时看到这种现象，说明结构体尾部挂了变长数据。
+
+柔性数组在协议头、游戏封包、C2 通信里非常常见：前面是固定头部（长度、类型、标志位等），后面跟着变长 payload。
+
 ## 逆向识别清单
 
 | 特征                               | 含义                                   |
@@ -305,6 +379,8 @@ struct Entity {
 | `[reg+offset]` 偏移不连续          | 对齐 padding（字段间有空洞）           |
 | 偏移 0、4 一组 + 8、C 一组         | 可能是嵌套结构体（两个内层结构体）     |
 | `mov byte ptr [reg], val`          | 偏移 0 是 char 字段                    |
+| 密集 `and`/`or`/`shr` 访问同一字段 | 可能是位域（详见 c-asm-12）            |
+| 访问偏移远超 `sizeof`              | 柔性数组（尾部挂变长数据）             |
 
 **结构体逆向的核心**：收集所有 `[reg+offset]` 访问，按偏移排列，用访问大小推断字段类型，补上对齐 padding，还原出完整结构体定义。
 
@@ -370,7 +446,7 @@ struct Entity {
    > };
    > ```
 
-3. 下面这段汇编的偏移分为两组，每组两个 dword，像是两个坐标点。还原出嵌套结构体定义。
+3. 下面这段汇编和练习 1 完全相同，但换一个角度：偏移分为两组，每组两个 dword，像是两个坐标点。还原出嵌套结构体定义。
 
    ```asm
    push ebp
