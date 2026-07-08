@@ -29,11 +29,11 @@ int add(int a, int b) {
 ```asm
 mov  eax, dword ptr [ebp+8]     ; eax = a
 add  eax, dword ptr [ebp+C]     ; eax = a + b
-mov  dword ptr [ebp-4], eax     ; sum = eax（存到局部变量）
-mov  eax, dword ptr [ebp-4]     ; 返回值放 eax（重新读出来）
+mov  dword ptr [ebp-8], eax     ; sum = eax（存到局部变量）
+mov  eax, dword ptr [ebp-8]     ; 返回值放 eax（重新读出来）
 ```
 
-最后那条 `mov eax, [ebp-4]` 看起来多余：明明 eax 已经是 `a + b` 了，为什么要存回去再读出来？因为 MSVC Debug 模式不优化，C 代码写了 `return sum`，编译器就老老实实从 `sum` 的栈位置读一遍。Release 模式会直接用 eax 里的值，省掉这两条指令。
+最后那条 `mov eax, [ebp-8]` 看起来多余：明明 eax 已经是 `a + b` 了，为什么要存回去再读出来？因为 MSVC Debug 模式不优化，C 代码写了 `return sum`，编译器就老老实实从 `sum` 的栈位置读一遍。Release 模式会直接用 eax 里的值，省掉这两条指令。
 
 逆向时看到函数末尾 `mov eax, <某个值>` 后面紧跟 epilogue，就是返回值。
 
@@ -102,7 +102,8 @@ void log_message(const char *msg) {
 ```
 
 ```asm
-push dword ptr [ebp+8]          ; 参数 msg
+mov  eax, dword ptr [ebp+8]      ; 参数 msg
+push eax                         ; 入栈
 push offset ??_C@...@LOG?3?5?$CFs?6@  ; "LOG: %s\n"
 call _printf
 add  esp, 8
@@ -143,8 +144,8 @@ add  esp, 0xC                    ; cdecl：调用者清理 3 个参数（12 字�
 
 每次调用 `printf`，`add esp` 的数字都不同，取决于压了几个参数。如果是 stdcall，`ret N` 的 N 写死在函数里，没法适应不同参数个数。
 
-> [!NOTE] 为什么 Windows API 用 stdcall 而不用 cdecl
-> Windows API 函数的参数个数是固定的（如 `MessageBoxA` 永远是 4 个参数），不存在可变参数的问题。stdcall 让被调者清理栈，调用方不用每次写 `add esp`，代码更紧凑。Windows 系统 DLL 里有大量 API 调用，省下几条指令累积起来是很可观的体积节省。所以 Windows API 选了 stdcall，而 C 语言的 `printf` 之类可变参数函数只能用 cdecl。
+> [!NOTE] 为什么 Windows API 大部分用 stdcall
+> 绝大多数 Windows API 函数参数个数固定（如 `MessageBoxA` 永远是 4 个参数），stdcall 让被调者清理栈，调用方不用每次写 `add esp`，代码更紧凑。Windows 系统 DLL 里有大量 API 调用，省下几条指令累积起来是可观的体积节省。但也有例外：`wsprintf`、`wvsprintf` 等可变参数 API 用的是 cdecl，因为参数个数由调用方决定，被调者没法在 `ret N` 里写死 N。cdecl 至今仍是 C/C++ 默认调用约定。
 
 ## fastcall 被调者内部
 
@@ -205,22 +206,26 @@ int apply(int (*op)(int, int), int x, int y) {
 
 ```asm
 ; apply 函数，op 在 [ebp+8]，x 在 [ebp+C]，y 在 [ebp+10]
-push dword ptr [ebp+10]          ; 参数 y
-push dword ptr [ebp+C]           ; 参数 x
-call dword ptr [ebp+8]           ; 间接调用：从 [ebp+8] 读出函数地址，调用它
-add  esp, 8                      ; cdecl 清理
+mov  eax, dword ptr [ebp+8]       ; 把 op（函数地址）读到 eax
+mov  dword ptr [ebp-0C4], eax     ; 存到局部变量（Debug 模式习惯）
+mov  ecx, dword ptr [ebp+10]      ; ecx = y
+push ecx                          ; 参数 y
+mov  edx, dword ptr [ebp+C]       ; edx = x
+push edx                          ; 参数 x
+call dword ptr [ebp-0C4]          ; 间接调用：从局部变量读出函数地址，调用它
+add  esp, 8                       ; cdecl 清理
 ```
 
-`call dword ptr [ebp+8]` 不是跳到一个固定地址，而是先从 `[ebp+8]` 读出一个地址，再跳过去。这就是函数指针调用的汇编形态。
+`call dword ptr [ebp-0C4]` 不是跳到一个固定地址，而是先从局部变量读出函数地址，再跳过去。这就是函数指针调用的汇编形态。Debug 模式把参数 `op` 先复制到局部变量 `[ebp-0C4]` 再通过它间接调用，Release 模式会省掉这一步，直接 `call dword ptr [ebp+8]`。
 
 间接调用在逆向中非常常见，几种典型场景：
 
-| 汇编形式                      | 含义                           |
-| ----------------------------- | ------------------------------ |
-| `call eax`                    | eax 里存着函数地址（函数指针） |
-| `call dword ptr [ebp-X]`      | 从栈上读函数地址               |
-| `call dword ptr [eax+N]`      | 从结构体里读函数地址（虚函数） |
-| `call dword ptr [0x00XXXXXX]` | 从固定地址读函数地址（IAT）    |
+| 汇编形式                  | 含义                           |
+| ------------------------- | ------------------------------ |
+| `call eax`                | eax 里存着函数地址（函数指针） |
+| `call dword ptr [ebp-X]`  | 从栈上读函数地址               |
+| `call dword ptr [eax+N]`  | 从结构体里读函数地址（虚函数） |
+| `call dword ptr [XXXXXX]` | 从固定地址读函数地址（IAT）    |
 
 最后一行是 Windows 程序里最常见的模式：`call dword ptr [__imp__MessageBoxA]` 就是调用 IAT（导入地址表）里的 API。程序运行时，Windows 加载器把 API 的真实地址填进 IAT，程序通过间接调用跳过去。逆向时看到 `call dword ptr ds:[固定地址]`，跳过去看那个地址存的是什么，通常就是某个 API 函数指针。
 
@@ -374,6 +379,8 @@ int __stdcall func(int a, int b) {
 1. 下面这段汇编的返回类型是什么？为什么？
 
    ```asm
+   push ebp
+   mov  ebp, esp
    mov  eax, dword ptr [ebp+8]
    cdq
    mov  ecx, eax
