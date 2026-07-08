@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 200" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">struct Rect 内存布局 (嵌套结构体, sizeof=20)</text>
+
+  <!-- 外层字段分组标签 -->
+  <g transform="translate(30, 55)">
+    <text x="120" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">top_left</text>
+    <text x="360" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">bottom_right</text>
+    <text x="540" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">color</text>
+  </g>
+
+  <!-- Offset labels -->
+  <g transform="translate(30, 72)">
+    <text x="60" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">0-3</text>
+    <text x="180" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">4-7</text>
+    <text x="300" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">8-B</text>
+    <text x="420" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">C-F</text>
+    <text x="540" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">10-13</text>
+  </g>
+
+  <!-- 字段矩形: 每字节 60px, 5 个 int 各 120px -->
+  <g transform="translate(30, 80)">
+    <!-- top_left.x: offset 0-3 -->
+    <rect x="0" y="0" width="120" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="60" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">x</text>
+    <text x="60" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">int</text>
+
+    <!-- top_left.y: offset 4-7 -->
+    <rect x="120" y="0" width="120" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="180" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">y</text>
+    <text x="180" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">int</text>
+
+    <!-- bottom_right.x: offset 8-B -->
+    <rect x="240" y="0" width="120" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="300" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">x</text>
+    <text x="300" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">int</text>
+
+    <!-- bottom_right.y: offset C-F -->
+    <rect x="360" y="0" width="120" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="420" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">y</text>
+    <text x="420" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">int</text>
+
+    <!-- color: offset 10-13 -->
+    <rect x="480" y="0" width="120" height="48" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="540" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">color</text>
+    <text x="540" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">int</text>
+  </g>
+
+  <!-- 汇编映射 -->
+  <g transform="translate(30, 150)">
+    <text x="60" y="0" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">[eax]</text>
+    <text x="180" y="0" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">[eax+4]</text>
+    <text x="300" y="0" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">[eax+8]</text>
+    <text x="420" y="0" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">[eax+C]</text>
+    <text x="540" y="0" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">[eax+10]</text>
+  </g>
+
+  <!-- 低/高地址 -->
+  <g transform="translate(30, 175)">
+    <text x="60" y="0" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">低地址</text>
+    <text x="540" y="0" font-size="11" font-weight="bold" text-anchor="middle" fill="#64748b">高地址</text>
+  </g>
+
+</svg>
