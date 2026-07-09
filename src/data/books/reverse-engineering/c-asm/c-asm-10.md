@@ -80,6 +80,9 @@ mov  dword ptr [eax+8], 1        ; p->level = 1（偏移 8）
 
 编译器把 `p->hp` 翻译成 `[eax+0]`，`p->mp` 翻译成 `[eax+4]`，`p->level` 翻译成 `[eax+8]`。字段名在汇编层面消失了，只剩下偏移。
 
+> [!NOTE] 游戏逆向的结构体
+> 游戏里的玩家、NPC、怪物、物品全都是结构体。你在 CE 或 x64dbg 里看到 `[base + 0x10]` 是血量、`[base + 0x14]` 是蓝量、`[base + 0x18]` 是等级，这就是一个 `struct Player`。逆向游戏的本质就是猜结构体定义：收集所有偏移访问，按偏移排列，用 `byte/word/dword ptr` 推断字段类型，补上 padding，还原出完整的 C 结构体。
+
 > [!NOTE] Debug 模式反复读 [ebp+8]
 > 上面每条赋值前都有一条 `mov eax, dword ptr [ebp+8]`，看起来多余。Release 模式会只读一次 `eax = p`，后续直接用 eax。Debug 模式不做优化，所以每步都重新从栈上读参数。
 
