@@ -438,7 +438,26 @@ mov  eax, dword ptr [ebp-0C]
 >
 > 游戏网络包经常用 tagged union：包头有 `type` 字段标识包类型，`data` 字段是联合体，type=1 时按 int 读（伤害值），type=2 时按 float 读（坐标），type=3 时按 struct 读（物品信息）。逆向时看到同一个偏移在不同分支里用不同 `ptr` 大小访问，就是联合体。
 >
-> 上面的 `struct Packet` 用的是**具名联合体**（`p.data.int_val`）。C 和 C++ 还支持**匿名联合体**，省略成员名，直接写 `p.int_val` 或 `p.float_val`。汇编上两者完全一样，都是同一偏移的多种类型访问，区别只在源代码写法。
+> 上面的 `struct Packet` 用的是**具名联合体**，联合体有个变量名 `data`，访问时必须写 `p.data.int_val`。
+>
+> C 和 C++ 还支持**匿名联合体**，省略变量名，联合体成员直接提升到外层结构体：
+
+```c
+struct Packet2 {
+    int type;
+    union {                // 没有 data
+        int   int_val;
+        float float_val;
+        char  str[4];
+    };
+};
+
+// 匿名联合体：直接 p.int_val，不用 p.data.int_val
+p2.int_val = 0xDEADBEEF;
+p2.float_val = 2.0f;
+```
+
+具名和匿名在汇编上完全一样，`int_val` 和 `float_val` 都在偏移 4。区别只在 C 代码写法：具名多一层 `.data`，匿名直接访问。逆向时无法区分两者。
 
 ## 从汇编反推位域与联合体
 
