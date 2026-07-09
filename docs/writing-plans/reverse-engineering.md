@@ -67,10 +67,10 @@ src/data/books/reverse-engineering/
 | — | ~~asm-memory.md~~ | ~~字符串、内存与交叉引用~~ | 🗑️ 已删除 | 内容属逆向实操，移至破解篇 |
 | 34 | c-asm-11.md | 枚举与类型转换 | ✅ 草稿完成 | 新增章，枚举/隐式转换/强转/指针强转/函数指针强转/UB，汇编全部 dumpbin 验证 |
 | 35 | c-asm-12.md | 位域与联合体 | ✅ 草稿完成 | 位域(读-改-写/shr+and)/联合体(同一地址混用ptr)/结构体里联合体/反推，汇编全部 dumpbin 验证 |
-| 36 | c-asm-13.md | 编译器优化与 Release 形态 | 待写 | |
-| 37 | c-asm-14.md | x86-64 汇编形态 | 待写 | |
-| 38 | c-asm-15.md | C++ this 指针与成员访问 | 待写 | 游戏逆向门槛，最高优先级 |
-| 39 | c-asm-16.md | 虚函数表与多态 | 待写 | |
+| 36 | c-asm-13.md | x86-64 汇编形态 | 待写 | |
+| 37 | c-asm-14.md | C++ this 指针与成员访问 | 待写 | 游戏逆向门槛，最高优先级 |
+| 38 | c-asm-15.md | 虚函数表与多态 | 待写 | |
+| 39 | c-asm-16.md | 编译器优化与 Release 形态 | 待写 | |
 | 40 | c-asm-17.md | STL 与 C++ 逆向实战 | 待写 | |
 
 **c-asm 章节的待办事项：**
@@ -117,13 +117,13 @@ src/data/books/reverse-engineering/
 |---|---|---|---|
 | 34 | c-asm-11.md | 枚举与类型转换 | 枚举（汇编层面就是整数，编译后和 #define 无区别）；隐式转换（整数提升、int↔double、char↔int）；显式强转语法；指针强转（int*↔char*、int(*)[N] 切行宽）；int 与字符串互转（reinterpret/union 两种路子）；函数指针强转；严格别名与 UB 边界 |
 | 35 | c-asm-12.md | 位域与联合体 | 位域（游戏状态标志位高频用法，呼应 asm-logic）；联合体（同内存多种解读，呼应强转章 union 路子）；取/设/清状态位 |
-| 36 | c-asm-13.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；sizeof 是编译期消除（不产生指令）；看懂 Release 反汇编的策略 |
-| 37 | c-asm-14.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
-| 38 | c-asm-15.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
-| 39 | c-asm-16.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |
+| 36 | c-asm-13.md | x86-64 汇编形态 | 64 位寄存器扩展（RAX/R8-R15）；fastcall 约定（前 6 参数走寄存器）；64 位栈帧 [rsp+N]；MOVSX/MOVZX 更频繁；何时遇到 x64（现代游戏/系统 DLL/驱动） |
+| 37 | c-asm-14.md | C++ this 指针与成员访问 | thiscall 约定（ecx=this）；`obj.method()`→`lea ecx,[obj]; call method`；`[ecx+offset]` 访问成员；构造/析构函数汇编；new/delete vs malloc/free；this 与多级指针 |
+| 38 | c-asm-15.md | 虚函数表与多态 | vtable 内存布局（对象首 4 字节=vptr）；`virtual func()`→`mov eax,[ecx]; call [eax+offset]`；继承链内存布局；多继承 vtable；RTTI/dynamic_cast；引擎 UObject/Entity 布局 |
+| 39 | c-asm-16.md | 编译器优化与 Release 形态 | Debug vs Release；常量折叠/死代码消除/循环展开；寄存器分配差异；内联/尾调用；sizeof 是编译期消除（不产生指令）；看懂 Release 反汇编的策略 |
 | 40 | c-asm-17.md | STL 与 C++ 逆向实战 | std::string/vector/map 内存布局；迭代器汇编形态；异常处理(try/catch)结构；模板实例化；综合实战（逆向 C++ 程序 + ReClass.NET 还原类结构） |
 
-> **优先级**：c-asm-15 (this 指针) 最高 — 这是从"看得懂 C"到"看得懂游戏"的分水岭，FLARE 和 kovidomi 都强调 C++ 是游戏逆向必学。
+> **优先级**：c-asm-14 (this 指针) 是游戏逆向分水岭，FLARE 和 kovidomi 都强调 C++ 是游戏逆向必学，但按阅读顺序先写 c-asm-13 (x86-64)。
 
 ### 工具穿插策略
 
@@ -178,10 +178,10 @@ src/data/books/reverse-engineering/
 
 ## 四、下一步优先级
 
-1. **c-asm-15 C++ this 指针** — 最大缺口，游戏逆向门槛
-2. **c-asm-16 虚函数表** — 紧接 this，C++ 逆向核心
-3. **c-asm-14 x86-64** — 补全 64 位
-4. **c-asm-13 编译器优化与 Release 形态** — 待写
+1. **c-asm-13 x86-64** — 补全 64 位，紧接 C 基础
+2. **c-asm-14 C++ this 指针** — 游戏逆向门槛，C++ 逆向核心
+3. **c-asm-15 虚函数表** — 紧接 this
+4. **c-asm-16 编译器优化与 Release 形态** — 总结收尾，依赖前面所有 Debug 形态
 5. **cracking-1/2** — 破解篇地基（方法论 + PE），含原 asm-memory.md 内容
 6. **game-1 CE 入门** — 游戏篇起点
 7. 其余按篇内顺序推进
