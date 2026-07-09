@@ -122,6 +122,88 @@ add  esp, 8
 | 指针           | EAX     | 和 int 一样                           |
 | void           | 无      | 函数末尾没有设置返回值                |
 
+## 参数类型与整数提升
+
+返回值的类型决定 EAX 还是 EDX:EAX，那参数的类型呢？`int`、`char`、`short`、`float` 在传参时有什么区别？
+
+### char 和 short 提升到 int
+
+C 标准规定，`char` 和 `short` 在传参时**自动提升到 `int`**。调用方 `push` 的永远是 4 字节，不是 1 字节或 2 字节：
+
+```c
+void take_char(char c) { ... }
+void take_short(short s) { ... }
+
+take_char('A');       // 'A' = 0x41
+take_short(300);      // 300 = 0x12C
+```
+
+```asm
+; 调用方
+push 0x41             ; take_char('A')，push 的是 4 字节
+call take_char
+add  esp, 4
+
+push 0x12C            ; take_short(300)，push 的也是 4 字节
+call take_short
+add  esp, 4
+```
+
+无论参数是 `char`（1 字节）还是 `short`（2 字节），调用方都是 `push` 一个 4 字节的 `int`。这是整数提升（integer promotion）：小于 `int` 的类型在传参时自动提升到 `int`。
+
+### 被调方按原始类型读取
+
+调用方总是 push 4 字节，但被调方知道参数的真实类型，会按原始类型宽度读取：
+
+```asm
+take_char:
+    push ebp
+    mov  ebp, esp
+    ...
+    movsx eax, byte ptr [ebp+8]    ; 按 char 读 1 字节，符号扩展到 int
+    ...
+
+take_short:
+    push ebp
+    mov  ebp, esp
+    ...
+    movsx eax, word ptr [ebp+8]    ; 按 short 读 2 字节，符号扩展到 int
+    ...
+```
+
+`take_char` 用 `byte ptr [ebp+8]` 读 1 字节再 `movsx` 扩展到 32 位；`take_short` 用 `word ptr [ebp+8]` 读 2 字节再 `movsx` 扩展。两者都从 `[ebp+8]` 读，但 `ptr` 大小不同。
+
+### 混合参数
+
+```c
+void take_char_short(char c, short s) { ... }
+
+take_char_short('A', 300);
+```
+
+```asm
+; 调用方
+push 0x12C            ; 第二参数 short 300，push 4 字节
+push 0x41             ; 第一参数 char 'A'，push 4 字节
+call take_char_short
+add  esp, 8
+
+; 被调方
+take_char_short:
+    ...
+    movsx eax, word ptr [ebp+0C]    ; 第二参数 short（偏移 +0xC）
+    movsx ecx, byte ptr [ebp+8]     ; 第一参数 char（偏移 +8）
+    ...
+```
+
+两个参数各占 4 字节栈空间，`char` 在 `[ebp+8]`，`short` 在 `[ebp+0C]`。即使 `char` 只用 1 字节，栈上仍然占 4 字节。
+
+> [!IMPORTANT] 参数类型识别
+> 32 位 cdecl 下 char、short、int 参数都占 4 字节栈空间（整数提升）。参数类型的线索在被调方：`byte ptr` 读 char，`word ptr` 读 short，`dword ptr` 读 int/指针，`movss` 读 float，`movsd` 读 double。调用方只能看到一堆 `push`，无法区分类型。`long long` 是例外，占 8 字节，用两个 4 字节槽。
+
+> [!NOTE] 浮点参数不提升
+> 整数提升只影响 `char` 和 `short`，`float` 不会提升到 `double`。`float` 参数仍然 `push` 4 字节，用 `movss` 或 `fld dword ptr` 读取。`double` 参数 `push` 8 字节，用 `movsd` 或 `fld qword ptr` 读取。
+
 ## 可变参数
 
 C 语言的 `printf` 可以接受任意数量的参数：`printf("a")`、`printf("a %d", 1)`、`printf("a %d %d", 1, 2)`。这种函数叫**可变参数函数**，它有一个硬性约束：**必须用 cdecl 调用约定**。
@@ -311,7 +393,7 @@ done:
 1. **参数个数**：数 `push` 的次数（cdecl/stdcall）或 `mov ecx/edx` + `push` 的次数（fastcall），再看 `[ebp+8]` 到 `[ebp+?]` 用了哪些偏移
 2. **调用约定**：`ret` 带不带数字、call 后有没有 `add esp`、调用前有没有 `mov ecx/edx`
 3. **返回类型**：函数末尾 eax 还是 edx:eax 还是 ST(0)
-4. **参数类型**：`dword ptr` 是 int/指针，`word ptr` 是 short，`byte ptr` 是 char，`movss` 是 float，`movsd` 是 double
+4. **参数类型**：看被调方用什么 `ptr` 读取（详见上面的"参数类型与整数提升"小节）。`dword ptr` 是 int/指针，`word ptr` 是 short，`byte ptr` 是 char，`movss` 是 float，`movsd` 是 double。调用方因为整数提升都是 `push` 4 字节，看不出类型
 
 ### 综合示例
 
@@ -351,7 +433,11 @@ int __stdcall func(int a, int b) {
 | 函数末尾 `fld`                 | 返回 float/double                          |
 | 函数内 `call <自身>`           | 递归函数                                   |
 | `[ebp+8]` 用 `dword ptr` 访问  | 第一个参数是 int/指针                      |
+| `[ebp+8]` 用 `byte ptr` 访问   | 第一个参数是 char                          |
+| `[ebp+8]` 用 `word ptr` 访问   | 第一个参数是 short                         |
 | `[ebp+8]` 用 `movss` 访问      | 第一个参数是 float                         |
+| `[ebp+8]` 用 `movsd` 访问      | 第一个参数是 double                        |
+| 调用方全是 `push`              | 看不出类型（整数提升都是 4 字节）          |
 
 ## 逆向识别清单
 
