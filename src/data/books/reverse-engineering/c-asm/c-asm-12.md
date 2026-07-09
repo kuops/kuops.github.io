@@ -166,28 +166,9 @@ and  eax, 1
 > [!IMPORTANT] 位域读的识别模式
 > 位域读操作的标志是**`shr` + `and`**。`shr` 的移位数 = 字段的起始位，`and` 的掩码 = 2^位数 - 1。比如 `shr eax, 3` + `and eax, 7`（3 位字段，起始 bit 3），`shr eax, 4` + `and eax, 0xF`（4 位字段，起始 bit 4）。
 
-### 位域布局与排列
-
-位域字段按声明顺序从低位到高位排列。以 `struct Flags` 为例：
-
-```
-  bit 7  6  5  4  3  2  1  0
-  ┌────┬────┬────┬────┬────┬────┬────┬────┐
-  │ reserved(2)  │  level(3)  │ exe │ wr │ rd │
-  └────┴────┴────┴────┴────┴────┴────┴────┘
-```
-
-- `read` 在 bit 0（1 位）
-- `write` 在 bit 1（1 位）
-- `execute` 在 bit 2（1 位）
-- `level` 在 bit 3-5（3 位）
-- `reserved` 在 bit 6-7（2 位）
-
-`shr` 的移位数就是字段的起始位号，`and` 的掩码由字段位数决定。从汇编里的移位数和掩码，可以反推每个字段的位置和宽度。
-
 ### 位域布局示例：32 位填满一个 int
 
-位域字段按声明顺序从低位到高位排列。下面是一个填满整个 `int` 的例子：
+下面是一个填满整个 `int` 的例子：
 
 ```c
 struct Mixed {
@@ -196,6 +177,15 @@ struct Mixed {
     unsigned int c : 8;    // bit 8-15
     unsigned int d : 16;   // bit 16-31
 };
+
+void test_mixed_bitfield(void) {
+    struct Mixed m;
+    m.a = 0xF;
+    m.b = 0xA;
+    m.c = 0x42;
+    m.d = 0x1234;
+    printf("a=%X b=%X c=%X d=%X\n", m.a, m.b, m.c, m.d);
+}
 ```
 
 `struct Mixed` 总共 32 位，刚好一个 `int`（4 字节）。写操作的模式和前面一样：
@@ -454,87 +444,96 @@ mov  eax, dword ptr [ebp-0C]
 
 ### 位域反推
 
-看到密集的 `and`/`or`/`shr` 操作同一个 `dword ptr`，按以下步骤反推：
-
-1. **找到 `shr` 的移位数** — 这是字段的起始位号
-2. **找到 `and` 的掩码** — 掩码 `2^N - 1` 对应 N 位字段宽度
-3. **排列字段** — 按起始位从小到大排列，补上空隙
-
-比如看到：
+逆向时遇到一段函数，里面密集出现 `and`/`or`/`shr` 操作同一个地址，怎么判断是位域并还原出定义？看一个完整示例：
 
 ```asm
-shr  eax, 3
-and  eax, 7
-```
-
-说明有一个字段在 bit 3，宽度 3 位（`and 7 = 0b111`，3 位）。
-
-### 联合体反推
-
-看到同一个地址配合不同的 `ptr` 大小和不同的指令，按以下步骤反推：
-
-1. **找到同一个地址** — 多种访问都指向同一个 `[ebp-X]` 或 `[reg+Y]`
-2. **列出所有访问大小** — `byte ptr`/`word ptr`/`dword ptr`/`movss` 等
-3. **推断成员类型** — `dword ptr` 是 `int`，`movss` 是 `float`，`byte ptr` 数组是 `char[]`，`word ptr` 是 `short`
-
-### 综合示例
-
-```asm
-mov  eax, dword ptr [ebp-0C]
-and  eax, 0xFFFFFFC7
-or   eax, 0x28
+; 函数内部，反复读写 [ebp-0C]
+mov  eax, dword ptr [ebp-0C]          ; 读整个 int
+or   eax, 1                           ; 设置 bit 0
 mov  dword ptr [ebp-0C], eax
+
+mov  eax, dword ptr [ebp-0C]          ; 读整个 int
+and  eax, 0xFFFFFFC7                  ; 清除 bit 3-5（0xC7 = ~0x38）
+or   eax, 0x28                        ; 0x28 = 0b00101000 = 5 << 3
+mov  dword ptr [ebp-0C], eax
+
+mov  eax, dword ptr [ebp-0C]          ; 读整个 int
+shr  eax, 3                           ; 右移 3 位
+and  eax, 7                           ; 截取 3 位
 ```
 
 逐步推断：
 
-1. `mov eax, dword ptr [ebp-0C]` — 读出一个 `int`
-2. `and eax, 0xFFFFFFC7` — 清除 bit 3-5
-3. `or eax, 0x28` — 设置某些位，`0x28` = `0b00101000`，即 `5 << 3`
-4. `mov dword ptr [ebp-0C], eax` — 写回
+1. 三段操作都读写 `[ebp-0C]`，是同一个 `int` 变量
+2. `or eax, 1` 设置 bit 0 → 有一个 1 位字段在 bit 0
+3. `and eax, 0xFFFFFFC7` 清除 bit 3-5，`or eax, 0x28` 写入 `5 << 3` → 有一个 3 位字段在 bit 3-5，写入值 5
+4. `shr eax, 3` + `and eax, 7` 读取 bit 3-5 → 3 位字段，掩码 `0b111 = 7` 确认宽度 3 位
 
-这是位域写操作：把 bit 3-5 的字段设为 5。对应的 C 代码：
+从 `shr` 的移位数得到字段起始位（3），从 `and` 的掩码得到字段宽度（3 位，`2^3-1=7`）。从 `and` 的清除掩码 `0xFFFFFFC7 = ~0x38` 也能验证：`0x38 = 0b111000`，清除的是 bit 3-5。
+
+对应的 C 代码：
 
 ```c
 struct Flags {
-    // ... 其他字段
-    unsigned int level : 3;    // bit 3-5
-    // ...
+    unsigned int flag0  : 1;    // bit 0，or 1 设置
+    unsigned int unused : 2;    // bit 1-2，没被访问
+    unsigned int level  : 3;    // bit 3-5，and 0xFFFFFFC7 清除 + or 0x28 写 5
+    // ... 后面可能还有字段
 };
-f.level = 5;
+
+f.flag0 = 1;       // or eax, 1
+f.level = 5;       // and + or
+x = f.level;       // shr 3 + and 7
 ```
 
-### 联合体反推示例
+> [!TIP] 位域反推三步
+>
+> 1. **找 `shr` 移位数** — 字段的起始位号
+> 2. **找 `and` 掩码** — `2^N - 1` 对应 N 位宽度
+> 3. **找 `and` 清除掩码** — `~(2^N - 1) << 起始位` 确认位置和宽度
+
+### 联合体反推
+
+逆向时遇到同一个地址被不同 `ptr` 大小和不同指令访问，怎么判断是联合体？看一个完整示例：
 
 ```asm
-mov  dword ptr [ebp-8], 0x41424344
-movsx eax, byte ptr [ebp-8]
+; 函数内部，同一个 [ebp-8] 被多种方式访问
+mov  dword ptr [ebp-8], 0x41424344    ; 用 dword ptr 写 int
+movsx eax, byte ptr [ebp-8]          ; 用 byte ptr 读 char（第 0 字节）
+movsx ecx, byte ptr [ebp+1-8]        ; 用 byte ptr 读 char（第 1 字节）
 movss xmm0, dword ptr [__real@3f800000]
-movss dword ptr [ebp-8], xmm0
-mov  ecx, dword ptr [ebp-8]
+movss dword ptr [ebp-8], xmm0        ; 用 movss 写 float（覆盖了 int 的值）
+mov  eax, dword ptr [ebp-8]          ; 用 dword ptr 读 int（现在是 float 的位模式）
 ```
 
 逐步推断：
 
-1. `mov dword ptr [ebp-8], 0x41424344` — 用 `dword ptr` 写一个 `int`（0x41424344）
-2. `movsx eax, byte ptr [ebp-8]` — 同一个地址用 `byte ptr` 读 `char`，说明有 `char` 成员
-3. `movss dword ptr [ebp-8], xmm0` — 同一个地址用 `movss` 写 `float`，说明有 `float` 成员
-4. `mov ecx, dword ptr [ebp-8]` — 再用 `dword ptr` 读 `int`，但值已经被 `movss` 覆盖了
+1. `[ebp-8]` 被三种方式访问：`mov dword ptr`（int）、`movsx byte ptr`（char）、`movss`（float）
+2. 三种访问指向同一个 4 字节区域，说明它们共享同一块内存
+3. `movsx byte ptr [ebp-8]` 读第 0 字节、`movsx byte ptr [ebp+1-8]` 读第 1 字节 → 有 `char` 数组成员
+4. `movss` 写入后 `mov dword ptr` 读出的值变了 → 写 `float` 覆盖了 `int` 的值，确认共享内存
 
-同一地址 `[ebp-8]` 混用 `dword ptr`、`byte ptr`、`movss`，是联合体的特征。对应的 C 代码：
+对应的 C 代码：
 
 ```c
 union Data {
-    int  i;
-    float f;
-    char bytes[4];
+    int  i;           // dword ptr
+    float f;          // movss
+    char bytes[4];    // movsx byte ptr
 };
 
-d.i = 0x41424344;          // mov dword ptr
-x = d.bytes[0];            // movsx byte ptr
-d.f = 1.0f;                // movss
-y = d.i;                   // mov dword ptr（读到 0x3F800000）
+d.i = 0x41424344;              // mov dword ptr [ebp-8]
+x = d.bytes[0];                // movsx byte ptr [ebp-8]
+y = d.bytes[1];                // movsx byte ptr [ebp+1-8]
+d.f = 1.0f;                    // movss dword ptr [ebp-8]
+z = d.i;                       // mov dword ptr [ebp-8]（读到 0x3F800000）
 ```
+
+> [!TIP] 联合体反推三步
+>
+> 1. **找同一个地址** — 多种访问都指向同一个 `[ebp-X]` 或 `[reg+Y]`
+> 2. **列出所有访问方式** — `dword ptr`（int）、`movss`（float）、`byte ptr`（char）、`word ptr`（short）
+> 3. **推断成员类型** — 每种访问方式对应一个联合体成员
 
 ## 逆向识别清单
 
