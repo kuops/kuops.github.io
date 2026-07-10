@@ -295,14 +295,45 @@ Player::~Player:
 和 C 结构体完全一样。C++ 类和 C 结构体的区别在源码层面（方法、访问控制），在汇编层面对象的内存布局就是成员变量的平铺。
 
 > [!NOTE] C++ 类 vs C 结构体
-> C++ 的 `class Player { int hp; int mp; void set_pos(...); }` 和 C 的 `struct Player { int hp; int mp; };` 加独立函数 `void Player_set_pos(struct Player* this, int nx, int ny)` 在汇编层面**完全一样**。C++ 编译器把方法翻译成接受 `this` 参数的普通函数，把 `obj.set_pos(10, 20)` 翻译成 `push 20; push 10; lea ecx, &obj; call set_pos`。理解了这一点，C++ 逆向就没那么神秘了。
+> C++ 的方法和 C 的"结构体 + 独立函数"在汇编层面**完全一样**：
+>
+> ```c
+> // C++ 写法
+> class Player {
+>     int hp;
+>     int mp;
+>     void set_pos(int nx, int ny);
+> };
+> obj.set_pos(10, 20);
+>
+> // 等价的 C 写法
+> struct Player {
+>     int hp;
+>     int mp;
+> };
+> void Player_set_pos(struct Player* this, int nx, int ny);
+> Player_set_pos(&obj, 10, 20);
+> ```
+>
+> C++ 编译器把 `obj.set_pos(10, 20)` 翻译成：
+>
+> ```asm
+> push 20           ; ny
+> push 10           ; nx
+> lea  ecx, &obj    ; this
+> call set_pos
+> ```
+>
+> 理解了这一点，C++ 逆向就没那么神秘了。
 
 > [!NOTE] bool 成员
 > bool 成员在内存里占 1 字节（值 0 或 1），但受对齐影响，下一个 int 成员会跳到偏移 +8。读取 bool 成员用 `movzx eax, byte ptr [eax+offset]`（零扩展到 32 位），写入用 `mov byte ptr [eax+offset], cl`。bool 参数传参时和 char/short 一样整数提升到 int（`push 0` = false，`push 1` = true）。
 >
 > ```c
 > class Entity { int hp; bool alive; int mp; };  // hp 在 +0，alive 在 +4，mp 在 +8（对齐）
+>
 > bool is_alive(void) { return alive; }          // movzx eax, byte ptr [eax+4]
+>
 > void set_alive(bool a) { alive = a; }          // mov byte ptr [eax+4], cl
 > ```
 
@@ -347,6 +378,9 @@ Player::~Player:
 | 参数地址传入，函数内 `mov [eax]` 解引用   | 引用参数（和指针无法区分）        |
 
 **C++ 类的汇编本质**：方法是接受 `this`（ECX）的普通函数，成员访问是 `[this+offset]`，对象布局是成员变量的平铺。和 C 结构体加函数指针没有本质区别。
+
+> [!NOTE] x64 下的 this 指针
+> 以上讲的是 32 位 thiscall，this 走 ECX。64 位下没有单独的 thiscall 约定，this 直接当作第一个参数走 **RCX**（和 x64 fastcall 一致）。其余参数走 RDX/R8/R9/栈。逆向 64 位游戏时，看到 `lea rcx, [obj]; call func`，RCX 就是 this。
 
 > [!NOTE] 游戏逆向中的 this 指针
 > 游戏引擎里的 Entity、Player、Weapon 都是 C++ 类。你在 x64dbg 里看到 `lea ecx, [eax+70h]; call 00412345`，就是在调用某个对象的虚方法（下一章讲虚函数表）。看到 `[ecx+0A4h]` 就知道在访问这个对象的偏移 0xA4 成员，可能是 hp 或坐标。用 ReClass.NET 还原类结构时，本质就是根据这些偏移重建成员布局。
