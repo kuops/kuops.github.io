@@ -67,7 +67,7 @@ src/data/books/reverse-engineering/
 | — | ~~asm-memory.md~~ | ~~字符串、内存与交叉引用~~ | 🗑️ 已删除 | 内容属逆向实操，移至破解篇 |
 | 34 | c-asm-11.md | 枚举与类型转换 | ✅ 草稿完成 | 新增章，枚举/隐式转换/强转/指针强转/函数指针强转/UB，汇编全部 dumpbin 验证 |
 | 35 | c-asm-12.md | 位域与联合体 | ✅ 草稿完成 | 位域(读-改-写/shr+and)/联合体(同一地址混用ptr)/结构体里联合体/反推，汇编全部 dumpbin 验证 |
-| 36 | c-asm-13.md | x86-64 汇编形态 | 待写 | |
+| 36 | c-asm-13.md | x86-64 汇编形态 | ✅ 草稿完成 | 寄存器扩展/fastcall前4参数走寄存器/shadow space/64位栈帧/movsxd/RIP相对寻址/结构体按值传递，汇编全部 dumpbin x64 验证 |
 | 37 | c-asm-14.md | C++ this 指针与成员访问 | 待写 | 游戏逆向门槛，最高优先级 |
 | 38 | c-asm-15.md | 虚函数表与多态 | 待写 | |
 | 39 | c-asm-16.md | 编译器优化与 Release 形态 | 待写 | |
