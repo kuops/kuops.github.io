@@ -417,6 +417,53 @@ mov  eax, dword ptr [ebp-4]
 
 先检查 `a > 0`：不满足就跳到 `check_c`（短路跳过 `b` 的检查）。满足再检查 `b > 0`：满足就跳进 if 体（`a && b` 为真，整个 `||` 为真）。到了 `check_c`，说明 `a && b` 整体为假，只剩 `c > 0` 这一条路，`c` 不满足就 `jle skip` 跳走，满足就掉进紧跟的 if 体。
 
+### 逻辑非 !
+
+`!` 是逻辑取反：`!x` 在 x 为 0 时返回 1，x 非 0 时返回 0。Debug 模式下编译器把 `!` 翻译成 if/else 结构：
+
+```c
+int test_not(int x) {
+    return !x;
+}
+```
+
+```asm
+    cmp  dword ptr [ebp+8], 0     ; x == 0 ?
+    jne  assign_zero              ; x != 0 -> !x = 0
+    mov  dword ptr [ebp-0C4], 1   ; x == 0 -> !x = 1
+    jmp  done
+assign_zero:
+    mov  dword ptr [ebp-0C4], 0   ; x != 0 -> !x = 0
+done:
+```
+
+`cmp` + `jne` 的逻辑：x 等于 0 时不跳（`jne` 不满足），往下赋 1；x 不等于 0 时跳到 `assign_zero` 赋 0。和 `if (x == 0) { 1 } else { 0 }` 完全一样。
+
+用在条件判断里更常见：
+
+```c
+int a = 0;
+if (!a) {
+    return 1;
+}
+```
+
+```asm
+    mov  dword ptr [ebp-8], 0      ; a = 0
+    cmp  dword ptr [ebp-8], 0      ; a == 0 ?
+    jne  skip                      ; a != 0 -> !a 为假，跳过 if 体
+    mov  eax, 1                    ; !a 为真，执行 if 体
+    jmp  done
+skip:
+    xor  eax, eax                  ; !a 为假
+done:
+```
+
+`if (!a)` 编译成 `cmp a, 0` + `jne skip`，等价于 `if (a == 0)` 的反转。`jne`（不等于 0 跳转）就是 `!` 的体现。
+
+> [!NOTE] ! 就是反向跳转
+> Debug 模式下 `!` 没有专门指令，编译器用 `cmp + jne` 翻译成 if/else。`if (!a)` 和 `if (a == 0)` 的区别只在跳转方向：`if (a)` 用 `je`（等于 0 跳走），`if (!a)` 用 `jne`（不等于 0 跳走）。Release 模式下 `!x` 可能优化成 `sete al` + `movzx eax, al`（x 等于 0 时 al=1），和三目运算符 `x ? 0 : 1` 一样。
+
 ## 条件表达式（三目运算符）
 
 `a ? b : c` 在 Debug 模式下和 if/else 结构完全一样：
