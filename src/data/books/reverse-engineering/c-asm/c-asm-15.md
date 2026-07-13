@@ -5,7 +5,7 @@ description: C++ 的虚函数在汇编里是什么样。对象首 4 字节存 vp
 order: 38
 ---
 
-上一章学了 C++ this 指针。这一章学**虚函数表与多态**：C 里写 `struct` 加函数指针，C++ 写 `virtual` 函数，编译器翻译成什么。
+上一章学了 C++ this 指针。这一章学**虚函数表与多态**：C++ 的 `virtual` 函数在汇编里是什么样，编译器怎么实现运行时多态。
 
 上一章的 `obj.method()` 是直接调用：`lea ecx, [obj]; call method`，编译器在编译期就知道调哪个函数。但 C++ 的多态需要运行时决定：`Animal* p = &dog; p->speak()` 调的是 `Dog::speak` 还是 `Animal::speak`，取决于 `p` 实际指向什么对象。编译器无法在编译期决定，只能在运行时查表。这张表就是**虚函数表**（vtable）。
 
@@ -68,6 +68,18 @@ void update_all(Entity** entities, int count) {
 
 这就是多态：同一段代码（`p->update()`），根据实际对象类型，执行不同的函数。
 
+那编译器怎么实现"运行时自动找到正确的函数"？答案就是 **虚函数表**（vtable）。下面从汇编看它具体怎么工作。
+
+> [!IMPORTANT] 没有预编译地址，运行时怎么找到函数？
+> 每个有虚函数的类，编译器生成一张 **vtable**（虚函数表），按声明顺序存了每个虚函数的地址。每个对象首 4 字节存一个 **vptr**，指向自己所属类的 vtable。
+>
+> 调用 `p->update()` 时，编译器生成"从对象取 vptr，再从 vtable 取函数地址，间接 call"的代码：
+>
+> - Player 对象 → vptr 指向 Player 的 vtable → 取出 `Player::update` 地址
+> - Zombie 对象 → vptr 指向 Zombie 的 vtable → 取出 `Zombie::update` 地址
+>
+> 编译器在编译期不需要知道函数地址，只需要知道 vtable 里的 **offset**（第几项）。函数地址在运行时从对象自身的 vptr 取。
+
 ## 虚函数 vs 非虚函数
 
 虚函数和非虚函数在调用方的区别：
@@ -118,19 +130,53 @@ call eax                    ; 间接调用
 >
 > 识别虚调用的关键：调用前从对象首 4 字节取指针（`mov edx, [eax]`），再从这个指针取函数地址（`mov eax, [edx]`），最后 `call eax`。
 
+## 对象里到底有什么
+
+虚函数的出现改变了对象内存布局。看下面 4 种类的对比：
+
+```c
+class Empty {                      // 只有非虚方法, 无属性
+    void speak() { printf("Hi"); }
+};
+
+class Cat {                        // 非虚方法 + 1 个属性
+public:
+    int tag;
+    void speak() { printf("Meow"); }
+};
+
+class OnlyVirtual {                // 只有虚方法, 无属性
+    virtual void speak() { printf("Hi"); }
+};
+
+class Animal {                     // 虚方法 + 1 个属性
+public:
+    int tag;
+    virtual void speak() { printf("Animal"); }
+};
+```
+
+| 类          | 虚函数 | 属性 | sizeof | +0       | +4  |
+| ----------- | ------ | ---- | ------ | -------- | --- |
+| Empty       | 0      | 0    | 1      | (空占位) | -   |
+| Cat         | 0      | 1    | 4      | tag      | -   |
+| OnlyVirtual | 1+     | 0    | 4      | vptr     | -   |
+| Animal      | 1+     | 1    | 8      | vptr     | tag |
+
+关键结论：
+
+- **方法不占对象空间**。无论非虚方法还是虚方法，函数体都在代码段，对象里不存函数。非虚方法调用是 `call 地址`，地址编译期确定；虚方法的地址存在 vtable 里，不在对象里。
+- **有虚函数时，对象首 4 字节被 vptr 占据**。不管有多少虚方法（1 个还是 100 个），对象里只有 1 个 vptr。虚方法越多，vtable 越长，对象大小不变。
+- **没有虚函数时，+0 就是第一个属性**。没有 vptr 挡在前面，属性从头开始排列。
+- **Empty 的 sizeof=1**。C++ 规定空对象至少占 1 字节，保证不同实例的地址不同。里面没有任何有效数据。
+
+一句话总结：对象内存里只放两样东西，**vptr（如果有虚函数）和属性**，方法不在其中。
+
 ## vtable 内存布局
 
 有虚函数的类，每个对象的首 4 字节存一个指针，叫 **vptr**（virtual pointer），指向这个类的 **vtable**（虚函数表）。vtable 是一个函数指针数组，按虚函数声明顺序排列：
 
-```
-Animal 对象内存布局：
-偏移     内容
-+0       vptr ──────► vtable for Animal
-+4       tag             ┌──────────────────────┐
-                         │ [0] = &Animal::speak  │
-                         │ [4] = &Animal::get_tag│
-                         └──────────────────────┘
-```
+![Animal 对象内存布局与 vtable：对象首 4 字节是 vptr，指向右侧 vtable；vtable 按声明顺序存函数地址](c-asm-15-images/animal-vtable-layout.png)
 
 `Animal` 有两个虚函数 `speak` 和 `get_tag`，vtable 有 2 项。vtable[0] 是 `speak` 的地址，vtable[4] 是 `get_tag` 的地址（每项 4 字节，因为 32 位指针）。
 
@@ -206,17 +252,34 @@ Dog::Dog:
 
 关键步骤：先 `call Animal::Animal`（父类构造把 vptr 设成 `??_7Animal`），然后**覆盖** vptr 为 `??_7Dog`。子类构造函数总是先调父类构造，再覆盖 vptr，最后初始化自己的成员。
 
-```
-Dog 对象内存布局：
-偏移     内容
-+0       vptr ──────► vtable for Dog
-+4       tag             ┌──────────────────────┐
-+8       breed           │ [0] = &Dog::speak      │
-                         │ [4] = &Dog::get_tag    │
-                         └──────────────────────┘
-```
+![Dog 对象内存布局与 vtable：对象含 vptr、tag、breed 三个字段，vptr 指向右侧 vtable](c-asm-15-images/dog-vtable-layout.png)
 
 `Dog` 的 vtable 和 `Animal` 的 vtable 结构一样（2 项），但每项指向的函数不同：`Dog::speak` 和 `Dog::get_tag`。多态的本质就是：不同子类的对象有不同的 vptr，vptr 指向不同的 vtable，调用 `p->speak()` 时查到不同的函数地址。
+
+### 部分重写：槽位替换
+
+上面的 `Dog` 把两个虚函数都重写了。如果子类只重写一部分虚函数，没重写的那些槽位怎么办？答案：**vtable 项数不变，只有被 override 的槽位换地址，没 override 的槽位直接复用父类的函数地址**。
+
+```c
+class Dog : public Animal {
+public:
+    int breed;
+    void speak() override { printf("Woof\n"); }   // 只重写 speak
+    // get_tag 没重写, 继承 Animal::get_tag
+};
+```
+
+`Dog` 的 vtable 结构：
+
+![部分重写：Dog 只重写 speak，get_tag 继承自 Animal](c-asm-15-images/partial-override-vtable.png)
+
+关键点：
+
+- **vtable 项数 = 虚函数个数**。Animal 有 2 个虚函数，Dog 的 vtable 也是 2 项，不会因为没重写而少一项。
+- **override 的槽位换地址**：vtable[0] 从 `&Animal::speak` 换成 `&Dog::speak`。
+- **没 override 的槽位保持父类地址**：vtable[4] 仍然是 `&Animal::get_tag`。
+
+逆向时这一点很有用：对比子类和父类的 vtable，相同的槽位 = 没被重写，不同的槽位 = 被重写了。用 IDA 的 xref 顺着 vtable 一项项看，很快就能还原出"子类重写了哪几个虚函数"。
 
 ### 多态调用
 
@@ -299,6 +362,13 @@ make_speak:
 一个类继承多个带虚函数的基类时，对象里有多个 vptr。每个虚基类对应一个 vtable 子表：
 
 ```c
+class Animal {                  // 前面定义过的基类
+public:
+    int tag;
+    virtual void speak() { printf("Animal\n"); }
+    virtual int get_tag() { return tag; }
+};
+
 class Flyable {
 public:
     int altitude;
@@ -315,18 +385,7 @@ public:
 
 `Bird` 继承 `Animal`（有 vptr）和 `Flyable`（有 vptr），所以 `Bird` 对象有**两个** vptr：
 
-```
-Bird 对象内存布局：
-偏移     内容
-+0       vptr_Animal ──► vtable for Bird (Animal 部分)
-+4       tag              ┌────────────────────────┐
-+8       vptr_Flyable ──► │ [0] = &Bird::speak      │
-+0xC     altitude         │ [4] = &Bird::get_tag    │  ← Animal 的 vtable
-+0x10    wingspan         └────────────────────────┘
-                         ┌────────────────────────┐
-                         │ [0] = &Bird::fly        │  ← Flyable 的 vtable
-                         └────────────────────────┘
-```
+![Bird 对象内存布局与两个 vtable：多继承下对象有两个 vptr，分别指向 Animal 部分和 Flyable 部分的 vtable](c-asm-15-images/bird-vtable-layout.png)
 
 `Bird` 的构造函数设置两个 vptr：
 
@@ -354,7 +413,17 @@ Bird::Bird:
 
 ### this 指针调整
 
+把 `Bird` 对象赋给 `Flyable*` 指针时，编译器要调整指针：
+
+```c
+Bird b;
+Flyable* pf = &b;    // 不能直接用 &b, 要 +8 跳到 Flyable 子对象
+pf->fly();           // 这里 this 是 Flyable 子对象地址, 不是 &b
+```
+
 `Flyable* pf = &b` 不能直接用 `&b`，因为 `Bird` 里的 `Flyable` 子对象不在对象开头，而在偏移 +8。编译器需要调整指针：
+
+![多继承的 this 指针调整：&b 指向对象开头，pf = &b + 8 指向 Flyable 子对象，虚调用用的 this 是 pf 不是 &b](c-asm-15-images/this-adjustment.png)
 
 ```asm
 ; Flyable* pf = &b;
@@ -430,7 +499,7 @@ call eax
 > 64 位下 vptr 仍是对象首字段（8 字节），vtable 每项 8 字节。虚调用模板变成 `mov rdx, [rcx]; call qword ptr [rdx]`（this 走 RCX）。多继承时 this 调整用 `add rcx, N`。整体结构和 32 位一致，只是寄存器和指针大小翻倍。
 
 > [!NOTE] 游戏逆向中的 vtable
-> 游戏引擎的 Entity/Actor/Component 几乎都有虚函数。你在 x64dbg 或 IDA 里看到 `mov edx, [ecx]; call [edx+0Ch]`，就是在调虚函数表第 4 项（偏移 0xC = 第 4 个虚函数）。用 IDA 的 xref 功能找到 vtable，再顺着 vtable 的每一项找到函数地址，就能还原这个类的所有虚函数。ReClass.NET 能直接显示对象的 vptr，帮你快速定位 vtable。
+> 游戏引擎的 Entity/Actor/Component 几乎都有虚函数。你在 x64dbg 或 IDA 里看到 `mov edx, [ecx]; call [edx+0C]`，就是在调虚函数表第 4 项（偏移 0xC = 第 4 个虚函数）。用 IDA 的 xref 功能找到 vtable，再顺着 vtable 的每一项找到函数地址，就能还原这个类的所有虚函数。ReClass.NET 能直接显示对象的 vptr，帮你快速定位 vtable。
 
 > [!NOTE] RTTI 与 dynamic_cast
 > MSVC 在 vtable 前面（偏移 -4）放一个指向 `RTTI Complete Object Locator` 的指针，里面包含类名和继承关系。`dynamic_cast` 就是查这个信息做运行时类型判断。逆向时如果 IDA 显示 `??_R0` 开头的符号，那是 RTTI 类型描述符，能直接读到类名。但很多游戏会关闭 RTTI（编译选项 `/GR-`）来减小体积和防逆向，这时 vtable 前面没有 RTTI 信息，只能靠 vtable 结构和函数行为反推。

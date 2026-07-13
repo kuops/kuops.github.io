@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 270" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">Bird 对象内存布局与两个 vtable (多继承, sizeof=20)</text>
+
+  <!-- 左侧: 对象内存 -->
+  <text x="80" y="62" font-size="12" font-weight="bold" fill="#94a3b8">对象内存</text>
+
+  <g transform="translate(80, 70)">
+    <!-- vptr_Animal: offset +0 -->
+    <rect x="0" y="0" width="180" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="23" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">vptr_Animal</text>
+
+    <!-- tag: offset +4 -->
+    <rect x="0" y="36" width="180" height="36" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="59" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">tag</text>
+
+    <!-- vptr_Flyable: offset +8 -->
+    <rect x="0" y="72" width="180" height="36" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="95" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">vptr_Flyable</text>
+
+    <!-- altitude: offset +0xC -->
+    <rect x="0" y="108" width="180" height="36" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="131" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">altitude</text>
+
+    <!-- wingspan: offset +0x10 -->
+    <rect x="0" y="144" width="180" height="36" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="167" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">wingspan</text>
+  </g>
+
+  <!-- 偏移标签 -->
+  <g transform="translate(30, 70)">
+    <text x="0" y="23" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0</text>
+    <text x="0" y="59" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+4</text>
+    <text x="0" y="95" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+8</text>
+    <text x="0" y="131" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0xC</text>
+    <text x="0" y="167" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0x10</text>
+  </g>
+
+  <!-- 右侧: vtable for Animal -->
+  <text x="450" y="62" font-size="12" font-weight="bold" fill="#94a3b8">vtable (Animal 部分)</text>
+
+  <g transform="translate(450, 70)">
+    <!-- vtable[0]: speak -->
+    <rect x="0" y="0" width="320" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="160" y="23" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">[0] = &amp;Bird::speak</text>
+
+    <!-- vtable[4]: get_tag -->
+    <rect x="0" y="36" width="320" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="160" y="59" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">[4] = &amp;Bird::get_tag</text>
+  </g>
+
+  <!-- 右侧: vtable for Flyable -->
+  <!-- Animal vtable 底边 = 70+72 = 142, 留 28px 间距, 标题 y=170, vtable 组 y=178 -->
+  <text x="450" y="170" font-size="12" font-weight="bold" fill="#94a3b8">vtable (Flyable 部分)</text>
+
+  <g transform="translate(450, 178)">
+    <rect x="0" y="0" width="320" height="36" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="160" y="23" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">[0] = &amp;Bird::fly</text>
+  </g>
+
+  <!-- 箭头1: vptr_Animal (对象右边 x=260, 中心 y=88) -> vtable_Animal (vtable 在 x=450, tip 离边框 6px) -->
+  <line x1="260" y1="88" x2="444" y2="88" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="440,84 448,88 440,92" fill="#3b82f6"/>
+  <text x="352" y="82" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">vptr 指向</text>
+
+  <!-- 箭头2: vptr_Flyable (对象右边 x=260, 中心 y=160) -> vtable_Flyable 中心 (左边 x=440, 中心 y=196) -->
+  <!-- 间隙中点 x=355 拐弯 -->
+  <path d="M 260 160 L 351 160 Q 355 160 355 164 L 355 192 Q 355 196 359 196 L 440 196" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5" fill="none"/>
+  <polygon points="436,192 444,196 436,200" fill="#fbbf24"/>
+  <text x="355" y="154" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">vptr 指向</text>
+
+</svg>

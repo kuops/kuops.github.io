@@ -277,8 +277,55 @@ Player::~Player:
 > [!IMPORTANT] 局部对象的构造和析构
 > 局部对象的构造函数在声明处调用，析构函数在所在函数返回前调用。逆向时看到函数末尾（`ret` 之前）有一串 `lea ecx, [对象地址]; call 析构函数`，就是局部对象在析构。main 函数里尤其明显：开头构造、结尾析构。
 
-> [!NOTE] 堆对象：new 和 delete
-> 上面的 `Player p` 是栈上对象，编译器自动插入构造和析构调用。堆对象 `Player* p = new Player` 先 `call operator new` 分配内存，再 `call Player::Player` 构造；`delete p` 先 `call Player::~Player` 析构，再 `call operator delete` 释放。逆向时看到 `call ??2@`（operator new）后跟 `call ??0`（构造），就是 `new`；看到 `call ??1`（析构）后跟 `call ??3@`（operator delete），就是 `delete`。
+### 堆对象：new 和 delete
+
+前面的 `Player p` 是栈上对象，编译器自动插入构造和析构。堆对象用 `new` 分配、`delete` 释放，汇编形态完全不同：
+
+```c
+Player* p = new Player();   // 堆对象
+printf("hp=%d\n", p->hp);
+delete p;
+```
+
+```asm
+; new Player()
+push 0x10                     ; sizeof(Player)=16
+call ??2@YAPAXI@Z            ; operator new(16) -> eax = 堆地址
+add  esp, 4                  ; cdecl 清栈
+mov  [ebp-0EC], eax          ; 暂存堆地址
+cmp  dword ptr [ebp-0EC], 0  ; 检查是否分配成功
+je   skip_ctor               ; nullptr 则跳过构造
+mov  ecx, dword ptr [ebp-0EC]; this = 堆地址
+call ??0Player@@QAE@XZ       ; Player::Player 构造
+skip_ctor:
+
+; delete p
+cmp  dword ptr [ebp-14h], 0  ; 检查 p 是否为 nullptr
+je   skip_del                ; nullptr 则不 delete
+push 1                       ; 标志位（标量 delete, 不是 delete[]）
+mov  ecx, dword ptr [ebp-14h]; this
+call ??_GPlayer@@QAEPAXI@Z  ; scalar deleting destructor
+skip_del:
+```
+
+栈对象和堆对象的关键区别：
+
+|           | 栈对象 `Player p`         | 堆对象 `new Player()`                 |
+| --------- | ------------------------- | ------------------------------------- |
+| 内存位置  | 栈（`[ebp-N]`）           | 堆（`operator new` 分配）             |
+| this 来源 | `lea ecx, [ebp-N]`        | `mov ecx, operator_new 的返回值`      |
+| 生命周期  | 离开作用域自动析构        | 必须 `delete` 才析构                  |
+| 汇编特征  | `lea ecx; call 构造/析构` | `call ??2` + `call ??0` / `call ??_G` |
+
+逆向识别要点：
+
+- `??2@YAPAXI@Z` 是 `operator new`，参数是字节数，返回堆地址。
+- `??3@YAXPAXI@Z` 是 `operator delete`，参数是堆地址。
+- `??0` 是构造函数，`??1` 是析构函数。
+- `??_G` 是 **scalar deleting destructor**（标量删除析构器）：MSVC 把"析构 + operator delete"打包成一个函数，`delete p` 实际调的是 `??_G`，它内部先 `call ??1`（析构），再 `call ??3`（operator delete）。所以逆向时看到 `call ??_G`，就是 `delete`。
+
+> [!NOTE] 为什么栈对象不调用 ??\_G
+> 栈对象的析构是编译器自动插入的，对象在栈上，不需要 `operator delete` 释放，所以只调 `??1`（析构函数本身），不调 `??_G`。`??_G` 只在 `delete` 堆对象时出现，它额外多做了一步 `operator delete`。
 
 ## 对象的内存布局
 
@@ -311,9 +358,11 @@ Player::~Player:
 >     int hp;
 >     int mp;
 > };
-> void Player_set_pos(struct Player* this, int nx, int ny);
+> void Player_set_pos(struct Player* this, int nx, int ny);  // 概念示意
 > Player_set_pos(&obj, 10, 20);
 > ```
+>
+> 注意：`this` 是 C++ 关键字，不能当参数名，上面的 C 写法无法编译通过。这里用 `this` 只是为了帮你理解 C++ 编译器内部把 `obj.set_pos(10, 20)` 看成什么样的函数调用。实际写 C 代码时换成 `self` 或其他名字即可。
 >
 > C++ 编译器把 `obj.set_pos(10, 20)` 翻译成：
 >
