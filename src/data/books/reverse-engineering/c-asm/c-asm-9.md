@@ -384,6 +384,47 @@ done:
 > [!NOTE] Security Cookie（栈保护）
 > 本章的汇编都是 Debug 模式输出。如果你切到 **Release 模式**，有栈缓冲区的函数（局部变量含数组）会多出一串"看起来多余"的代码：函数开头 `mov eax, <security_cookie>` 把一个随机值存到 `[ebp-4]`，函数结尾 `mov ecx, [ebp-4]` + `xor ecx, ebp` + `call __security_check_cookie` 检查这个值有没有被篡改。这是 MSVC 的 `/GS` 栈保护机制：如果发生缓冲区溢出覆盖了返回地址，cookie 也会被改掉，检查不通过就终止程序，防止攻击者利用溢出执行恶意代码。Debug 模式用 RTC 检查代替，所以看不到 cookie。详见后面的编译器优化章节。
 
+## static 局部变量
+
+普通局部变量在栈上，函数返回就销毁。`static` 局部变量不一样：它存在全局存储（`.data` 段），生命周期和程序一样长，但只在首次进入函数时初始化一次。
+
+```c
+void init_config() { printf("init\n"); }
+
+int get_config() {
+    static int initialized = 0;    // 只在首次调用时初始化
+    if (!initialized) {
+        init_config();
+        initialized = 1;
+    }
+    return 42;
+}
+```
+
+```asm
+get_config:
+    ...
+    cmp  dword ptr [initialized], 0    ; 检查标志位（全局地址）
+    jne  skip_init                     ; 已初始化则跳过整段
+    call init_config                   ; 首次调用才执行初始化
+    mov  dword ptr [initialized], 1    ; 设标志位
+skip_init:
+    mov  eax, 0x2A                     ; return 42
+    ...
+    ret
+```
+
+`initialized` 的地址是全局地址（`.data` 段），不是 `[ebp-N]`。MSVC 给 static 变量的名称修饰格式是 `?变量名@?1??函数名@@YAXXZ@4HA`，逆向时看到这种符号就知道是函数内的 static 变量。
+
+识别要点：
+
+- 函数开头有一个 `cmp [全局地址], 0; jne skip` 的模式，就是 static 变量的初始化标志位检查。
+- 第一次调用执行 `jne` 不跳转（值为 0），走初始化逻辑；后续调用 `jne` 跳过初始化。
+- 逆向时如果看到同一个全局地址在函数入口被检查、在函数体中间被写入，而且函数被多次调用，很可能是 static 变量的惰性初始化。
+
+> [!NOTE] 线程安全的 static 初始化
+> C++11 起，`static` 局部变量的初始化是线程安全的。MSVC 会额外生成一个线程安全守卫（`_Init_thread_header` / `_Init_thread_footer`），把初始化代码包起来。逆向 C++ 程序时如果看到这两个函数调用，就是线程安全的 static 初始化。C 语言的 `static` 没有这个保护。
+
 ## 从汇编反推函数签名
 
 前面分别讲了返回值、调用约定、参数个数的识别。实际逆向时需要综合判断，从一个函数的汇编反推出完整的 C 函数签名。

@@ -20,7 +20,7 @@ src/data/books/reverse-engineering/
 |------|--------|----------------------|---------------------|--------|
 | 入门篇 | 3 章 | 3 章 | 0 | 100% |
 | 汇编基础 | 9 章 | 9 章 | 0 | 100% |
-| C 与汇编 | 16 章 | 10 章 | 6 章 | 69% |
+| C 与汇编 | 16 章 | 12 章 | 4 章 | 75% |
 | 破解篇 | 0 章 | 0 | 0 | 未开始 |
 | 游戏篇 | 0 章 | 0 | 0 | 未开始 |
 
@@ -50,7 +50,7 @@ src/data/books/reverse-engineering/
 
 ### 待完成分类详情
 
-#### C 与汇编 (order 11-21) — 11/17 已发布
+#### C 与汇编 (order 11-21) — 13/17 已发布 + 2 草稿完成
 
 | Order | 文件 | 标题 | 状态 | 备注 |
 |-------|------|------|------|------|
@@ -68,8 +68,8 @@ src/data/books/reverse-engineering/
 | 34 | c-asm-11.md | 枚举与类型转换 | ✅ 草稿完成 | 新增章，枚举/隐式转换/强转/指针强转/函数指针强转/UB，汇编全部 dumpbin 验证 |
 | 35 | c-asm-12.md | 位域与联合体 | ✅ 草稿完成 | 位域(读-改-写/shr+and)/联合体(同一地址混用ptr)/结构体里联合体/反推，汇编全部 dumpbin 验证 |
 | 36 | c-asm-13.md | x86-64 汇编形态 | ✅ 草稿完成 | 寄存器扩展/fastcall前4参数走寄存器/shadow space/64位栈帧/movsxd/RIP相对寻址/结构体按值传递，汇编全部 dumpbin x64 验证 |
-| 37 | c-asm-14.md | C++ this 指针与成员访问 | 待写 | 游戏逆向门槛，最高优先级 |
-| 38 | c-asm-15.md | 虚函数表与多态 | 待写 | |
+| 37 | c-asm-14.md | C++ this 指针与成员访问 | ✅ 草稿完成 | thiscall 约定、[ecx+offset] 访问成员、构造/析构函数、堆对象 new/delete（??2/??3/??_G）、bool 成员、引用 vs 指针，汇编全部 dumpbin 验证 |
+| 38 | c-asm-15.md | 虚函数表与多态 | ✅ 草稿完成 | vtable 内存布局、vptr 在偏移 +0、单继承覆盖 vptr、部分重写槽位替换、多继承多 vptr、this 指针调整、RTTI/dynamic_cast、5 张 SVG（animal/dog/bird/partial-override/this-adjustment），汇编全部 dumpbin 验证 |
 | 39 | c-asm-16.md | 编译器优化与 Release 形态 | 待写 | |
 | 40 | c-asm-17.md | STL 与 C++ 逆向实战 | 待写 | |
 
@@ -178,13 +178,10 @@ src/data/books/reverse-engineering/
 
 ## 四、下一步优先级
 
-1. **c-asm-13 x86-64** — 补全 64 位，紧接 C 基础
-2. **c-asm-14 C++ this 指针** — 游戏逆向门槛，C++ 逆向核心
-3. **c-asm-15 虚函数表** — 紧接 this
-4. **c-asm-16 编译器优化与 Release 形态** — 总结收尾，依赖前面所有 Debug 形态
-5. **cracking-1/2** — 破解篇地基（方法论 + PE），含原 asm-memory.md 内容
-6. **game-1 CE 入门** — 游戏篇起点
-7. 其余按篇内顺序推进
+1. **c-asm-16 编译器优化与 Release 形态** — 总结收尾，依赖前面所有 Debug 形态
+2. **cracking-1/2** — 破解篇地基（方法论 + PE），含原 asm-memory.md 内容
+3. **game-1 CE 入门** — 游戏篇起点
+4. 其余按篇内顺序推进
 
 ## 五、写作规范参考
 

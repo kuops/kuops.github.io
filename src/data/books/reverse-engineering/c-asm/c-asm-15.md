@@ -456,6 +456,57 @@ call eax
 > [!NOTE] 多继承 vtable 的名称修饰
 > 单继承 vtable 名是 `??_7类名@@6B@`（如 `??_7Animal@@6B@`）。多继承 vtable 名是 `??_7类名@@6B基类名@@@`（如 `??_7Bird@@6BAnimal@@@`、`??_7Bird@@6BFlyable@@@`）。`6B` 后的基类名标识这个 vtable 对应哪个基类子对象。
 
+## 虚析构函数
+
+如果基类的析构函数声明为 `virtual`，它就占 vtable 的一个槽位，和普通虚函数一样。
+
+```c
+class Base {
+public:
+    virtual ~Base() { printf("base dtor\n"); }    // 虚析构, 占 vtable[0]
+    virtual void work() { printf("base work\n"); } // 占 vtable[4]
+};
+
+class Derived : public Base {
+public:
+    ~Derived() override { printf("derived dtor\n"); }
+    void work() override { printf("derived work\n"); }
+};
+```
+
+`delete p`（`p` 是 `Base*`）的汇编：
+
+```asm
+; delete p  —— p 在 [ebp-8]
+mov  eax, [ebp-8]           ; eax = p
+mov  edx, [eax]             ; edx = vptr
+mov  eax, [edx]             ; eax = vtable[0] = 虚析构（??_GDerived）
+push 1                      ; 标量 delete 标志
+call eax                    ; 调 ??_GDerived
+```
+
+虚析构和普通虚函数的调用方式完全一样：查 vtable 间接调用。区别在于 `delete p` 调的是 vtable[0]（析构），而 `p->work()` 调的是 vtable[4]。
+
+`??_GDerived`（scalar deleting destructor）内部按顺序执行三步：
+
+```asm
+??_GDerived:
+    ...
+    call ??1Derived@@UAE@XZ   ; 1. Derived 析构（清理子类资源）
+    and  eax, 1               ; 2. 检查标志位（1 = delete 后要释放内存）
+    je   skip_free
+    push 4                    ; 3. sizeof(Derived) = 4
+    push [ebp-8]              ; this
+    call ??3@YAXPAXI@Z        ; operator delete（释放堆内存）
+skip_free:
+    ret 4
+```
+
+`??1Derived` 内部还会调 `??1Base`（父类析构），形成完整的析构链：`??_GDerived` → `??1Derived` → `??1Base` → `??3`（operator delete）。
+
+> [!IMPORTANT] 为什么基类析构要声明 virtual
+> 如果 `Base` 的析构不是 virtual，`delete p`（`p` 是 `Base*`，实际指向 `Derived`）只会调 `Base::~Base`，不会调 `Derived::~Derived`，子类资源泄漏。声明 virtual 后，`delete p` 通过 vtable 查到 `??_GDerived`，先析构子类再析构父类。C++ 游戏引擎的基类（Entity/Actor/Component）几乎都有虚析构，逆向时 vtable[0] 往往就是虚析构。
+
 ## 从汇编反推类结构
 
 综合来看，从汇编反推 C++ 多态类结构的方法：

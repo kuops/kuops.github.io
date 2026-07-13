@@ -327,6 +327,40 @@ skip_del:
 > [!NOTE] 为什么栈对象不调用 ??\_G
 > 栈对象的析构是编译器自动插入的，对象在栈上，不需要 `operator delete` 释放，所以只调 `??1`（析构函数本身），不调 `??_G`。`??_G` 只在 `delete` 堆对象时出现，它额外多做了一步 `operator delete`。
 
+### 全局对象：main 之前构造
+
+前面讲了栈对象和堆对象，还有一种：全局对象（或 static 对象）。它的构造不在 `main` 里，而是在 **main 之前**，由 C 运行时（CRT）触发。
+
+```c
+Player g_player;    // 全局对象, 在 main 之前构造
+
+int main() {
+    printf("hp=%d\n", g_player.hp);   // 直接用, 构造已完成
+    return 0;
+}
+```
+
+编译器为每个全局对象生成一个 **dynamic initializer** 包装函数（`??__E`），里面调构造函数：
+
+```asm
+??__Eg_player:                       ; dynamic initializer for 'g_player'
+    mov  ecx, offset g_player        ; this = &g_player（全局地址, .data 段）
+    call ??0Player@@QAE@XZ           ; 构造
+    push offset ??__Fg_player        ; 注册析构函数到 atexit
+    call _atexit                     ; 程序退出时自动调析构
+```
+
+```asm
+??__Fg_player:                       ; dynamic atexit destructor for 'g_player'
+    mov  ecx, offset g_player
+    call ??1Player@@QAE@XZ           ; 析构
+```
+
+CRT 启动代码用 `_initterm` 函数遍历所有 `??__E` 指针，在 `main` 之前逐个调用，构造完所有全局对象后才进入 `main`。析构靠 `_atexit` 注册，程序退出时反向调用。
+
+> [!NOTE] 逆向时怎么看到全局对象
+> 逆向时如果在 `main` 之前（CRT 启动阶段）看到 `_initterm` 调用，它正在批量构造全局对象。IDA 的 F5 伪代码会把 `??__E` 符号显示成 `dynamic initializer`。全局对象本身存在 `.data` 段的固定地址，构造完成后 `main` 里直接用那个地址访问，不需要 `new` 或 `lea ecx, [ebp-N]`。
+
 ## 对象的内存布局
 
 `Player` 有 4 个 int 成员，`sizeof(Player)` 是 16 字节：
