@@ -16,9 +16,9 @@ order: 40
 >
 > Debug 模式下每个 STL 容器开头有一个 `_Container_proxy` 指针（4 字节），Release 模式下这个字段消失。所以同一个 `vector<Player>`，Debug 下是 16 字节，Release 下是 12 字节。逆向时如果看到的容器大小和本章对不上，先确认是不是 Release。
 
-## 贯穿例子
+## 示例代码
 
-先用一个很小的类贯穿整章：
+这一章用一个小类做例子，后面所有 STL 容器都围绕它展开：
 
 ```c
 #include <map>
