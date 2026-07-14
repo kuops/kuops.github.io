@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 282" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">继承的属性布局: 子类 = 父类部分 + 子类新增 (32 位)</text>
+
+  <!-- 左侧: Animal 对象 (参照) -->
+  <text x="80" y="62" font-size="12" font-weight="bold" fill="#94a3b8">Animal 对象 (sizeof=8)</text>
+
+  <g transform="translate(80, 70)">
+    <!-- tag: offset +0 -->
+    <rect x="0" y="0" width="180" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">tag</text>
+    <text x="90" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">int (4 字节)</text>
+
+    <!-- age: offset +4 -->
+    <rect x="0" y="48" width="180" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="90" y="70" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">age</text>
+    <text x="90" y="88" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">int (4 字节)</text>
+  </g>
+
+  <!-- 偏移标签 (Animal) -->
+  <g transform="translate(30, 70)">
+    <text x="0" y="22" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0</text>
+    <text x="0" y="70" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+4</text>
+  </g>
+
+  <!-- 右侧: Dog 对象 -->
+  <text x="540" y="62" font-size="12" font-weight="bold" fill="#94a3b8">Dog 对象 (sizeof=16)</text>
+
+  <g transform="translate(540, 70)">
+    <!-- tag: offset +0 (继承自 Animal, 蓝色) -->
+    <rect x="0" y="0" width="240" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="120" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">tag</text>
+    <text x="120" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">继承自 Animal</text>
+
+    <!-- age: offset +4 (继承自 Animal, 蓝色) -->
+    <rect x="0" y="48" width="240" height="48" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="120" y="70" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">age</text>
+    <text x="120" y="88" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">继承自 Animal</text>
+
+    <!-- breed: offset +8 (Dog 新增, 绿色) -->
+    <rect x="0" y="96" width="240" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="120" y="118" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">breed</text>
+    <text x="120" y="136" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">Dog 新增</text>
+
+    <!-- weight: offset +0xC (Dog 新增, 绿色) -->
+    <rect x="0" y="144" width="240" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="120" y="166" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">weight</text>
+    <text x="120" y="184" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">Dog 新增</text>
+  </g>
+
+  <!-- 偏移标签 (Dog) -->
+  <g transform="translate(490, 70)">
+    <text x="0" y="22" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0</text>
+    <text x="0" y="70" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+4</text>
+    <text x="0" y="118" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+8</text>
+    <text x="0" y="166" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">+0xC</text>
+  </g>
+
+  <!-- 中间标注: Animal 对应 Dog 的前两行 -->
+  <!-- Animal tag/age 中心 y=94, Dog tag/age 整体中心 y=70+96=166... 但 Dog 前两行中心 = (70+118)/2 + 24 = 118 -->
+  <!-- 用两条水平虚线 + 中间文字说明对应关系 -->
+  <line x1="270" y1="94" x2="480" y2="94" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <line x1="270" y1="142" x2="480" y2="142" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="375" y="122" font-size="11" font-weight="bold" text-anchor="middle" fill="#3b82f6">Animal 部分</text>
+
+</svg>

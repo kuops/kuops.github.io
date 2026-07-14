@@ -420,6 +420,42 @@ CRT 启动代码用 `_initterm` 函数遍历所有 `??__E` 指针，在 `main` �
 > void set_alive(bool a) { alive = a; }          // mov byte ptr [eax+4], cl
 > ```
 
+### 继承的属性布局
+
+类继承时，子类对象的内存 = **父类成员在前 + 子类新增成员在后**，按声明顺序紧密排列：
+
+```c
+class Animal {
+public:
+    int tag;            // +0
+    int age;            // +4
+};
+
+class Dog : public Animal {
+public:
+    int breed;          // +8（接在父类后面）
+    int weight;         // +0xC
+};
+```
+
+![继承的属性布局：子类对象 = 父类部分（蓝色 tag/age）+ 子类新增（绿色 breed/weight），偏移连续排列](c-asm-14-images/inheritance-layout.png)
+
+`Dog` 对象的前 8 字节就是完整的 `Animal`（tag + age），自己的成员从 +8 开始接在后面。`sizeof(Dog)` 是 16（Animal 的 8 + Dog 新增的 8）。编译器自动算好偏移，子类只是在父类布局末尾追加自己的成员。
+
+这个布局规则的意义：**`Dog*` 和 `Animal*` 指向同一个 `Dog` 对象时，地址相同**。因为父类部分总在对象开头，`Animal*` 看到的就是前 8 字节，`Dog*` 看到完整的 16 字节，但两者指向同一个起始地址。这也是为什么单继承不需要 this 指针调整（下一章讲多继承时才需要）。
+
+访问继承来的成员和访问自己的成员没有区别，都是 `[ecx+offset]`：
+
+```asm
+mov  eax, [ecx]          ; this->tag（继承的, 偏移 +0）
+mov  eax, [ecx+4]        ; this->age（继承的, 偏移 +4）
+mov  eax, [ecx+8]        ; this->breed（自己的, 偏移 +8）
+mov  eax, [ecx+0C]       ; this->weight（自己的, 偏移 +0xC）
+```
+
+> [!NOTE] 父类有虚函数时的布局
+> 如果父类有虚函数（有 vptr），vptr 占 +0，父类属性从 +4 开始，子类属性接在父类后面。例如 `Animal` 有 `virtual void speak()` 和 `int tag`，则 Animal 布局是 vptr(+0) + tag(+4)，`Dog : public Animal` 的布局是 vptr(+0) + tag(+4) + breed(+8)。vptr 只有一个（子类覆盖父类的 vptr），不会因为继承多出一个。详见下一章虚函数表。
+
 ## 从汇编反推类结构
 
 综合来看，从汇编反推 C++ 类结构的方法：
