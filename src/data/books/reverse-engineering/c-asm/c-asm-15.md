@@ -130,6 +130,48 @@ call eax                    ; 间接调用
 >
 > 识别虚调用的关键：调用前从对象首 4 字节取指针（`mov edx, [eax]`），再从这个指针取函数地址（`mov eax, [edx]`），最后 `call eax`。
 
+### 非虚方法没有多态
+
+前面的例子对比了虚调用和非虚调用。还有一个容易搞混的点：子类和父类有同名非虚方法时，调哪个？
+
+```c
+class Animal {
+public:
+    void speak() { printf("animal\n"); }   // 非虚
+};
+
+class Dog : public Animal {
+public:
+    void speak() { printf("dog\n"); }      // 隐藏（hide）父类的 speak, 不是 override
+};
+
+Dog d;
+d.speak();          // Dog::speak
+
+Animal* a = &d;
+a->speak();         // Animal::speak, 不是 Dog::speak!
+```
+
+`a->speak()` 调的是 `Animal::speak`，不是 `Dog::speak`。因为 `speak` 不是 virtual，没有多态：**调哪个完全由指针的声明类型在编译期决定**。`a` 声明成 `Animal*`，编译器就调 `Animal::speak`，不管 `a` 实际指向什么对象。
+
+三行调用的汇编都是直接 `call`，不查表：
+
+```asm
+lea  ecx, [d]                     ; this = &d
+call ?speak@Dog@@QAEXXZ           ; d.speak() -> Dog::speak
+
+lea  ecx, [d]                     ; this = &d（同一个对象）
+call ?speak@Animal@@QAEXXZ        ; a->speak() -> Animal::speak
+
+lea  ecx, [d]                     ; this = &d
+call ?speak@Animal@@QAEXXZ        ; d.Animal::speak() -> 显式调父类
+```
+
+同一个 `Dog` 对象，`d.speak()` 和 `a->speak()` 调的是**不同的函数**，全靠编译期看声明类型。这就是非虚和虚的核心区别：非虚是编译期定死，虚是运行时查表。如果 `speak` 声明为 `virtual`，`a->speak()` 就会查 vtable 调到 `Dog::speak`。
+
+> [!NOTE] 隐藏（hide）vs 重写（override）
+> 子类定义了和父类同名的非虚方法，叫**隐藏**（hide），不是重写（override）。隐藏只是子类的方法挡住了父类的同名方法，不涉及 vtable。override 只对 `virtual` 函数有效：子类重写虚函数，vtable 里对应的槽位换成子类的函数地址。逆向时看到 `call ?speak@Dog` 和 `call ?speak@Animal` 是两个不同的直接调用，就知道是非虚的隐藏；看到查 vtable 的间接调用，才是虚函数的重写。
+
 ## 对象里到底有什么
 
 虚函数的出现改变了对象内存布局。看下面 4 种类的对比：
