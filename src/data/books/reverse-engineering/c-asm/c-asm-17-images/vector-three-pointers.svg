@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 260" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">vector 三指针关系</text>
+
+  <!-- 指针标签和箭头 -->
+  <g transform="translate(20, 55)">
+    <!-- _Myfirst: 对齐 [0] 中心 -->
+    <text x="55" y="0" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">_Myfirst</text>
+    <line x1="55" y1="8" x2="55" y2="27" stroke="#10b981" stroke-width="2"/>
+    <polygon points="51,24 55,33 59,24" fill="#10b981"/>
+
+    <!-- _Mylast: 对齐 [3] 右边界 / 未使用空间左边界 -->
+    <text x="440" y="0" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">_Mylast</text>
+    <line x1="440" y1="8" x2="440" y2="27" stroke="#fbbf24" stroke-width="2"/>
+    <polygon points="436,24 440,33 444,24" fill="#fbbf24"/>
+
+    <!-- _Myend: 对齐未使用空间右边界 -->
+    <text x="780" y="0" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">_Myend</text>
+    <line x1="780" y1="8" x2="780" y2="27" stroke="#3b82f6" stroke-width="2"/>
+    <polygon points="776,24 780,33 784,24" fill="#3b82f6"/>
+  </g>
+
+  <!-- 元素矩形 -->
+  <g transform="translate(20, 90)">
+    <!-- [0] -->
+    <rect x="0" y="0" width="110" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="55" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">[0]</text>
+    <text x="55" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">元素</text>
+
+    <!-- [1] -->
+    <rect x="110" y="0" width="110" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="165" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">[1]</text>
+    <text x="165" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">元素</text>
+
+    <!-- [2] -->
+    <rect x="220" y="0" width="110" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="275" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">[2]</text>
+    <text x="275" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">元素</text>
+
+    <!-- [3] -->
+    <rect x="330" y="0" width="110" height="48" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="385" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">[3]</text>
+    <text x="385" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">元素</text>
+
+    <!-- 未使用空间 -->
+    <rect x="440" y="0" width="340" height="48" rx="4" fill="#94a3b8" fill-opacity="0.05" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="610" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">未使用空间</text>
+    <text x="610" y="40" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">(已分配但没存元素)</text>
+  </g>
+
+  <!-- 范围标注 -->
+  <g transform="translate(20, 155)">
+    <!-- 有效元素 -->
+    <line x1="0" y1="0" x2="440" y2="0" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.5"/>
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.5"/>
+    <line x1="440" y1="-5" x2="440" y2="5" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.5"/>
+    <text x="220" y="20" font-size="12" font-weight="bold" text-anchor="middle" fill="#10b981">有效元素 (size = _Mylast - _Myfirst)</text>
+
+    <!-- 剩余容量 -->
+    <line x1="440" y1="0" x2="780" y2="0" stroke="#94a3b8" stroke-width="1.5" stroke-opacity="0.5"/>
+    <line x1="780" y1="-5" x2="780" y2="5" stroke="#94a3b8" stroke-width="1.5" stroke-opacity="0.5"/>
+    <text x="610" y="20" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">剩余容量</text>
+  </g>
+
+  <g transform="translate(20, 195)">
+    <!-- 已分配空间 -->
+    <line x1="0" y1="0" x2="780" y2="0" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.5"/>
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.5"/>
+    <line x1="780" y1="-5" x2="780" y2="5" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.5"/>
+    <text x="390" y="20" font-size="12" font-weight="bold" text-anchor="middle" fill="#3b82f6">已分配空间 (capacity = _Myend - _Myfirst)</text>
+  </g>
+
+  <!-- 低/高地址 -->
+  <g transform="translate(20, 235)">
+    <text x="0" y="0" font-size="11" font-weight="bold" fill="#94a3b8">低地址</text>
+    <text x="780" y="0" font-size="11" font-weight="bold" text-anchor="end" fill="#94a3b8">高地址</text>
+  </g>
+
+</svg>

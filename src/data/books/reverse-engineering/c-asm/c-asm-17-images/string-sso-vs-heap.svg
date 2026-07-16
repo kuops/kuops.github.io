@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 370" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">std::string SSO 与堆模式对比 (MSVC x86 Debug, 28 字节)</text>
+
+  <!-- ============ SSO 模式 (a = "Alice") ============ -->
+  <g transform="translate(20, 55)">
+    <!-- 模式标签 -->
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#10b981">SSO 模式 (a = "Alice", 5 字节)</text>
+
+    <!-- 偏移标签 -->
+    <g transform="translate(0, 22)">
+      <text x="70" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0</text>
+      <text x="310" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+4</text>
+      <text x="750" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x14</text>
+      <text x="870" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x18</text>
+    </g>
+
+    <!-- 字段矩形 -->
+    <g transform="translate(0, 30)">
+      <!-- _Container_proxy: +0, 4 字节 -->
+      <rect x="0" y="0" width="140" height="56" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="70" y="22" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Container_proxy</text>
+      <text x="70" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">4 字节</text>
+
+      <!-- buf (SSO): +4, 16 字节, 含 "Alice" -->
+      <rect x="140" y="0" width="480" height="56" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="380" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#10b981">buf[16] (SSO)</text>
+      <text x="380" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#10b981">41 6C 69 63 65 00 ...  "Alice"</text>
+
+      <!-- size: +0x14, 4 字节 -->
+      <rect x="620" y="0" width="160" height="56" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="700" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">size</text>
+      <text x="700" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">05 00 00 00 = 5</text>
+
+      <!-- capacity: +0x18, 4 字节 -->
+      <rect x="780" y="0" width="140" height="56" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="850" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">capacity</text>
+      <text x="850" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">0F 00 00 00 = 15</text>
+    </g>
+
+    <!-- 说明 -->
+    <g transform="translate(0, 100)">
+      <text x="0" y="0" font-size="12" fill="#94a3b8">+4 处直接是 ASCII 字符, 不走堆分配</text>
+    </g>
+  </g>
+
+  <!-- ============ 堆模式 (b = "this is a very long string") ============ -->
+  <g transform="translate(20, 195)">
+    <!-- 模式标签 -->
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#fbbf24">堆模式 (b = "this is a very long string", 25 字节)</text>
+
+    <!-- 偏移标签 -->
+    <g transform="translate(0, 22)">
+      <text x="70" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0</text>
+      <text x="310" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+4</text>
+      <text x="750" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x14</text>
+      <text x="870" y="0" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x18</text>
+    </g>
+
+    <!-- 字段矩形 -->
+    <g transform="translate(0, 30)">
+      <!-- _Container_proxy: +0, 4 字节 -->
+      <rect x="0" y="0" width="140" height="56" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="70" y="22" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Container_proxy</text>
+      <text x="70" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">4 字节</text>
+
+      <!-- ptr (堆指针): +4, 16 字节 -->
+      <rect x="140" y="0" width="480" height="56" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="380" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#fbbf24">ptr (堆指针)</text>
+      <text x="380" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">50 1F 6E 00 00 00 ...  指向堆上的字符</text>
+
+      <!-- size: +0x14, 4 字节 -->
+      <rect x="620" y="0" width="160" height="56" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="700" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">size</text>
+      <text x="700" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">19 00 00 00 = 25</text>
+
+      <!-- capacity: +0x18, 4 字节 -->
+      <rect x="780" y="0" width="140" height="56" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
+      <text x="850" y="22" font-size="13" font-weight="bold" text-anchor="middle" fill="#3b82f6">capacity</text>
+      <text x="850" y="42" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#3b82f6">1F 00 00 00 = 31</text>
+    </g>
+
+    <!-- 说明 -->
+    <g transform="translate(0, 100)">
+      <text x="0" y="0" font-size="12" fill="#94a3b8">+4 处是堆地址, 解引用后才是字符内容</text>
+    </g>
+  </g>
+
+  <!-- 底部总结 -->
+  <g transform="translate(20, 345)">
+    <text x="0" y="0" font-size="12" font-weight="bold" fill="#94a3b8">两种模式都是 28 字节, 区别在 +4 处: 像字符串 = SSO, 像地址 = 堆模式</text>
+  </g>
+
+</svg>
