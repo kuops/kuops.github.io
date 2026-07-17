@@ -381,7 +381,7 @@ sizeof(std::map<int,int>) = 12
 
 ### 从哨兵到根节点
 
-顺着 `_Myhead` 的地址 dump 哨兵节点（28 字节）：
+顺着 `_Myhead` 的地址查看 Debug CRT 分配块的前 28 字节：前 24 字节是哨兵节点对象，最后 4 字节是分配块尾部保护区：
 
 ```text
 +0:    48 68 92 00    _Left   → 0x00926848
@@ -392,17 +392,17 @@ sizeof(std::map<int,int>) = 12
 +0xE:  CD CD          padding
 +0x10: CD CD CD CD    无有效数据（哨兵不存 key/value）
 +0x14: CD CD CD CD    无有效数据
-+0x18: FD FD FD FD    debug padding
++0x18: FD FD FD FD    CRT 堆尾保护区（不属于节点对象）
 ```
 
 哨兵节点的 `_Left`、`_Parent`、`_Right` 都指向 `0x00926848`。因为只有一个元素，最左、最右、根都是同一个节点。`_Isnil = 1` 标记它是哨兵，`+0x10` 到 `+0x14` 全是 CDCD（未初始化），没有真实数据。
 
 ### 节点结构
 
-每个树节点占 28 字节，和哨兵的布局完全一样，只是内容不同：
+`_Tree_node<pair<const int, int>>` 对象本身占 24 字节：最后一个成员 `_Value` 在 `+0x14`，对象在 `+0x18` 结束。Debug CRT 在分配块末尾追加 4 字节 `FDFDFDFD` 保护区，因此查看整块内存时会看到 28 字节；这 4 字节不是节点成员。
 
 ```text
-sizeof(_Tree_node<pair<const int, int>>) = 28
+sizeof(_Tree_node<pair<const int, int>>) = 24
 
 偏移     内容
 +0       _Left（左子节点指针）
@@ -413,10 +413,9 @@ sizeof(_Tree_node<pair<const int, int>>) = 28
 +0xE     padding（2 字节，Debug 填 CDCD）
 +0x10    _Key（int，4 字节）
 +0x14    _Value（int，4 字节）
-+0x18    debug padding（4 字节，填 FDFDFDFD）
 ```
 
-顺着哨兵的 `_Parent` dump 根节点 `0x00926848`（28 字节）：
+顺着哨兵的 `_Parent` 查看根节点 `0x00926848` 所在分配块：
 
 ```text
 +0:    D8 6B 92 00    _Left   → 0x00926BD8（指向哨兵，没有左子节点）
@@ -427,7 +426,7 @@ sizeof(_Tree_node<pair<const int, int>>) = 28
 +0xE:  CD CD          padding
 +0x10: 07 00 00 00    _Key   = 7
 +0x14: 84 03 00 00    _Value = 900 (0x384)
-+0x18: FD FD FD FD    debug padding
++0x18: FD FD FD FD    CRT 堆尾保护区（不属于节点对象）
 ```
 
 `_Isnil = 0` 标记它是真实节点，`_Key = 7`、`_Value = 900`，就是你插入的 `scores[7] = 900`。`_Left`、`_Right` 都指向哨兵，说明这个节点没有子节点（叶子节点）。
@@ -563,6 +562,175 @@ done:
 > [!NOTE] map 和 vector 的区别
 > vector 是连续内存，元素地址能用加法算出来。map 是树结构，元素地址靠查找节点得到。逆向时看到连续指针加法，优先怀疑 vector；看到左右子节点和 key 比较，优先怀疑 map。
 
+## std::unordered_map：哈希表布局
+
+逆向时经常会遇到 `std::unordered_map`：游戏配置表、ID 到数据的映射和缓存都常用它。它和 `map` 的接口相似，但内部不是红黑树，而是“全局双向链表 + 桶边界数组”。
+
+下面的偏移只适用于 **MSVC 14.51、Debug x86、`std::unordered_map<int, int>`**。换编译器版本、架构、构建模式或 key/value 类型，都必须重新验证。
+
+`unordered_map` 在这个样本中占 **40 字节**（`0x28`）。先看四个内部组：traits 保存负载因子，list 保存元素和哨兵，桶向量保存每个桶的范围，最后两个字段负责把 hash 映射到桶。
+
+![unordered_map 对象布局：traits、元素链表、桶向量和索引元数据四个内部组](c-asm-17-images/unordered-map-layout.png)
+
+逆向时优先找 `_Myhead`、桶向量首指针 `_Myfirst`、`_Mask` 和 `bucket_count`；其余指针帮助确认这个对象确实是同一版本的布局。
+
+```text
+sizeof(std::unordered_map<int, int>) = 0x28
+
+偏移     内容
++0x00    Traits：max_load_factor（float）
++0x04    _List 的 Debug proxy
++0x08    _List._Myhead（哨兵节点指针）
++0x0C    _List._Mysize（元素个数）
++0x10    桶向量的 Debug proxy
++0x14    桶向量 _Myfirst
++0x18    桶向量 _Mylast
++0x1C    桶向量 _Myend
++0x20    _Mask
++0x24    _Maxidx（`bucket_count()`）
+```
+
+插入两个元素后 dump 对象（40 字节）：
+
+```text
++0x00: 00 00 80 3F    max_load_factor = 1.0f
++0x04: 08 22 79 00    _List 的 Debug proxy
++0x08: E0 1F 78 00    _List._Myhead → 哨兵节点
++0x0C: 02 00 00 00    _List._Mysize = 2
++0x10: B0 22 79 00    桶向量的 Debug proxy
++0x14: E0 81 78 00    桶向量 _Myfirst
++0x18: 20 82 78 00    桶向量 _Mylast
++0x1C: 20 82 78 00    桶向量 _Myend
++0x20: 07 00 00 00    _Mask = 7
++0x24: 08 00 00 00    _Maxidx = 8，即 bucket_count() = 8
+```
+
+插入 10 个元素后 rehash，桶数量从 8 涨到 64，`_Mask` 从 7 变成 63，桶向量也重新分配：
+
+```text
++0x0C: 0A 00 00 00    _List._Mysize = 10
++0x14: F0 41 79 00    桶向量 _Myfirst 变了
++0x20: 3F 00 00 00    _Mask = 63
++0x24: 40 00 00 00    _Maxidx = 64，即 bucket_count() = 64
+```
+
+### 元素怎么存进去
+
+`_Myfirst` 指向的桶向量不存 key/value。它为每个 bucket 保存 `[low, high]` 两个链表节点指针；真实的 key/value 都在 `_List._Myhead` 管理的全局双向链表里。下面三张图只看这两条指针链怎样随插入变化。
+
+刚构造完成时，`_Mysize=0`。`_Myhead` 指向哨兵，哨兵的 `_Next` 和 `_Prev` 都指向自己；所有空 bucket 的 `[low, high]` 也都保存这个哨兵地址：
+
+![unordered_map 初始化状态：_Myhead 指向自环哨兵，8 个 bucket 的 low 和 high 都指向哨兵](c-asm-17-images/unordered-map-state-1-init.png)
+
+插入 `scores[7] = 900` 后，节点进入哨兵管理的全局双向链表。这个版本里 `hash(7) = 0x5B1137E2`，所以 `hash(7) & 7 = 2`；只有一个节点时，`bucket[2]` 的 low 和 high 都指向它：
+
+![unordered_map 插入 scores[7]=900 后：哨兵和 key=7 节点组成双向链表，bucket[2] 的 low 和 high 都指向该节点](c-asm-17-images/unordered-map-state-2-insert-7.png)
+
+再插入 `scores[15] = 1500`。`hash(15) = 0xDC73306A`，同样满足 `hash(15) & 7 = 2`，因此和 key 7 落在同一个 bucket。新节点插入该 bucket 区间的 low 端：
+
+![unordered_map 碰撞插入 scores[15]=1500 后：bucket[2] 的 low 指向 key=15，high 指向 key=7；查找 15 从 high 沿 Prev 回到 low](c-asm-17-images/unordered-map-state-3-insert-15.png)
+
+现在能把结构读成一条完整的关系：`_Myhead -> 哨兵 -> 全局链表`，`_Myfirst -> bucket[2] -> [low, high] -> 链表节点`。bucket 不复制或拥有元素，它只标出全局链表中属于自己的一段连续节点。
+
+`unordered_map` 的真实节点是 `_List_node`，比 `map` 的 `_Tree_node` 小：
+
+```text
+_List_node 布局（16 字节）：
++0    _Next（指向下一个节点）
++4    _Prev（指向上一个节点）
++8    pair._Key（const int）
++0xC  pair._Value（int）
+```
+
+### 哈希查找：先选桶，再比较 key
+
+`map` 的查找靠 key 比较沿二叉树走。`unordered_map` 先用 `hash & mask` 选出一个 bucket，但 bucket 内仍要比较 key。
+
+这个版本的桶向量为每个 bucket 保存一对迭代器：`[low, high]`。查找从 `high` 开始，比较失败就沿 `_Prev` 向 `low` 回退；到达 `low` 仍不匹配，才说明该 bucket 没有这个 key。图中的 key 15 就会先比较 high 指向的 key 7，再从 `+4 _Prev` 回退到 low 指向的 key 15，最后从 `+0xC` 读取 value。
+
+下列关键指令来自这个样本中 `_Find_last` 的 `dumpbin /disasm` 输出，省略了调试栈初始化和结果结构的写回。它先取 high，再取 low；比较失败且当前节点不是 low 时，才用 `+4` 的 `_Prev` 回退：
+
+```asm
+; bucket = hash & _Mask
+mov  eax, [ebp-8]                   ; eax = container
+mov  ecx, [ebp+10]                  ; ecx = hash
+and  ecx, [eax+20]
+mov  [ebp-14], ecx
+mov  eax, [ebp-14]
+shl  eax, 1
+
+; high = buckets[(bucket << 1) + 1]
+mov  ecx, [ebp-8]
+mov  edx, [ecx+14]
+mov  eax, [edx+eax*4+4]
+mov  [ebp-20], eax
+
+; low = buckets[bucket << 1]
+mov  eax, [ebp-14]
+shl  eax, 1
+mov  ecx, [ebp-8]
+mov  edx, [ecx+14]
+mov  eax, [edx+eax*4]
+mov  [ebp-38], eax
+
+loop:
+; 比较当前节点的 key；_Uhash_compare 返回 1 表示不相等
+mov  ecx, [ebp-20]
+add  ecx, 8                         ; &where->_Key
+push ecx
+call _Umap_traits::_Kfn
+push eax
+mov  edx, [ebp+C]                   ; 搜索 key
+push edx
+call _Uhash_compare::operator()
+test al, al
+jne  try_prev                        ; 不相等，检查是否还能回退
+
+; 相等：返回当前节点
+
+try_prev:
+mov  eax, [ebp-20]
+cmp  eax, [ebp-38]                  ; where == low?
+je   not_found
+mov  ecx, [eax+4]                  ; where = where->_Prev
+mov  [ebp-20], ecx
+jmp  loop
+
+not_found:
+; 返回未命中结果（结果结构写回已省略）
+```
+
+`operator[]` 不能只当作查找：它先走类似的查找路径；未命中时会默认构造 value、插入新节点，并且可能 rehash。逆向一个纯查询函数时，优先对照 `find` 或 `_Find_last`。
+
+> [!IMPORTANT] 不要只靠一个偏移判断容器
+> 在本节的 MSVC 14.51 Debug x86 样本中，`and reg, [container+20]`、两倍 bucket 下标、bucket 的 `[low, high]` 边界和双向链表节点同时出现时，才是 `unordered_map` 的强佐证。`+0xC` 取 value、40 字节对象和 2 的幂 bucket 数量都只是该样本的实现特征，不是 C++ 标准保证。
+
+对比 `map` 的 `_Tree_node`：
+
+|            | `map` (`_Tree_node`)             | `unordered_map` (`_List_node`) |
+| ---------- | -------------------------------- | ------------------------------ |
+| 节点对象   | 24 字节                          | 16 字节                        |
+| 指针       | `_Left`, `_Parent`, `_Right`     | `_Next`, `_Prev`               |
+| key 偏移   | `+0x10`                          | `+0x8`                         |
+| value 偏移 | `+0x14`                          | `+0xC`                         |
+| 额外字段   | `_Color`, `_Isnil`（红黑树维护） | 无                             |
+
+`unordered_map` 的节点没有 `_Color`、`_Isnil` 这些红黑树字段。它只有前后指针和 key/value；bucket 向量负责指出全局链表中属于某个 bucket 的连续范围。
+
+### 无符号时怎么识别 unordered_map
+
+在本节限定的样本中，按下面的组合判断：
+
+1. **对象大小 40 字节**：同时看到 `float 1.0`、list 结构、桶向量三指针、`_Mask` 和 bucket 数量。
+2. **`and reg, [reg+20]` 后左移一位**：hash 被映射到 bucket，再转成一对边界迭代器的下标。
+3. **桶向量的成对访问**：`bucket << 1` 和 `(bucket << 1) + 1` 分别对应 low 与 high。
+4. **双向回退**：从 high 读 `+4` 的 `_Prev`，直到 low；这和 `map` 的左右子节点搜索不同。
+5. **rehash 时桶向量地址变化**：元素增多后 `_Myfirst` 改变，但容器对象本身位置不变。
+6. **有符号时**常见 `_Hash`、`_List_node`、`_Uhash_compare`、`_Umap_traits`。
+
+> [!NOTE] 什么时候用 map，什么时候用 unordered_map
+> 需要按 key 有序遍历时用 `map`；只需要快速查找、不关心顺序时用 `unordered_map`。游戏代码里缓存和 ID 映射多用 `unordered_map`，配置表如果需要排序导出则用 `map`。逆向时两种都可能遇到，区分方法是看树比较，还是 hash、桶范围和链表回退的组合。
+
 ## 模板实例化：有符号时的辅助线索
 
 C++ 模板是编译期代码生成。`vector<int>` 和 `vector<Player>` 是两个不同类型，编译器会为它们生成不同的函数实例。
@@ -656,14 +824,14 @@ std::vector<Player> team;  // +4/+8/+0xC 是三指针
    > [!NOTE]- 参考答案
    > 最像 **`std::vector` 的 `size()`**。`[ecx+8] - [ecx+4]` 是 `_Mylast - _Myfirst`，也就是有效元素占用的字节数。除数 `0x24` 是元素大小，所以每个元素是 36 字节。
 
-4. 下面是一个树节点的 hex dump（28 字节），这是什么数据结构？key 和 value 分别是多少？
+4. 下面是从一个节点地址开始读取的分配块 dump（28 字节：节点对象 24 字节 + CRT 尾部保护区 4 字节），这是什么数据结构？key 和 value 分别是多少？
 
    ```text
    D0 E6 DC 00  98 E2 DC 00  D0 E6 DC 00  00 00 CD CD  03 00 00 00  2C 01 00 00  FD FD FD FD
    ```
 
    > [!NOTE]- 参考答案
-   > 是 **`std::map` 的红黑树节点**。
+   > 前 24 字节是 **`std::map` 的红黑树节点**，最后 4 字节是 CRT 堆尾保护区。
    >
    > - `+0` `_Left` = 0x00DCE6D0
    > - `+4` `_Parent` = 0x00DCE298
@@ -674,3 +842,20 @@ std::vector<Player> team;  // +4/+8/+0xC 是三指针
    > - `+0x14` `_Value` = 300（0x12C）
    >
    > `_Left` 和 `_Right` 指向同一个地址，说明这个节点是叶子节点，两个子指针都指向哨兵。
+
+5. 下面这段汇编最像哪个容器的查找？依据是什么？
+
+   ```asm
+   mov  ecx, [esi+20]
+   and  ecx, eax
+   shl  ecx, 1
+   mov  edx, [esi+14]
+   mov  eax, [edx+ecx*4+4]
+   ```
+
+   > [!NOTE]- 参考答案
+   > 最像 **`std::unordered_map`** 的哈希查找。依据：
+   >
+   > - `mov ecx, [esi+20]` 后 `and ecx, eax`：先取 `_Mask`，再与 hash 做位与得到桶下标；这是本节样本的哈希表特征
+   > - `shl ecx, 1` 后 `[edx+ecx*4+4]`：从 `[esi+14]` 的桶向量取该 bucket 的 high 边界；同一个 bucket 的 low 边界在不带 `+4` 的相邻槽位
+   > - 这段只展示到 high 边界；要确认 `unordered_map`，还应在后续代码里看到对 low 边界的比较和通过 `_Prev` 的回退

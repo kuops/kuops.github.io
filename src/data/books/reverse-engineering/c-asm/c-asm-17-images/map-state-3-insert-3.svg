@@ -55,9 +55,10 @@
     <text x="675" y="27" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">+14 _Value (无效)</text>
     <text x="675" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">CD CD CD CD</text>
 
-    <rect x="732" y="10" width="90" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
-    <text x="777" y="27" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 Debug guard</text>
-    <text x="777" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD</text>
+    <line x1="736" y1="10" x2="736" y2="50" stroke="#64748b" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3"/>
+    <rect x="748" y="10" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="808" y="27" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 CRT guard</text>
+    <text x="808" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD | 对象外</text>
   </g>
 
   <path d="M 205 205 L 205 221 Q 205 225 201 225 L 44 225 Q 40 225 40 229 L 40 281 Q 40 285 44 285 L 62 285" fill="none" stroke="#3b82f6" stroke-width="2"/>
@@ -98,9 +99,10 @@
     <text x="675" y="27" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+14 _Value</text>
     <text x="675" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#fbbf24">84 03 00 00</text>
 
-    <rect x="732" y="10" width="90" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
-    <text x="777" y="27" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 Debug guard</text>
-    <text x="777" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD</text>
+    <line x1="736" y1="10" x2="736" y2="50" stroke="#64748b" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3"/>
+    <rect x="748" y="10" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="808" y="27" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 CRT guard</text>
+    <text x="808" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD | 对象外</text>
   </g>
 
   <path d="M 115 305 L 115 321 Q 115 325 111 325 L 44 325 Q 40 325 40 329 L 40 381 Q 40 385 44 385 L 62 385" fill="none" stroke="#10b981" stroke-width="2"/>
@@ -141,8 +143,9 @@
     <text x="675" y="27" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+14 _Value</text>
     <text x="675" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#fbbf24">2C 01 00 00</text>
 
-    <rect x="732" y="10" width="90" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
-    <text x="777" y="27" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 Debug guard</text>
-    <text x="777" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD</text>
+    <line x1="736" y1="10" x2="736" y2="50" stroke="#64748b" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3"/>
+    <rect x="748" y="10" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="808" y="27" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+18 CRT guard</text>
+    <text x="808" y="40" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">FD FD FD FD | 对象外</text>
   </g>
 </svg>

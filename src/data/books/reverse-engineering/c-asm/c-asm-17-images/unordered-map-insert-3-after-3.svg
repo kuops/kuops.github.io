@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">插入 scores[3]=300 后</text>
+
+  <!-- 对象 0x10FF9D8 -->
+  <g transform="translate(20, 60)">
+    <text x="440" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">对象 scores 地址：  0x10FF9D8 (40 字节)</text>
+
+    <rect x="0" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="50" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x00</text>
+    <text x="50" y="46" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">max_load_factor</text>
+
+    <rect x="100" y="14" width="60" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="130" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x04</text>
+    <text x="130" y="46" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">List proxy</text>
+
+    <rect x="160" y="14" width="100" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="210" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">+0x08</text>
+    <text x="210" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">_Myhead</text>
+
+    <rect x="260" y="14" width="100" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="310" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+0x0C</text>
+    <text x="310" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">_Mysize</text>
+
+    <rect x="360" y="14" width="60" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="390" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x10</text>
+    <text x="390" y="46" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">Bkt proxy</text>
+
+    <rect x="420" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="470" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x14</text>
+    <text x="470" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Myfirst</text>
+
+    <rect x="520" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="570" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x18</text>
+    <text x="570" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Mylast</text>
+
+    <rect x="620" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="670" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x1C</text>
+    <text x="670" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Myend</text>
+
+    <rect x="720" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="770" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x20</text>
+    <text x="770" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Mask</text>
+
+    <rect x="820" y="14" width="100" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+    <text x="870" y="31" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x24</text>
+    <text x="870" y="46" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Maxidx</text>
+
+    <text x="50" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">CD CC CC 3D</text>
+    <text x="50" y="85" font-size="9" text-anchor="middle" fill="#94a3b8">0.1f</text>
+
+    <text x="210" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#34d399">80 75 24 01</text>
+    <text x="210" y="85" font-size="9" text-anchor="middle" fill="#34d399">→ 0x1247580</text>
+
+    <text x="310" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#fbbf24">02 00 00 00</text>
+    <text x="310" y="85" font-size="9" text-anchor="middle" fill="#fbbf24">= 2 (原 1)</text>
+
+    <text x="470" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">C8 CE 24 01</text>
+    <text x="470" y="85" font-size="9" text-anchor="middle" fill="#94a3b8">→ 0x124CEC8</text>
+
+    <text x="770" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">3F 00 00 00</text>
+    <text x="770" y="85" font-size="9" text-anchor="middle" fill="#94a3b8">= 63</text>
+
+    <text x="870" y="72" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#94a3b8">40 00 00 00</text>
+    <text x="870" y="85" font-size="9" text-anchor="middle" fill="#94a3b8">= 64</text>
+  </g>
+
+  <!-- 箭头：_Myhead → 哨兵 -->
+  <path d="M 230 150 L 230 187 Q 230 191 224 191 L 86 191 Q 80 191 80 195 L 80 232" fill="none" stroke="#10b981" stroke-width="2"/>
+  <polygon points="76,232 84,232 80,240" fill="#10b981"/>
+  <text x="145" y="186" font-size="10" font-weight="bold" fill="#34d399">哨兵</text>
+
+  <!-- 箭头：_Myfirst → 桶数组 -->
+  <path d="M 490 150 L 490 187 Q 490 191 494 191 L 554 191 Q 560 191 560 195 L 560 232" fill="none" stroke="#10b981" stroke-width="2"/>
+  <polygon points="556,232 564,232 560,240" fill="#10b981"/>
+  <text x="530" y="186" font-size="10" font-weight="bold" fill="#34d399">桶数组</text>
+
+  <!-- 哨兵 (宽120) -->
+  <g transform="translate(20, 244)">
+    <rect x="0" y="14" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="60" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x00 _Next</text>
+    <text x="60" y="48" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">D0 69 24 01</text>
+
+    <rect x="0" y="60" width="120" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="60" y="78" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+0x04 _Prev</text>
+    <text x="60" y="94" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">F8 65 24 01</text>
+  </g>
+
+  <!-- _List_node key=7 (宽120) -->
+  <g transform="translate(180, 244)">
+    <text x="60" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">_List_node 0x12469D0</text>
+
+    <rect x="0" y="14" width="120" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="60" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+0x00 _Next</text>
+    <text x="60" y="48" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">F8 65 24 01</text>
+
+    <rect x="0" y="60" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="60" y="78" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x04 _Prev</text>
+    <text x="60" y="94" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">80 75 24 01</text>
+
+    <rect x="0" y="106" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="60" y="124" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x08 key</text>
+    <text x="60" y="140" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">07 00 00 00</text>
+
+    <rect x="0" y="152" width="120" height="40" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="60" y="170" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">+0x0C value</text>
+    <text x="60" y="186" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">84 03 00 00</text>
+  </g>
+
+  <!-- _List_node key=3 (宽120, 新) -->
+  <g transform="translate(340, 244)">
+    <text x="60" y="0" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">_List_node 0x12465F8 (新)</text>
+
+    <rect x="0" y="14" width="120" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="60" y="32" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+0x00 _Next</text>
+    <text x="60" y="48" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">80 75 24 01</text>
+
+    <rect x="0" y="60" width="120" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="60" y="78" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">+0x04 _Prev</text>
+    <text x="60" y="94" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">D0 69 24 01</text>
+
+    <rect x="0" y="106" width="120" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="60" y="124" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">+0x08 key</text>
+    <text x="60" y="140" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">03 00 00 00</text>
+
+    <rect x="0" y="152" width="120" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="60" y="170" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">+0x0C value</text>
+    <text x="60" y="186" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#34d399">2C 01 00 00</text>
+  </g>
+
+  <!-- 桶数组 (宽200, 三列) -->
+  <g transform="translate(500, 244)">
+    <text x="22" y="10" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">bkt</text>
+    <text x="80" y="10" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">low</text>
+    <text x="152" y="10" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">high</text>
+
+    <g transform="translate(0, 18)">
+      <rect x="0" y="0" width="44" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="22" y="16" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">0</text>
+      <rect x="44" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="80" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">80 75 24 01</text>
+      <rect x="116" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="152" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">80 75 24 01</text>
+    </g>
+
+    <text x="80" y="54" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">...</text>
+    <text x="152" y="54" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">...</text>
+
+    <g transform="translate(0, 62)">
+      <rect x="0" y="0" width="44" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="22" y="16" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">34</text>
+      <rect x="44" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="80" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">D0 69 24 01</text>
+      <rect x="116" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+      <text x="152" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">D0 69 24 01</text>
+    </g>
+
+    <g transform="translate(0, 90)">
+      <rect x="0" y="0" width="44" height="24" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+      <text x="22" y="16" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#fbbf24">38</text>
+      <rect x="44" y="0" width="72" height="24" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+      <text x="80" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#fbbf24">F8 65 24 01</text>
+      <rect x="116" y="0" width="72" height="24" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="2"/>
+      <text x="152" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#fbbf24">F8 65 24 01</text>
+    </g>
+
+    <text x="80" y="126" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">...</text>
+    <text x="152" y="126" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">...</text>
+
+    <g transform="translate(0, 134)">
+      <rect x="0" y="0" width="44" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="22" y="16" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="#94a3b8">63</text>
+      <rect x="44" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="80" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">80 75 24 01</text>
+      <rect x="116" y="0" width="72" height="24" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5"/>
+      <text x="152" y="16" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" fill="#94a3b8">80 75 24 01</text>
+    </g>
+  </g>
+
+  <!-- 哨兵 _Next → key=7 (水平箭头) -->
+  <path d="M 140 278 L 172 278" fill="none" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="172,274 180,278 172,282" fill="#94a3b8"/>
+  <text x="156" y="270" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Next</text>
+
+  <!-- key=7 _Next → key=3 (水平箭头, 变了) -->
+  <path d="M 300 278 L 332 278" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="332,274 340,278 332,282" fill="#fbbf24"/>
+  <text x="316" y="270" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#fbbf24">_Next</text>
+
+  <!-- key=3 _Prev → key=7 (水平箭头) -->
+  <path d="M 340 324 L 308 324" fill="none" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="308,320 300,324 308,328" fill="#94a3b8"/>
+  <text x="324" y="316" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Prev</text>
+
+  <!-- key=7 _Prev → 哨兵 (水平箭头) -->
+  <path d="M 180 324 L 148 324" fill="none" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="148,320 140,324 148,328" fill="#94a3b8"/>
+  <text x="164" y="316" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" fill="#94a3b8">_Prev</text>
+
+  <!-- 底部说明 -->
+  <g transform="translate(20, 460)">
+    <rect x="0" y="0" width="920" height="50" rx="6" fill="#fbbf24" fill-opacity="0.06" stroke="#fbbf24" stroke-opacity="0.4" stroke-width="1.5"/>
+    <text x="460" y="20" font-size="12" font-weight="bold" text-anchor="middle" fill="#fbbf24">插入 3 后的变化（黄色高亮）</text>
+    <text x="460" y="40" font-size="11" text-anchor="middle" fill="#94a3b8">_Mysize 1→2 / 哨兵 _Prev 指向 key=3 / key=7 _Next 指向 key=3 / 新节点 key=3 / bucket[38] 指向 key=3</text>
+  </g>
+</svg>
