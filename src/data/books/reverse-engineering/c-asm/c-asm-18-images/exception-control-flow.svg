@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 520" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">异常控制流：正常路径与异常路径</text>
+
+  <!-- 共同起点 -->
+  <g transform="translate(335, 55)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#60a5fa">call may_throw</text>
+  </g>
+
+  <!-- 分叉点：从 call may_throw 底部向左右分叉 -->
+  <!-- 向左（正常） -->
+  <path d="M 420 85 L 420 95 Q 420 99 416 99 L 175 99 Q 171 99 171 103 L 171 113" fill="none" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="167,107 171,113 175,107" fill="#10b981"/>
+  <text x="250" y="95" font-size="11" font-weight="bold" fill="#10b981">正常返回</text>
+
+  <!-- 向右（异常） -->
+  <path d="M 420 85 L 420 95 Q 420 99 424 99 L 665 99 Q 669 99 669 103 L 669 113" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="665,107 669,113 673,107" fill="#fbbf24"/>
+  <text x="500" y="95" font-size="11" font-weight="bold" fill="#fbbf24">抛出异常</text>
+
+  <!-- ===== 左列：正常路径 ===== -->
+  <g transform="translate(86, 113)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#34d399">try 后续代码</text>
+  </g>
+  <line x1="171" y1="143" x2="171" y2="157" stroke="#10b981" stroke-width="1.5"/>
+  <polygon points="167,151 171,157 175,151" fill="#10b981"/>
+
+  <g transform="translate(86, 157)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">跳过 catch</text>
+  </g>
+
+  <!-- 跳过 catch 后向下到汇合点（虚线表示跳过） -->
+  <line x1="171" y1="187" x2="171" y2="355" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <polygon points="167,349 171,355 175,349" fill="#10b981"/>
+
+  <!-- ===== 右列：异常路径 ===== -->
+  <g transform="translate(584, 113)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#f87171">throw x</text>
+  </g>
+  <line x1="669" y1="143" x2="669" y2="157" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="665,151 669,157 673,151" fill="#fbbf24"/>
+
+  <g transform="translate(584, 157)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#f59e0b">__CxxThrowException</text>
+  </g>
+  <line x1="669" y1="187" x2="669" y2="201" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="665,195 669,201 673,195" fill="#fbbf24"/>
+
+  <g transform="translate(584, 201)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#f59e0b">SEH 搜索匹配 catch</text>
+  </g>
+  <line x1="669" y1="231" x2="669" y2="245" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="665,239 669,245 673,239" fill="#fbbf24"/>
+
+  <g transform="translate(584, 245)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#f59e0b">栈展开 (弹 may_throw)</text>
+  </g>
+  <line x1="669" y1="275" x2="669" y2="289" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="665,283 669,289 673,283" fill="#fbbf24"/>
+
+  <g transform="translate(584, 289)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#f59e0b">catch(int e)</text>
+  </g>
+
+  <!-- catch 执行完后向左汇合到 $LN8 -->
+  <path d="M 669 319 L 669 339 Q 669 343 665 343 L 175 343 Q 171 343 171 347 L 171 355" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+  <polygon points="167,349 171,355 175,349" fill="#fbbf24"/>
+  <text x="300" y="339" font-size="11" fill="#94a3b8">catch 返回后汇合</text>
+
+  <!-- ===== 汇合点：$LN8 ===== -->
+  <g transform="translate(86, 355)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle" fill="#94a3b8">$LN8 统一退出</text>
+  </g>
+  <line x1="171" y1="385" x2="171" y2="399" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <polygon points="167,393 171,399 175,393" fill="#94a3b8" fill-opacity="0.3"/>
+
+  <g transform="translate(86, 399)">
+    <rect x="0" y="0" width="170" height="30" rx="4" fill="#94a3b8" fill-opacity="0.08" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="85" y="20" font-family="monospace" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">析构 Guard</text>
+  </g>
+
+  <!-- 图例 -->
+  <g transform="translate(400, 400)">
+    <rect x="0" y="0" width="14" height="14" rx="2" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="20" y="11" font-size="11" fill="#94a3b8">正常路径</text>
+
+    <rect x="0" y="20" width="14" height="14" rx="2" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="20" y="31" font-size="11" fill="#94a3b8">异常路径</text>
+
+    <rect x="0" y="40" width="14" height="14" rx="2" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="20" y="51" font-size="11" fill="#94a3b8">throw 点</text>
+
+    <rect x="0" y="60" width="14" height="14" rx="2" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="20" y="71" font-size="11" fill="#94a3b8">跳过/不可达</text>
+  </g>
+
+</svg>

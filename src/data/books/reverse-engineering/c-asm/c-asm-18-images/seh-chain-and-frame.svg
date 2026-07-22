@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">SEH 链与异常帧栈布局</text>
+
+  <!-- ===== 左侧：SEH 链 ===== -->
+  <g transform="translate(40, 60)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#94a3b8">SEH 链</text>
+
+    <!-- fs:[0] -->
+    <rect x="0" y="20" width="180" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="90" y="42" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" fill="#60a5fa">fs:[0]</text>
+    <text x="200" y="42" font-size="11" fill="#94a3b8">TIB 里的链表头</text>
+
+    <!-- 箭头到当前帧 -->
+    <line x1="90" y1="56" x2="90" y2="78" stroke="#3b82f6" stroke-width="2"/>
+    <polygon points="86,72 90,78 94,72" fill="#3b82f6"/>
+
+    <!-- 当前异常帧 -->
+    <rect x="0" y="78" width="180" height="80" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="90" y="98" font-size="12" font-weight="bold" text-anchor="middle" fill="#34d399">test_exception</text>
+    <text x="90" y="116" font-size="11" text-anchor="middle" fill="#94a3b8">异常帧</text>
+    <text x="90" y="138" font-family="monospace" font-size="11" text-anchor="middle" fill="#94a3b8">[ebp-0C]</text>
+    <text x="200" y="118" font-size="11" fill="#94a3b8">当前函数注册的</text>
+
+    <!-- 箭头到上一个帧 -->
+    <line x1="90" y1="158" x2="90" y2="180" stroke="#10b981" stroke-width="2"/>
+    <polygon points="86,174 90,180 94,174" fill="#10b981"/>
+
+    <!-- 调用者异常帧 -->
+    <rect x="0" y="180" width="180" height="64" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="90" y="202" font-size="12" font-weight="bold" text-anchor="middle" fill="#94a3b8">main</text>
+    <text x="90" y="220" font-size="11" text-anchor="middle" fill="#94a3b8">异常帧 (如果有)</text>
+    <text x="90" y="236" font-family="monospace" font-size="11" text-anchor="middle" fill="#94a3b8">prev -> ...</text>
+
+    <!-- 箭头到更上一层 -->
+    <line x1="90" y1="244" x2="90" y2="266" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <polygon points="86,260 90,266 94,260" fill="#94a3b8" fill-opacity="0.3"/>
+    <text x="100" y="258" font-size="11" fill="#94a3b8">0 (链尾)</text>
+  </g>
+
+  <!-- ===== 右侧：异常帧栈布局 ===== -->
+  <g transform="translate(480, 60)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#94a3b8">异常帧栈布局 (test_exception)</text>
+    <text x="0" y="18" font-size="11" fill="#94a3b8">低地址在上 (栈顶方向)</text>
+
+    <!-- ebp-14: cookie -->
+    <rect x="0" y="30" width="160" height="38" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="54" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp-14</text>
+    <text x="170" y="54" font-family="monospace" font-size="13" fill="#94a3b8">security_cookie</text>
+    <text x="320" y="54" font-size="11" fill="#94a3b8">栈保护 (非异常处理)</text>
+
+    <!-- ebp-10: 保存的 ESP -->
+    <rect x="0" y="68" width="160" height="38" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="92" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp-10</text>
+    <text x="170" y="92" font-family="monospace" font-size="13" font-weight="bold" fill="#f59e0b">保存的 ESP</text>
+    <text x="320" y="92" font-size="11" fill="#94a3b8">编译器扩展</text>
+
+    <!-- ebp-0C: 上一个 SEH 帧 (注册记录字段 0) -->
+    <rect x="0" y="106" width="160" height="38" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="130" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp-0C</text>
+    <text x="170" y="130" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">prev (上一个帧)</text>
+    <text x="320" y="130" font-size="11" font-weight="bold" fill="#34d399">SEH 注册记录</text>
+
+    <!-- ebp-08: handler (注册记录字段 1) -->
+    <rect x="0" y="144" width="160" height="38" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="168" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp-08</text>
+    <text x="170" y="168" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">handler 地址</text>
+    <text x="320" y="168" font-size="11" font-weight="bold" fill="#34d399">SEH 注册记录</text>
+
+    <!-- ebp-04: 状态值 -->
+    <rect x="0" y="182" width="160" height="38" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="206" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp-04</text>
+    <text x="170" y="206" font-family="monospace" font-size="13" font-weight="bold" fill="#f59e0b">异常状态值</text>
+    <text x="320" y="206" font-size="11" fill="#94a3b8">编译器扩展</text>
+
+    <!-- ebp: 旧 EBP -->
+    <rect x="0" y="220" width="160" height="38" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="244" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp+00</text>
+    <text x="170" y="244" font-family="monospace" font-size="13" fill="#94a3b8">保存的旧 EBP</text>
+    <text x="320" y="244" font-size="11" fill="#94a3b8">标准栈帧</text>
+
+    <!-- ebp+04: 返回地址 -->
+    <rect x="0" y="258" width="160" height="38" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="282" font-family="monospace" font-size="13" font-weight="bold" fill="#94a3b8">ebp+04</text>
+    <text x="170" y="282" font-family="monospace" font-size="13" fill="#94a3b8">返回地址</text>
+    <text x="320" y="282" font-size="11" fill="#94a3b8">call 自动压入</text>
+
+    <text x="0" y="310" font-size="11" fill="#94a3b8">高地址在下 (栈底方向)</text>
+
+    <!-- 标注：fs:[0] 指向 ebp-0C -->
+    <path d="M 0 125 L -50 125 L -50 130" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="-60" y="118" font-size="10" font-weight="bold" fill="#60a5fa" text-anchor="end">fs:[0] 指向这里</text>
+  </g>
+
+  <!-- 说明 callout -->
+  <g transform="translate(40, 350)">
+    <rect x="0" y="0" width="880" height="56" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="14" y="20" font-size="12" font-weight="bold" fill="#60a5fa">关键区分</text>
+    <text x="14" y="38" font-size="11" fill="#94a3b8">绿色 = SEH 注册记录 (Windows 定义: prev + handler)，fs:[0] 指向这里</text>
+    <text x="14" y="54" font-size="11" fill="#94a3b8">黄色 = MSVC 编译器扩展字段 (状态值 + 保存的 ESP)，不属于 SEH 注册记录</text>
+  </g>
+
+</svg>

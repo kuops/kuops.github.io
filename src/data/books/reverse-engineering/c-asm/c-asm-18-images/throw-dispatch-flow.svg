@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 540" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">throw 到异常分发的控制流</text>
+
+  <!-- BB1: 进入 try + call may_throw -->
+  <g transform="translate(245, 55)">
+    <rect x="0" y="0" width="350" height="74" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">test_exception</text>
+    <text x="10" y="36" font-family="monospace" font-size="12" fill="#34d399">+0x63  mov dword ptr [ebp-4], 0</text>
+    <text x="10" y="54" font-family="monospace" font-size="12" fill="#34d399">+0x6A  mov byte ptr [ebp-4], 1</text>
+    <text x="10" y="72" font-family="monospace" font-size="12" font-weight="bold" fill="#60a5fa">+0x72  call may_throw</text>
+  </g>
+
+  <!-- BB1 到 BB2（进入 may_throw） -->
+  <line x1="420" y1="129" x2="420" y2="149" stroke="#3b82f6" stroke-width="2"/>
+  <polygon points="416,143 420,149 424,143" fill="#3b82f6"/>
+  <text x="430" y="142" font-size="11" font-weight="bold" fill="#60a5fa">call</text>
+
+  <!-- BB2: may_throw cmp/jge -->
+  <g transform="translate(245, 149)">
+    <rect x="0" y="0" width="350" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">may_throw</text>
+    <text x="10" y="36" font-family="monospace" font-size="12" fill="#f59e0b">+0x26  cmp dword ptr [ebp+8], 0</text>
+    <text x="275" y="36" font-family="monospace" font-size="12" font-weight="bold" fill="#f59e0b">jge +0x47</text>
+  </g>
+
+  <!-- jge 分叉 -->
+  <!-- jge taken: x >= 0 跳到 +0x47（正常返回） -->
+  <path d="M 595 169 L 720 169 Q 725 169 725 174 L 725 230" fill="none" stroke="#10b981" stroke-width="2"/>
+  <polygon points="721,224 725,230 729,224" fill="#10b981"/>
+  <text x="640" y="162" font-size="11" font-weight="bold" fill="#10b981">x &gt;= 0, 跳</text>
+
+  <!-- jge not taken: x < 0 继续（throw 路径） -->
+  <line x1="420" y1="189" x2="420" y2="209" stroke="#fbbf24" stroke-width="2"/>
+  <polygon points="416,203 420,209 424,203" fill="#fbbf24"/>
+  <text x="280" y="202" font-size="11" font-weight="bold" fill="#f59e0b">x &lt; 0, 不跳</text>
+
+  <!-- BB3: 正常返回（x >= 0） -->
+  <g transform="translate(600, 255)">
+    <rect x="0" y="0" width="210" height="74" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">may_throw</text>
+    <text x="10" y="36" font-family="monospace" font-size="12" fill="#34d399">+0x47  push [ebp+8]</text>
+    <text x="10" y="54" font-family="monospace" font-size="12" fill="#34d399">+0x50  call _printf</text>
+    <text x="10" y="72" font-family="monospace" font-size="12" font-weight="bold" fill="#34d399">+0x6B  ret</text>
+  </g>
+
+  <!-- 正常返回箭头 -->
+  <path d="M 705 329 L 705 370 Q 705 375 700 375 L 690 375" fill="none" stroke="#10b981" stroke-width="2"/>
+  <polygon points="686,371 690,375 694,371" fill="#10b981"/>
+  <text x="620" y="355" font-size="11" font-weight="bold" fill="#10b981">ret → 正常返回</text>
+
+  <!-- BB4: throw 路径（准备异常对象 + __CxxThrowException） -->
+  <g transform="translate(245, 209)">
+    <rect x="0" y="0" width="350" height="122" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">may_throw</text>
+    <text x="10" y="36" font-family="monospace" font-size="12" fill="#f59e0b">+0x2C  mov eax, [ebp+8]</text>
+    <text x="10" y="54" font-family="monospace" font-size="12" fill="#f59e0b">+0x2F  mov [ebp-C8], eax</text>
+    <text x="10" y="72" font-family="monospace" font-size="12" fill="#f59e0b">+0x35  push offset __TI1H</text>
+    <text x="10" y="90" font-family="monospace" font-size="12" fill="#f59e0b">+0x3A  lea ecx, [ebp-C8]</text>
+    <text x="10" y="108" font-family="monospace" font-size="12" fill="#f59e0b">+0x40  push ecx</text>
+    <text x="10" y="126" font-family="monospace" font-size="12" font-weight="bold" fill="#f87171">+0x41  call __CxxThrowException@8</text>
+  </g>
+
+  <!-- 异常分发边（黄色虚线）：从 __CxxThrowException 到 __catch$ -->
+  <path d="M 420 331 L 420 430 Q 420 435 415 435 L 130 435 Q 125 435 125 440 L 125 450" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,3"/>
+  <polygon points="121,444 125,450 129,444" fill="#fbbf24"/>
+  <text x="200" y="427" font-size="12" font-weight="bold" fill="#fbbf24">运行时异常分发</text>
+
+  <!-- BB5: __catch$ 入口 -->
+  <g transform="translate(50, 450)">
+    <rect x="0" y="0" width="350" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="11" font-weight="bold" fill="#64748b">__catch$test_exception$0</text>
+    <text x="10" y="36" font-family="monospace" font-size="12" font-weight="bold" fill="#f59e0b">+0x89  mov eax, [ebp-28]</text>
+    <text x="285" y="36" font-size="11" fill="#94a3b8">e = 捕获值</text>
+  </g>
+
+  <!-- catch 后续箭头（指向下一张图） -->
+  <line x1="225" y1="490" x2="225" y2="510" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,3"/>
+  <polygon points="221,504 225,510 229,504" fill="#fbbf24" fill-opacity="0.5"/>
+  <text x="235" y="505" font-size="11" fill="#94a3b8">catch 执行后见下图</text>
+
+</svg>

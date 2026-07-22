@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">栈展开的两种场景</text>
+
+  <!-- ===== 左列：catch 匹配（本例） ===== -->
+  <g transform="translate(40, 60)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#10b981">场景 A: catch 匹配 (本例)</text>
+
+    <!-- 栈帧从下到上：main → test_exception → may_throw -->
+    <text x="0" y="24" font-size="11" fill="#94a3b8">高地址</text>
+
+    <!-- main 帧 -->
+    <rect x="0" y="40" width="380" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="62" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">main 帧</text>
+
+    <!-- test_exception 帧 (保留) -->
+    <rect x="0" y="76" width="380" height="60" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="96" font-family="monospace" font-size="12" font-weight="bold" fill="#34d399">test_exception 帧 (保留)</text>
+    <text x="10" y="114" font-family="monospace" font-size="11" fill="#94a3b8">  Guard guard (已构造)</text>
+    <text x="10" y="130" font-family="monospace" font-size="11" fill="#94a3b8">  catch(int e) 在这里</text>
+
+    <!-- may_throw 帧 (弹出) -->
+    <rect x="0" y="136" width="380" height="48" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="158" font-family="monospace" font-size="12" font-weight="bold" fill="#f87171">may_throw 帧 (弹出)</text>
+    <text x="10" y="176" font-family="monospace" font-size="11" fill="#94a3b8">  无局部对象, 无析构</text>
+
+    <text x="0" y="200" font-size="11" fill="#94a3b8">低地址 (栈顶)</text>
+
+    <!-- 展开步骤 -->
+    <text x="0" y="230" font-size="12" font-weight="bold" fill="#10b981">展开过程:</text>
+    <text x="0" y="250" font-size="11" font-family="monospace" fill="#34d399">1. 搜索: 找到 test_exception catch 匹配</text>
+    <text x="0" y="268" font-size="11" font-family="monospace" fill="#f87171">2. 弹出 may_throw 帧 (无析构)</text>
+    <text x="0" y="286" font-size="11" font-family="monospace" fill="#34d399">3. test_exception 帧保留</text>
+    <text x="0" y="304" font-size="11" font-family="monospace" fill="#f59e0b">4. 执行 catch, 打印 caught: -1</text>
+    <text x="0" y="322" font-size="11" font-family="monospace" fill="#34d399">5. catch 后正常退出, 析构 Guard</text>
+
+    <!-- 结果 -->
+    <rect x="0" y="340" width="380" height="40" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="364" font-size="11" fill="#34d399">Guard 析构 1 次 (在 catch 后的正常退出路径)</text>
+  </g>
+
+  <!-- ===== 右列：异常穿过本帧 ===== -->
+  <g transform="translate(500, 60)">
+    <text x="0" y="0" font-size="13" font-weight="bold" fill="#fbbf24">场景 B: 异常穿过 test_exception</text>
+
+    <text x="0" y="24" font-size="11" fill="#94a3b8">高地址</text>
+
+    <!-- main 帧 -->
+    <rect x="0" y="40" width="420" height="36" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="10" y="62" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">main 帧 (假设有 catch)</text>
+
+    <!-- test_exception 帧 (也弹出) -->
+    <rect x="0" y="76" width="420" height="60" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="96" font-family="monospace" font-size="12" font-weight="bold" fill="#f87171">test_exception 帧 (弹出)</text>
+    <text x="10" y="114" font-family="monospace" font-size="11" fill="#94a3b8">  Guard guard (已构造)</text>
+    <text x="10" y="130" font-family="monospace" font-size="11" fill="#94a3b8">  catch 不匹配 / rethrow</text>
+
+    <!-- may_throw 帧 (弹出) -->
+    <rect x="0" y="136" width="420" height="48" rx="4" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="10" y="158" font-family="monospace" font-size="12" font-weight="bold" fill="#f87171">may_throw 帧 (弹出)</text>
+    <text x="10" y="176" font-family="monospace" font-size="11" fill="#94a3b8">  无局部对象</text>
+
+    <text x="0" y="200" font-size="11" fill="#94a3b8">低地址 (栈顶)</text>
+
+    <!-- 展开步骤 -->
+    <text x="0" y="230" font-size="12" font-weight="bold" fill="#fbbf24">展开过程:</text>
+    <text x="0" y="250" font-size="11" font-family="monospace" fill="#f59e0b">1. 搜索: test_exception catch 不匹配</text>
+    <text x="0" y="268" font-size="11" font-family="monospace" fill="#f87171">2. 弹出 may_throw 帧</text>
+    <text x="0" y="286" font-size="11" font-family="monospace" fill="#f87171">3. 弹出 test_exception 帧</text>
+    <text x="0" y="304" font-size="11" font-family="monospace" fill="#f59e0b">4. 调用 unwind funclet 析构 Guard</text>
+    <text x="0" y="322" font-size="11" font-family="monospace" fill="#94a3b8">5. 继续向外搜索匹配的 catch</text>
+
+    <!-- 结果 -->
+    <rect x="0" y="340" width="420" height="40" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="10" y="364" font-size="11" fill="#f59e0b">Guard 由 unwind funclet 析构 (异常路径)</text>
+  </g>
+
+  <!-- 底部说明 -->
+  <g transform="translate(40, 440)">
+    <rect x="0" y="0" width="880" height="44" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="14" y="20" font-size="11" fill="#94a3b8">本例是场景 A: catch 匹配, may_throw 帧被弹出, test_exception 帧保留, Guard 在 catch 后析构</text>
+    <text x="14" y="38" font-size="11" fill="#94a3b8">场景 B 的 unwind funclet 仍由编译器生成, 只在异常穿过本帧时被调用</text>
+  </g>
+
+</svg>
