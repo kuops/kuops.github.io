@@ -14,12 +14,13 @@
     "svg2png": "node scripts/svg2png.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "^6.0.1",
+    "@astrojs/markdown-remark": "^7.2.2",
+    "@astrojs/mdx": "^7.0.5",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.3",
     "@pagefind/component-ui": "1.5.2",
     "@resvg/resvg-js": "^2.6.2",
-    "astro": "^6.4.2",
+    "astro": "^7.1.5",
     "dayjs": "^1.11.21",
     "lodash.kebabcase": "^4.1.1",
     "mermaid": "^11.15.0",
