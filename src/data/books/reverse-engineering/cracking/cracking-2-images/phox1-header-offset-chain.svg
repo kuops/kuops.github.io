@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 632" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">PE 头部结构的起点如何逐步算出</text>
+  <text x="940" y="30" font-size="11" font-weight="bold" text-anchor="end" fill="#94a3b8">按文件顺序排列，块高不代表实际字节比例</text>
+
+  <text x="20" y="62" font-size="12" font-weight="bold" fill="#94a3b8">结构边界</text>
+  <text x="176" y="62" font-size="12" font-weight="bold" fill="#94a3b8">当前结构</text>
+  <text x="548" y="62" font-size="12" font-weight="bold" fill="#94a3b8">下一起点的来源</text>
+
+  <line x1="128" y1="84" x2="128" y2="600" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+
+  <g>
+    <text x="20" y="89" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0x00</text>
+    <rect x="124" y="80" width="8" height="8" rx="4" fill="#fbbf24"/>
+    <line x1="128" y1="127" x2="160" y2="127" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="96" width="350" height="62" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="176" y="121" font-size="14" font-weight="bold" fill="#fbbf24">DOS Header</text>
+    <text x="176" y="144" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0x00-0x3F</text>
+
+    <rect x="530" y="96" width="410" height="62" rx="4" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="120" font-size="11" font-weight="bold" fill="#94a3b8">固定长度 0x40</text>
+    <text x="548" y="145" font-family="monospace" font-size="15" font-weight="bold" fill="#fbbf24">0x00 + 0x40 = 0x40</text>
+  </g>
+
+  <g>
+    <text x="20" y="175" font-family="monospace" font-size="13" font-weight="bold" fill="#fbbf24">0x40</text>
+    <rect x="124" y="166" width="8" height="8" rx="4" fill="#fbbf24"/>
+    <line x1="128" y1="213" x2="160" y2="213" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="182" width="350" height="62" rx="4" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="176" y="207" font-size="14" font-weight="bold" fill="#fbbf24">DOS Stub 区域</text>
+    <text x="176" y="230" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0x40-0xB7</text>
+
+    <rect x="530" y="182" width="410" height="62" rx="4" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="206" font-size="11" font-weight="bold" fill="#94a3b8">不是固定长度相加，由 DOS Header 字段直接给出</text>
+    <text x="548" y="231" font-family="monospace" font-size="15" font-weight="bold" fill="#fbbf24">e_lfanew = 0xB8</text>
+  </g>
+
+  <g>
+    <text x="20" y="261" font-family="monospace" font-size="13" font-weight="bold" fill="#60a5fa">0xB8</text>
+    <rect x="124" y="252" width="8" height="8" rx="4" fill="#3b82f6"/>
+    <line x1="128" y1="299" x2="160" y2="299" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="268" width="350" height="62" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="176" y="293" font-size="14" font-weight="bold" fill="#60a5fa">NT Headers: PE 签名</text>
+    <text x="176" y="316" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0xB8-0xBB</text>
+
+    <rect x="530" y="268" width="410" height="62" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="292" font-size="11" font-weight="bold" fill="#94a3b8">PE 签名固定占 4 字节</text>
+    <text x="548" y="317" font-family="monospace" font-size="15" font-weight="bold" fill="#60a5fa">0xB8 + 0x04 = 0xBC</text>
+  </g>
+
+  <g>
+    <text x="20" y="347" font-family="monospace" font-size="13" font-weight="bold" fill="#60a5fa">0xBC</text>
+    <rect x="124" y="338" width="8" height="8" rx="4" fill="#3b82f6"/>
+    <line x1="128" y1="385" x2="160" y2="385" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="354" width="350" height="62" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="176" y="379" font-size="14" font-weight="bold" fill="#60a5fa">NT Headers: COFF 文件头</text>
+    <text x="176" y="402" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0xBC-0xCF</text>
+
+    <rect x="530" y="354" width="410" height="62" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="378" font-size="11" font-weight="bold" fill="#94a3b8">COFF 文件头固定占 0x14 字节</text>
+    <text x="548" y="403" font-family="monospace" font-size="15" font-weight="bold" fill="#60a5fa">0xBC + 0x14 = 0xD0</text>
+  </g>
+
+  <g>
+    <text x="20" y="433" font-family="monospace" font-size="13" font-weight="bold" fill="#60a5fa">0xD0</text>
+    <rect x="124" y="424" width="8" height="8" rx="4" fill="#3b82f6"/>
+    <line x1="128" y1="471" x2="160" y2="471" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="440" width="350" height="62" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="176" y="465" font-size="14" font-weight="bold" fill="#60a5fa">NT Headers: Optional Header</text>
+    <text x="176" y="488" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0xD0-0x1AF</text>
+
+    <rect x="530" y="440" width="410" height="62" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="464" font-size="11" font-weight="bold" fill="#94a3b8">SizeOfOptionalHeader = 0xE0</text>
+    <text x="548" y="489" font-family="monospace" font-size="15" font-weight="bold" fill="#60a5fa">0xD0 + 0xE0 = 0x1B0</text>
+  </g>
+
+  <g>
+    <text x="20" y="519" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">0x1B0</text>
+    <rect x="124" y="510" width="8" height="8" rx="4" fill="#10b981"/>
+    <line x1="128" y1="557" x2="160" y2="557" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+
+    <rect x="160" y="526" width="350" height="62" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="176" y="551" font-size="14" font-weight="bold" fill="#34d399">节表</text>
+    <text x="176" y="574" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件范围 0x1B0-0x24F</text>
+
+    <rect x="530" y="526" width="410" height="62" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="548" y="550" font-size="11" font-weight="bold" fill="#94a3b8">4 个节表项，每项固定占 0x28 字节</text>
+    <text x="548" y="575" font-family="monospace" font-size="15" font-weight="bold" fill="#34d399">0x1B0 + 4 x 0x28 = 0x250</text>
+  </g>
+
+  <text x="20" y="605" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">0x250</text>
+  <rect x="124" y="596" width="8" height="8" rx="4" fill="#10b981"/>
+  <text x="144" y="605" font-size="11" font-weight="bold" fill="#94a3b8">节表结束后的第一个文件偏移</text>
+</svg>

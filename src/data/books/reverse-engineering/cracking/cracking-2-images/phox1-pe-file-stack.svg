@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 618" width="100%" height="100%" font-family="'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif" font-size="14">
+  <text x="20" y="30" font-size="16" font-weight="bold" fill="#94a3b8">phox.1: PE 文件纵向布局</text>
+  <text x="940" y="30" font-size="11" font-weight="bold" text-anchor="end" fill="#94a3b8">按文件偏移排列，块高不代表实际字节比例</text>
+
+  <text x="20" y="58" font-size="12" font-weight="bold" fill="#94a3b8">文件范围</text>
+  <text x="198" y="58" font-size="12" font-weight="bold" fill="#94a3b8">结构与关键字段</text>
+  <text x="662" y="58" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">大小</text>
+
+  <g>
+    <text x="20" y="104" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x000-0x03F</text>
+    <rect x="180" y="70" width="500" height="56" rx="4" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="198" y="93" font-size="13" font-weight="bold" fill="#fbbf24">DOS Header</text>
+    <text x="330" y="93" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">MZ @ 0x00</text>
+    <text x="330" y="115" font-family="monospace" font-size="11" font-weight="bold" fill="#60a5fa">e_lfanew @ 0x3C = 0xB8</text>
+    <text x="662" y="93" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x40</text>
+  </g>
+
+  <g>
+    <text x="20" y="158" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x040-0x0B7</text>
+    <rect x="180" y="130" width="500" height="44" rx="4" fill="#fbbf24" fill-opacity="0.05" stroke="#fbbf24" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="158" font-size="13" font-weight="bold" fill="#fbbf24">DOS Stub</text>
+    <text x="330" y="158" font-size="11" font-weight="bold" fill="#94a3b8">指令 / 字符串 / Rich Header / 填充</text>
+    <text x="662" y="158" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x78</text>
+  </g>
+
+  <g>
+    <text x="20" y="201" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x0B8-0x0BB</text>
+    <rect x="180" y="178" width="500" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="198" y="201" font-size="12" font-weight="bold" fill="#60a5fa">PE 签名</text>
+    <text x="330" y="201" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">50 45 00 00  (PE\0\0)</text>
+    <text x="662" y="201" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x4</text>
+  </g>
+
+  <g>
+    <text x="20" y="240" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x0BC-0x0CF</text>
+    <rect x="180" y="218" width="500" height="36" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="198" y="240" font-family="monospace" font-size="12" font-weight="bold" fill="#60a5fa">IMAGE_FILE_HEADER</text>
+    <text x="408" y="240" font-size="11" font-weight="bold" fill="#94a3b8">COFF 文件头</text>
+    <text x="662" y="240" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x14</text>
+  </g>
+
+  <g>
+    <text x="20" y="284" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x0D0-0x1AF</text>
+    <rect x="180" y="258" width="500" height="50" rx="4" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="198" y="284" font-family="monospace" font-size="12" font-weight="bold" fill="#60a5fa">IMAGE_OPTIONAL_HEADER32</text>
+    <text x="430" y="284" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">SizeOfOptionalHeader = 0xE0</text>
+    <text x="662" y="284" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0xE0</text>
+  </g>
+
+  <path d="M 690 178 L 700 178 L 700 308 L 690 308" fill="none" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <text x="715" y="226" font-size="12" font-weight="bold" fill="#60a5fa">NT Headers</text>
+  <text x="715" y="247" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">0xB8-0x1AF</text>
+  <text x="715" y="268" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">共 0xF8</text>
+
+  <path d="M 180 115 L 169 115 Q 165 115 165 119 L 165 192 Q 165 196 169 196 L 180 196" fill="none" stroke="#3b82f6" stroke-opacity="0.5" stroke-width="1.5"/>
+  <polygon points="174,192 180,196 174,200" fill="#3b82f6"/>
+
+  <g>
+    <text x="20" y="337" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x1B0-0x24F</text>
+    <rect x="180" y="312" width="500" height="46" rx="4" fill="#3b82f6" fill-opacity="0.05" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="337" font-size="13" font-weight="bold" fill="#60a5fa">节表</text>
+    <text x="330" y="337" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">4 x 0x28 = 0xA0</text>
+    <text x="662" y="337" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0xA0</text>
+  </g>
+
+  <g>
+    <text x="20" y="382" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x250-0x3FF</text>
+    <rect x="180" y="362" width="500" height="34" rx="4" fill="none" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="383" font-size="11" font-weight="bold" fill="#94a3b8">头部对齐填充</text>
+    <text x="330" y="383" font-family="monospace" font-size="11" font-weight="bold" fill="#94a3b8">SizeOfHeaders = 0x400</text>
+    <text x="662" y="383" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x1B0</text>
+  </g>
+
+  <g>
+    <text x="20" y="425" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x400-0xBFF</text>
+    <rect x="180" y="400" width="500" height="38" rx="4" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="198" y="425" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">.text</text>
+    <text x="330" y="425" font-size="11" font-weight="bold" fill="#94a3b8">代码与入口机器码</text>
+    <text x="662" y="425" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x800</text>
+  </g>
+
+  <g>
+    <text x="20" y="467" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0xC00-0x11FF</text>
+    <rect x="180" y="442" width="500" height="38" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="467" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">.rdata</text>
+    <text x="330" y="467" font-size="11" font-weight="bold" fill="#94a3b8">只读数据与导入结构</text>
+    <text x="662" y="467" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x600</text>
+  </g>
+
+  <g>
+    <text x="20" y="509" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x1200-0x13FF</text>
+    <rect x="180" y="484" width="500" height="38" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="509" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">.data</text>
+    <text x="330" y="509" font-size="11" font-weight="bold" fill="#94a3b8">可写数据</text>
+    <text x="662" y="509" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x200</text>
+  </g>
+
+  <g>
+    <text x="20" y="551" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">0x1400-0x15FF</text>
+    <rect x="180" y="526" width="500" height="38" rx="4" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="198" y="551" font-family="monospace" font-size="13" font-weight="bold" fill="#34d399">.rsrc</text>
+    <text x="330" y="551" font-size="11" font-weight="bold" fill="#94a3b8">资源数据</text>
+    <text x="662" y="551" font-family="monospace" font-size="12" font-weight="bold" text-anchor="end" fill="#94a3b8">0x200</text>
+  </g>
+
+  <line x1="180" y1="578" x2="680" y2="578" stroke="#94a3b8" stroke-opacity="0.3" stroke-width="1.5"/>
+  <text x="20" y="594" font-family="monospace" font-size="12" font-weight="bold" fill="#94a3b8">文件结束 0x1600</text>
+</svg>

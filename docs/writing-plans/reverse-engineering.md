@@ -1,6 +1,6 @@
 # 《逆向工程实战入门》写作计划
 
-> 最后更新：2026-07-06
+> 最后更新：2026-07-27
 
 ## 一、全书结构
 
@@ -10,7 +10,7 @@ src/data/books/reverse-engineering/
 ├── getting-started/                  ← 第一大分类：入门篇 (order 1)
 ├── assembly-basics/                  ← 第二大分类：汇编基础 (order 2)
 ├── c-asm/                            ← 第三大分类：C 与汇编 (order 3)
-├── cracking/                         ← 第四大分类：破解篇 (order 2，待定)
+├── cracking/                         ← 第四大分类：破解篇 (order 4)
 └── game/                             ← 第五大分类：游戏篇 (order 3，待定)
 ```
 
@@ -21,7 +21,7 @@ src/data/books/reverse-engineering/
 | 入门篇 | 3 章 | 3 章 | 0 | 100% |
 | 汇编基础 | 9 章 | 9 章 | 0 | 100% |
 | C 与汇编 | 18 章 | 18 章 | 0 | 100% |
-| 破解篇 | 0 章 | 0 | 0 | 未开始 |
+| 破解篇 | 2 章 | 1 章 | 1 章 | 14% |
 | 游戏篇 | 0 章 | 0 | 0 | 未开始 |
 
 ### 已完成分类详情
@@ -84,17 +84,30 @@ src/data/books/reverse-engineering/
 - [x] 重构 c-asm-10（结构体）— 已完成，含对齐/padding/嵌套/柔性数组/反推结构体
 - [x] 审查 asm-memory.md — 已删除，内容移至破解篇
 
-#### 破解篇 — 待开始
+#### 破解篇 — 1/7 已发布，1 章草稿
 
-> 2026-07-03 调研后规划，基于 FLARE Malware Analysis Crash Course (Ch6 调试技巧 / Ch9 Windows 逆向) 和 kovidomi/game-reversing 资源。
+> 2026-07-27 样本调研后规划。已对 `~/crackme/a.chm` 中可提取的 157 个 ZIP 做不执行的静态筛选：识别到 155 个 PE32 对象、42 个 VB 运行时样本、11 个 MFC 样本和 12 个 UPX 样本。主线按单一教学目标选择小型样本；反调试不复用库中任务不明的样本，改用可控的自建训练程序。
 
-| Order | 文件 | 标题 | 内容要点 |
+**样本准备清单：** 以下编号是 `~/crackme/a.chm` 的目录编号。除第 6 章外，写作前均需解压并分别加载到 IDA 与 x32dbg。
+
+| CHM 编号 | 压缩包 | 章节职责 | 准备状态 |
 |---|---|---|---|
-| 22 | cracking-1.md | 破解方法论与工具链 | 三入手点（字符串/API/算法）；IDA Pro 入门（反汇编/交叉引用/函数图/伪代码 F5）；x64dbg 进阶（条件/内存/硬件断点/trace）；010 Editor 模板；静态+动态配合 |
-| 23 | cracking-2.md | PE 文件格式 | PE 结构总览（DOS头/PE头/节表/节数据）；节区（.text/.data/.rdata/.bss）；导入表/导出表；入口点与 OEP；010 Editor 模板解析；IDA Imports 窗口 |
-| 24 | cracking-3.md | 脱壳 | 壳原理（压缩/加密代码段，运行时解压）；常见壳（UPX/ASPack/Themida）；脱壳三法（单步到 OEP/内存断点/ESP 定律）；Dump + 修复 IAT；Scylla |
-| 25 | cracking-4.md | 注册算法逆向 | 追注册码流程（找验证函数→理解算法→逆推）；常见算法（异或/查表/CRC32/hash）；用户名绑定 vs 机器码绑定；写 Keygen；反调试（IsDebuggerPresent/PEB/时间检测）与绕过 |
-| 26 | cracking-5.md | Shellcode 与 Patch | shellcode 约束（位置无关/无导入表）；x64dbg 直接写 shellcode 字节；GetProcAddress+LoadLibrary 自动解析 API；Patch 技术（改跳转/NOP 填充/改返回值）；实战 Patch CrackMe |
+| 129 | `phox.2.zip` | `cracking-1`：从 GUI 线索定位验证逻辑 | 已发布 |
+| 128 | `phox.1.zip` | `cracking-2`、`cracking-3`：PE、装载和导入 | `cracking-2` 草稿中 |
+| 108 | `Acid Bytes.2.zip` | `cracking-4`：UPX 脱壳 | 待准备 |
+| 154 | `The_q.2.zip` | `cracking-5`：Name/Serial 验证算法 | 已准备 |
+| 自建 | `anti-debug-demo.exe` | `cracking-6`：反调试与完整性检查 | 待创建 |
+| 100 | `Acid_Cool_178.1.zip` | `cracking-7`：Patch 与行为验证 | 待准备 |
+
+| Order | 文件 | 标题 | 样本 | 内容要点 |
+|---|---|---|---|---|
+| 22 | cracking-1.md | 从线索定位验证逻辑 | `phox.2.zip`（#129） | PhoX CrackMe 5.1：从失败提示、字符串、xref、导入函数和伪代码定位 `check_serial`，再用 x32dbg 验证输入到比较目标的完整数据流。已发布 |
+| 23 | cracking-2.md | PE 文件与映像布局 | `phox.1.zip`（#128） | 磁盘文件与内存映像的对应关系；DOS 头、PE 头、节表、文件偏移、RVA、VA、节对齐、入口点；用 010 Editor 和 IDA 对照 `phox.1` 的四个节 |
+| 24 | cracking-3.md | Windows 装载、导入表与 IAT | `phox.1.zip`（#128） | 装载器如何映射节、解析导入描述符和填充 IAT；从 `.idata`、Imports 窗口到 `CreateWindowExA`、`GetWindowTextA` 等真实调用；区分磁盘导入表和内存 IAT |
+| 25 | cracking-4.md | UPX 脱壳：从壳入口到 OEP | `Acid Bytes.2.zip`（#108） | UPX 1.01 壳的节与入口特征；在 x32dbg 中识别解压 stub、定位 OEP、Dump 内存映像、检查并修复 IAT；`Acid Bytes.2` 随包说明明确面向新手，保护目标单一为 Serial |
+| 26 | cracking-5.md | Name/Serial 验证算法 | `The_q.2.zip`（#154） | 从对话框控件读取最多 8 字节名称和数值 Serial；名称补位、逐字节加法/XOR、循环移位与最终比较；静态还原后用断点验证数据流与成功分支 |
+| 27 | cracking-6.md | 反调试与完整性检查 | 自建 `anti-debug-demo.exe` | 使用可控源码分别展示 `IsDebuggerPresent`、PEB 调试标志、`CheckRemoteDebuggerPresent`、简单时间检测和代码完整性校验；在 x32dbg 中观察检测点与失败路径，避免将多个未知保护机制混入一个样本 |
+| 28 | cracking-7.md | 二进制 Patch 与行为验证 | `Acid_Cool_178.1.zip`（#100） | 定位第三个 `MessageBoxA` 的 Nag 调用，选择最小补丁，记录原始字节与修改后字节，重启验证并说明静态补丁与运行时修改的边界。随包 MASM 源码仅用于章节末尾核对，不在逆向过程前展示 |
 
 #### 游戏篇 — 待开始
 
