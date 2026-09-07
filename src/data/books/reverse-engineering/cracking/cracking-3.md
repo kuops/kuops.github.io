@@ -11,11 +11,11 @@ order: 24
 
 <!-- TODO: 程序运行截图：显示标题为 CrackMe、正文以 "Ok...ur first task" 开头的启动提示框。 -->
 
-![alt text](image.png)
+![PhoX CrackMe 启动时显示的 CrackMe 提示框](cracking-3-images/crackme-startup-nag.png)
 
 <!-- TODO: 程序运行截图：关闭提示框后显示的 PhoX' CrackMe 主窗口，用于提出“窗口由谁创建”的问题。 -->
 
-![alt text](image-1.png)
+![PhoX CrackMe 主窗口包含两个输入框和 OK 按钮](cracking-3-images/crackme-main-window.png)
 
 这个过程至少包含两种界面操作：显示提示框，以及创建并显示主窗口。它们都需要程序请求 Windows 提供的服务。本章选择主窗口作为追踪对象，寻找负责创建它的系统函数。
 
@@ -52,7 +52,7 @@ Windows 将这些可供程序调用的功能组织成 **API（Application Progra
 
 <!-- TODO: IDA 截图：Imports 窗口定位 CreateWindowExA，显示模块 USER32 和地址 0x402080。 -->
 
-![alt text](image-2.png)
+![IDA Imports 窗口选中 USER32 的 CreateWindowExA 导入项](cracking-3-images/ida-imports-createwindowexa.png)
 
 这一行显示三项直接观察结果：函数名是 `CreateWindowExA`，来自 `USER32`，地址为 `0x402080`。函数名说明它可能负责创建窗口，但名称本身还不能证明它创建的就是刚才看到的主窗口；还要检查调用位置和参数。
 
@@ -60,7 +60,7 @@ Windows 将这些可供程序调用的功能组织成 **API（Application Progra
 
 <!-- TODO: IDA 截图：在 CreateWindowExA 导入项查看 xref，显示 WinMain(...)+A8 的 p/r、sub_4010FB+1F4 的 r，以及 sub_4010FB+1FA、+231、+26A 的 p；选中 WinMain(...)+A8 的 p 引用。 -->
 
-![alt text](image-3.png)
+![IDA 显示 CreateWindowExA 地址项及其交叉引用列表](cracking-3-images/ida-createwindowexa-xrefs-overview.png)
 
 交叉引用窗口的 `Address` 列不一定直接显示绝对地址。IDA 常用“函数名 + 函数内偏移”表示来源位置；本例第一行显示为 `WinMain(...)+A8`，它的完整地址是：
 
@@ -83,7 +83,7 @@ _WinMain@16 起点 + 函数内偏移
 
 本章先双击 `WinMain(...)+A8` 的 `p` 引用，追踪这次直接调用。
 
-![alt text](image-4.png)
+![IDA 交叉引用列表显示 CreateWindowExA 的 p 和 r 引用](cracking-3-images/ida-createwindowexa-xrefs-detail.png)
 
 跳转到 `0x4010A8` 后，可以看到这个位置位于 `_WinMain@16`。前面的指令正在按 x86 `stdcall` 的约定，从最后一个参数开始反向压栈：
 
@@ -105,7 +105,7 @@ _WinMain@16 起点 + 函数内偏移
 
 <!-- TODO: IDA 截图：跳到 0x4010A8，显示 call ds:CreateWindowExA、上方 12 个参数压栈，并让 WindowName 注释中的 "PhoX' CrackMe" 可见；若当前界面已开启指令字节显示，再让 FF 15 80 20 40 00 出现在同一行。 -->
 
-![alt text](image-5.png)
+![IDA 在 WinMain 中显示 CreateWindowExA 调用及窗口标题参数](cracking-3-images/ida-createwindowexa-call-site.png)
 
 结合 IDA 添加的函数原型和参数注释，可以看出这次调用负责创建标题为 `PhoX' CrackMe` 的主窗口。这里先关注最后一条指令，而不是分析各个窗口参数。
 
@@ -123,7 +123,7 @@ FF 15 80 20 40 00
 
 IDA 是否直接显示这 6 个字节取决于界面设置；如果当前反汇编窗口没有机器码列，可以在 Hex View 中跳到指令地址 `0x4010A8` 查看原始字节。前两个字节 `FF 15` 编码的是一次通过内存地址进行的间接 `call`，后面的 4 字节按小端序读取为 `0x00402080`，这正是被符号名遮住的操作数地址。
 
-![alt text](image-7.png)
+![IDA Hex View 显示 CreateWindowExA 调用的机器码](cracking-3-images/ida-createwindowexa-machine-bytes.png)
 
 反汇编中的方括号表示内存访问，因此 CPU 不是跳到 `0x402080` 执行，而是先读取这个地址处保存的 4 字节，再把读到的值作为调用目标：
 
@@ -163,57 +163,34 @@ IDA 是否直接显示这 6 个字节取决于界面设置；如果当前反汇�
 | `0x402080`   | IDA 显示的 4 字节外部函数地址项        |
 | 运行时解析值 | USER32.dll 中 `CreateWindowExA` 的地址 |
 
-`0x4010A8` 是指令本身，`0x402080` 是指令读取的地址项，地址项里的值才是最终调用目标。它是否属于 IAT，留到读取 PE 数据目录后再确认。
+`0x4010A8` 是指令本身，`0x402080` 是指令读取的地址项，地址项里的值才是最终调用目标。IDA 为什么把这个地址项命名为 `CreateWindowExA`，接下来从 PE 的导入结构逐步验证。
 
 ## 用 010 Editor 找到导入描述符
 
-IDA 已经给出了外部函数地址项 `0x402080`，却没有展示它属于哪张 PE 表。现在用 010 Editor 打开同一份 `phox.1.exe`，先从数据目录读取导入目录和 IAT 的 RVA，再判断 `0x402080` 是否落在 IAT 范围内。上一章读过的 `.rdata` 字段稍后会用于换算文件偏移，这里先不代入公式。
+IDA 已经给出了 `USER32`、`CreateWindowExA` 和地址项 `0x402080`，但这些仍是 IDA 的解析结果。现在用 010 Editor 打开同一份 `phox.1.exe`，从 `Import` 数据目录找到导入描述符数组，再检查原始 PE 文件怎样记录 DLL 名称、API 名称和地址槽位。
 
-### 读取两个导入数据目录项
+### 读取 Import 数据目录项
 
 在 010 Editor 的模板结果中展开：
 
 ```text
 NtHeader
-└─ OptionalHeader
-   └─ DataDirArray
-      ├─ Import
-      └─ ImportAddressTable
+   └─ OptionalHeader
+      └─ DataDirArray
+         └─ Import
 ```
 
-展开后可以读到两组 RVA 和大小：
+展开后读到：
 
-| 数据目录项           | RVA      | 大小   | 本章作用                    |
-| -------------------- | -------- | ------ | --------------------------- |
-| `Import`             | `0x20D4` | `0x64` | 定位导入描述符数组          |
-| `ImportAddressTable` | `0x2000` | `0xC4` | 定位整个映像的 IAT 地址范围 |
+| 数据目录项 | RVA      | 大小   | 本章作用           |
+| ---------- | -------- | ------ | ------------------ |
+| `Import`   | `0x20D4` | `0x64` | 定位导入描述符数组 |
 
-<!-- TODO: 010 Editor 截图：展开 NtHeader -> OptionalHeader -> DataDirArray，同时显示 Import 和 ImportAddressTable 的 Value、Start、Size 列及对应原始字节；前者为 RVA 0x20D4/大小 0x64，后者为 RVA 0x2000/大小 0xC4。 -->
+<!-- TODO: 010 Editor 截图：展开 NtHeader -> OptionalHeader -> DataDirArray，突出显示 Import 的 RVA 0x20D4 和大小 0x64；本节不讲 ImportAddressTable 数据目录，截图尽量不要让它成为视觉重点。 -->
 
-![alt text](image-6.png)
+![010 Editor 展开 Import 数据目录项并显示 RVA 和大小](cracking-3-images/010-import-directory-entry.png)
 
-这两个数据目录项都与外部函数调用有关，但它们指向的不是同一种结构：
-
-- **导入目录（Import Directory）**：从一个导入描述符数组开始，主要回答“依赖哪些 DLL、每个 DLL 的名称表和 IAT 在哪里”。
-- **IAT（Import Address Table）**：一组地址槽位，主要回答“运行时调用外部函数时，要从哪里取得函数地址”。
-
-现在可以验证 IDA 中的 `0x402080` 是否属于 IAT。IDA 显示的是静态 VA，上一章读到 `ImageBase = 0x400000`，所以先减去映像基址：
-
-```text
-地址项 RVA = 0x402080 - 0x400000
-           = 0x2080
-```
-
-IAT 数据目录从 RVA `0x2000` 开始，大小为 `0xC4`，其半开范围是：
-
-```text
-0x2000 <= IAT RVA < 0x2000 + 0xC4
-0x2000 <= IAT RVA < 0x20C4
-```
-
-`0x2080` 落在这个范围内。到这里才有原始 PE 字段作为依据，可以确认：IDA 显示的 `0x402080` 确实是 IAT 中的一个 4 字节槽位。它具体为什么对应 `CreateWindowExA`，还要继续读取导入描述符和名称表。
-
-IDA 给出的线索是：`0x402080` 对应来自 USER32 的 `CreateWindowExA`。目前在 010 Editor 中只确认了它位于 IAT 范围，还没有用原始 PE 字段验证模块名和函数名。要完成验证，先从 `Import` 数据目录给出的 RVA `0x20D4` 找到导入描述符数组，再沿描述符读取 DLL 名称和两张 thunk 表。要在原始文件中定位描述符数组，先把这个 RVA 换算为文件偏移。上一章读到 `.rdata` 的字段为：
+`Import` 数据目录指向一个导入描述符数组。数组中的每个有效描述符对应一个 DLL，并通过字段继续指向该 DLL 的名称和导入项。这里的 `0x20D4` 是 RVA，不能直接当作文件偏移使用，因此先利用 `.rdata` 的节信息将它换算成 FOA。上一章读到 `.rdata` 的字段为：
 
 ```text
 .rdata.VirtualAddress   = RVA 0x2000
@@ -246,38 +223,44 @@ PE 规范规定一个 `IMAGE_IMPORT_DESCRIPTOR` 固定占 `0x14`（20）字节�
 | `ImportDescriptor[2]` | `0x0CFC` | `MSVCRT.dll`   |
 | `ImportDescriptor[3]` | `0x0D10` | `KERNEL32.dll` |
 
-紧随其后的第 5 项从 FOA `0x0D24` 开始，20 字节全为零，用来标记描述符数组结束。因此，一个 `IMAGE_IMPORT_DESCRIPTOR` 描述的是**一个 DLL 依赖**，不是一个 API；同一 DLL 导入的多个函数由该描述符指向的后续表项列出。
+紧随其后的第 5 项从 FOA `0x0D24` 开始，到 `0x0D37` 结束，20 字节全部为零。它不对应第 5 个 DLL，也不是为了地址对齐而添加的填充；这是一个有明确含义的**全零终止描述符**，Windows 读取到它就知道描述符数组已经结束。
 
-这里的 DLL 名称是模板根据描述符中的 `Name` 字段继续解析后给出的摘要，不是直接存放在这 20 字节描述符里的文本。接下来展开第一个描述符，检查 `Name` 的原始字段值以及它指向的字符串，验证模板为什么显示 `USER32.dll`。
-
-### 读取第一个描述符的五个字段
-
-展开 `ImportDescriptor[0]`，依次选择 `DUMMYUNIONNAME -> OriginalFirstThunk`、`TimeDateStamp`、`ForwarderChain`、`Name` 和 `FirstThunk`。每选择一项，上方都会高亮对应的 4 字节；将界面中的观察结果按结构顺序整理如下：
-
-| 项内偏移 | 010 Editor 字段      | 本例值   | 作用                         |
-| -------- | -------------------- | -------- | ---------------------------- |
-| `+0x00`  | `OriginalFirstThunk` | `0x21A4` | 指向导入查找表               |
-| `+0x04`  | `TimeDateStamp`      | `0`      | 本例未使用绑定导入           |
-| `+0x08`  | `ForwarderChain`     | `0`      | 旧式绑定导入使用的转发链索引 |
-| `+0x0C`  | `Name`               | `0x2352` | 指向 DLL 名称字符串          |
-| `+0x10`  | `FirstThunk`         | `0x206C` | 指向该 DLL 的 IAT 起点       |
-
-<!-- TODO: 010 Editor 截图：展开 ImportDescriptor[0] 和 DUMMYUNIONNAME，同屏显示 OriginalFirstThunk=0x21A4、Name=0x2352、FirstThunk=0x206C；让 Characteristics 与 OriginalFirstThunk 显示相同起点 0xCD4，并高亮原始字节 A4 21 00 00。提醒 Characteristics=8612 是 0x21A4 的十进制显示。 -->
-
-模板把第一项显示成名为 `DUMMYUNIONNAME` 的 union，其中有 `Characteristics` 和 `OriginalFirstThunk` 两种解释。截图中的 `Characteristics = 8612` 是十进制：
+一般来说，程序依赖 `N` 个 DLL，就会有 `N` 个非零的 `IMAGE_IMPORT_DESCRIPTOR`，后面再跟一个 20 字节全零的结束项。本例依赖 4 个 DLL，因此共有 4 个有效描述符和 1 个全零结束项，正好占用数据目录给出的 `0x64` 字节：
 
 ```text
-8612（十进制）= 0x21A4（十六进制）
+(4 + 1) * 0x14 = 0x64
 ```
 
-两行从同一个 FOA `0xCD4` 开始，共用同一组 4 字节 `A4 21 00 00`，不是两个连续字段。分析普通 PE 映像的导入时，本章按 `OriginalFirstThunk` 解释。
+因此，一个有效的 `IMAGE_IMPORT_DESCRIPTOR` 描述的是**一个 DLL 依赖**，不是一个 API；同一 DLL 导入的多个函数由该描述符指向的后续表项列出。
 
-> [!NOTE]- 为什么本章不使用中间两个字段
-> `TimeDateStamp` 和 `ForwarderChain` 与绑定导入有关。绑定导入会预先记录某个 DLL 版本下解析出的地址，以减少装载时的查找工作。本例 `TimeDateStamp = 0`，绑定导入数据目录也为空，因此没有使用这种机制。本章只追踪普通按名称导入，不再展开这两个字段。
+这里的 DLL 名称是模板根据描述符中的 `Name` 字段继续解析后给出的摘要，不是直接存放在这 20 字节描述符里的文本。接下来先检查每个描述符的 `Name`，找到真正属于 USER32 的那一项。
 
-### Name 找到的是 DLL 名称
+### 沿 Name 确认 USER32 描述符
 
-`Name = 0x2352` 是 RVA，不是文件偏移。它仍落在 `.rdata` 范围内，因此：
+PE 规范规定 `IMAGE_IMPORT_DESCRIPTOR` 的五个字段按下面的顺序排列，每个字段占 4 字节：
+
+| 描述符内偏移 | 字段                 |
+| ------------ | -------------------- |
+| `+0x00`      | `OriginalFirstThunk` |
+| `+0x04`      | `TimeDateStamp`      |
+| `+0x08`      | `ForwarderChain`     |
+| `+0x0C`      | `Name`               |
+| `+0x10`      | `FirstThunk`         |
+
+当前只读取 `Name`。第一个描述符从 FOA `0xCD4` 开始，因此它的 `Name` 字段位于：
+
+```text
+Name 字段 FOA = 0xCD4 + 0x0C
+              = 0xCE0
+```
+
+FOA `0xCE0` 的 4 字节是：
+
+```text
+52 23 00 00 -> RVA 0x2352
+```
+
+`Name = 0x2352` 指向 DLL 名称字符串。把它换算成 FOA：
 
 ```text
 DLL 名称 FOA = 0xC00 + (0x2352 - 0x2000)
@@ -291,109 +274,125 @@ DLL 名称 FOA = 0xC00 + (0x2352 - 0x2000)
  U  S  E  R  3  2  .  d  l  l \0
 ```
 
-所以第一个描述符属于 `USER32.dll`。`Name` 指向的这里只是 DLL 名称字符串，不包含 USER32.dll 的文件本体或函数代码；该 DLL 的导入查找表与 IAT 位置分别由描述符中的另外两个 RVA 给出。
+![010 Editor 根据 Name 字段定位 USER32.dll 字符串](cracking-3-images/010-user32-name-string.png)
 
-## 两张 thunk 表如何找到 API 名称
+所以第一个描述符属于 `USER32.dll`，模板将它编号为 `ImportDescriptor[0]`。这里的 `[0]` 只表示它是数组第一项；如果 USER32 出现在第二个描述符中，编号就会是 `[1]`。
 
-现在已经知道第一个描述符属于 USER32.dll，但还没有说明 `CreateWindowExA` 从哪里来。答案位于 `OriginalFirstThunk` 和 `FirstThunk` 指向的两张表中。
+### 读取 USER32 描述符的两个表起点
 
-### 什么是 thunk 表项
+现在已经确认 FOA `0xCD4` 是 USER32 描述符，再读取它的第一个和最后一个字段：
 
-在本章语境中，可以先把 **thunk** 理解为“保存下一步查找信息或调用地址的表项”。当前样本是 PE32，所以每个 thunk 表项占 4 字节；表项连续排列，以一个全零项结束。
+| 字段                 | 字段 FOA | 原始字节      | 小端序值     | 下一步用途    |
+| -------------------- | -------- | ------------- | ------------ | ------------- |
+| `OriginalFirstThunk` | `0xCD4`  | `A4 21 00 00` | RVA `0x21A4` | 查找 API 名称 |
+| `FirstThunk`         | `0xCE4`  | `6C 20 00 00` | RVA `0x206C` | 定位 IAT 槽位 |
 
-Microsoft PE 规范把 `OriginalFirstThunk` 指向的表称为 **Import Lookup Table（ILT，导入查找表）**。很多逆向资料也把它称为 **Import Name Table（INT，导入名称表）**；`INT` 是常见别称，不是 Windows SDK 中另一个独立字段。本章使用 `INT/ILT` 表示同一个对象。
+<!-- TODO: 010 Editor 截图：展开 ImportDescriptor[0] 和 DUMMYUNIONNAME，同屏显示 OriginalFirstThunk=0x21A4、Name=0x2352、FirstThunk=0x206C；让 Characteristics 与 OriginalFirstThunk 显示相同起点 0xCD4，并高亮原始字节 A4 21 00 00。说明两者是 union 中同一个 DWORD 的两个名称，模板分别用十进制 8612 和十六进制 21A4h 显示。 -->
 
-两张表的起点是：
+![010 Editor 展开 USER32 导入描述符的五个字段](cracking-3-images/010-user32-import-descriptor.png)
 
-```text
-INT/ILT 起点 = OriginalFirstThunk = RVA 0x21A4
-IAT 起点     = FirstThunk         = RVA 0x206C
-```
-
-转换成文件偏移：
+模板把第一个 DWORD 显示成名为 `DUMMYUNIONNAME` 的 union，其中有 `Characteristics` 和 `OriginalFirstThunk` 两种解释。两行都从 FOA `0xCD4` 开始，共用原始字节 `A4 21 00 00`，不是两个连续字段：
 
 ```text
-INT/ILT FOA = 0xC00 + (0x21A4 - 0x2000) = 0xDA4
-IAT FOA     = 0xC00 + (0x206C - 0x2000) = 0xC6C
+Characteristics    = 8612（十进制）
+OriginalFirstThunk = 0x21A4（十六进制）
 ```
 
-在 010 Editor 中分别按 <kbd>Ctrl</kbd> + <kbd>G</kbd> 跳到 FOA `0xDA4` 和 `0xC6C`，按每 4 字节一项读取。模板结果同时列出 `ImportByName[0]` 到 `ImportByName[20]`，说明 USER32 有 21 个名称项；两张表在第 22 个 DWORD 处都出现全零结束项。
+本章分析普通导入，因此按 `OriginalFirstThunk = RVA 0x21A4` 解释。中间的 `TimeDateStamp` 和 `ForwarderChain` 与绑定导入有关，本例都为 `0`，不参与当前主线。
 
-逐项比较全部 21 个非零 DWORD，结果都相同。下表只摘录本章马上要用到的前 6 项：
+## 从 USER32 描述符找到 CreateWindowExA
 
-<!-- TODO: 010 Editor 截图：USER32 导入总览，显示 ImportByName[0] 到 ImportByName[20]、后续其他三个 ImportDescriptor，并尽量保留上方 INT 或 IAT 末尾的全零 DWORD。 -->
+现在已经确认第一个描述符属于 `USER32.dll`。接下来只追踪一个目标：先找到 `CreateWindowExA` 的名称记录，再找到程序调用它时使用的 IAT 槽位。
 
-| 索引 | INT/ILT 表项 | 磁盘 IAT 表项 | 名称               |
-| ---- | ------------ | ------------- | ------------------ |
-| `0`  | `0x22C8`     | `0x22C8`      | `PostQuitMessage`  |
-| `1`  | `0x2232`     | `0x2232`      | `UpdateWindow`     |
-| `2`  | `0x2262`     | `0x2262`      | `RegisterClassExA` |
-| `3`  | `0x22A2`     | `0x22A2`      | `GetWindowLongA`   |
-| `4`  | `0x2242`     | `0x2242`      | `ShowWindow`       |
-| `5`  | `0x2250`     | `0x2250`      | `CreateWindowExA`  |
-
-完整比较证明本例磁盘中的 INT 和 IAT 初始内容一致。这些数值是装载器使用的初始 thunk 值，还不是运行时函数地址；每一项究竟表示名称结构 RVA 还是导入序号，要检查其最高位后才能确定。两张表在装载时承担的职责也不同：
-
-- 装载器通过 INT/ILT 读取每个导入项的查找信息。
-- 装载器把解析得到的函数地址写入 IAT。
-- 程序代码在运行时读取 IAT，不需要反复按名称查找函数。
-
-> [!NOTE]- 为什么需要两张初始内容相同的表
-> 装载器填写 IAT 后，其中的初始 thunk 值会被函数地址覆盖。保留独立的 INT/ILT，可以继续保存导入查找信息，并支持绑定等 PE 机制。某些 PE 的 `OriginalFirstThunk` 可以为零，此时装载器会改用 `FirstThunk` 中的初始查找信息；这属于兼容情况，不是本样本的布局。
-
-### 用索引定位 CreateWindowExA
-
-010 Editor 把 USER32 的名称项显示为 `ImportByName[0]` 到 `ImportByName[20]`。`CreateWindowExA` 是第 6 项，因此从零开始的索引是 `5`。
-
-PE32 每个 thunk 占 4 字节，所以它在 INT 中的位置为：
+描述符中的两个字段分别提供起点：
 
 ```text
-INT 表项 RVA = 0x21A4 + 5 * 4
-             = 0x21B8
-
-INT 表项 FOA = 0xDA4 + 5 * 4
-             = 0xDB8
+OriginalFirstThunk = RVA 0x21A4  -> 从这里查找 API 名称
+FirstThunk         = RVA 0x206C  -> 从这里定位 IAT 槽位
 ```
 
-FOA `0xDB8` 的 4 字节为：
+先沿 `OriginalFirstThunk` 查名称。确认名称和索引后，再使用同一个索引计算 IAT 槽位；这样不需要同时在两张表之间来回切换。
+
+### 先沿 OriginalFirstThunk 查名称
+
+Microsoft PE 规范把 `OriginalFirstThunk` 指向的表称为 **Import Lookup Table（ILT，导入查找表）**。很多逆向资料也称它为 **Import Name Table（INT，导入名称表）**；这两个名称指的是同一张表，本章简写为 `INT`。
+
+INT 可以看成一个连续数组。当前样本是 PE32，每个表项固定占 4 字节，保存下一步查找 API 所需的信息；最后再用一个全零表项标记结束。这里的“4 字节”只指 INT 表项本身，不是它稍后指向的 API 名称结构大小。
+
+`OriginalFirstThunk = 0x21A4` 是 RVA。将它换算成 FOA：
 
 ```text
-50 22 00 00 -> 0x2250
+INT 起点 FOA = 0xC00 + (0x21A4 - 0x2000)
+             = 0xDA4
 ```
 
-同一个索引在 IAT 中的位置为：
+没有模板时，从 FOA `0xDA4` 开始逐项查找：每次读取 4 字节；如果表项全零，说明 INT 已经结束；如果表项最高位为 0，就把读出的值当作名称结构 RVA，换算成 FOA 后跳过 2 字节 `Hint`，再读取 API 名称。
+
+先读取第 1 项：
 
 ```text
-IAT 表项 RVA = 0x206C + 5 * 4
-             = 0x2080
-
-IAT 表项 FOA = 0xC6C + 5 * 4
-             = 0xC80
-
-IAT 表项 VA  = ImageBase + RVA
-             = 0x400000 + 0x2080
-             = 0x402080
+INT 表项 FOA 0xDA4
+→ 原始字节 C8 22 00 00
+→ 名称结构 RVA 0x22C8
+→ 名称结构 FOA 0xEC8
+→ API 名称 PostQuitMessage
 ```
 
-FOA `0xC80` 在磁盘中同样保存：
+它不是目标，所以下一项从 FOA `0xDA8` 开始。按相同方法继续，前 6 项的查找结果是：
 
 ```text
-50 22 00 00 -> 0x2250
+FOA 0xDA4 → RVA 0x22C8 → PostQuitMessage
+FOA 0xDA8 → RVA 0x2232 → UpdateWindow
+FOA 0xDAC → RVA 0x2262 → RegisterClassExA
+FOA 0xDB0 → RVA 0x22A2 → GetWindowLongA
+FOA 0xDB4 → RVA 0x2242 → ShowWindow
+FOA 0xDB8 → RVA 0x2250 → CreateWindowExA
 ```
 
-这就解释了 IDA 中出现的 IAT 地址 `0x402080`。它不是模板直接给出的神秘常量，而是 `FirstThunk` 起点加上第 6 个 PE32 表项的偏移。
-
-### 解析 thunk 表项 0x2250
-
-PE32 thunk 表项的最高位用于区分两种导入方式。`0x2250` 的最高位没有设置，因此它表示**按名称导入**，其余位保存名称结构的 RVA。把它换算成文件偏移：
+到第 6 项才找到 `CreateWindowExA`。索引从 `0` 开始，因此第 6 项的索引是 `5`。它在 INT 中的位置也可以直接计算：
 
 ```text
-IMAGE_IMPORT_BY_NAME FOA
-    = 0xC00 + (0x2250 - 0x2000)
-    = 0xE50
+第 6 个 INT 表项 FOA = 0xDA4 + 5 * 4
+                     = 0xDB8
 ```
 
-按 <kbd>Ctrl</kbd> + <kbd>G</kbd> 跳到 FOA `0xE50`，可以看到以下原始字节：
+FOA `0xDB8` 到 `0xDBB` 的 4 字节为：
+
+```text
+50 22 00 00
+```
+
+按小端序读取，表项中保存的值是：
+
+```text
+RVA 0x2250
+```
+
+这里必须区分“表项的位置”和“表项保存的值”：
+
+| 对象                 | 坐标与数值   | 含义                        |
+| -------------------- | ------------ | --------------------------- |
+| 第 6 个 INT 表项位置 | FOA `0xDB8`  | 去文件中的哪里读取这 4 字节 |
+| INT 表项保存的值     | RVA `0x2250` | 这 4 字节指向下一步哪个结构 |
+
+010 Editor 模板自动执行了上述逐项解析，所以在 `ImportDescriptor[0]` 下把这一项显示为 `ImportByName[5] = CreateWindowExA`。方括号中的 `[5]` 就是刚才手工得到的索引；该节点“开始”列中的 FOA `0xE50` 是名称结构的位置，不是 INT 表项自身的 FOA `0xDB8`。
+
+<!-- TODO: 010 Editor 截图：在 ImportDescriptor[0] 下定位 ImportByName[5]，显示值 CreateWindowExA、开始 FOA 0xE50，并保留 OriginalFirstThunk=0x21A4。 -->
+
+![010 Editor 将 CreateWindowExA 解析为 ImportByName 第六项](cracking-3-images/010-createwindowexa-import-by-name.png)
+
+### 沿 RVA 0x2250 读取 API 名称
+
+PE32 的 INT 表项有两种解释：最高位为 1 时表示按序号导入；最高位为 0 时，其余位是一个 `IMAGE_IMPORT_BY_NAME` 结构的 RVA。本例的 `0x2250` 最高位为 0，所以它指向名称结构。
+
+把 RVA `0x2250` 换算成 FOA：
+
+```text
+名称结构 FOA = 0xC00 + (0x2250 - 0x2000)
+             = 0xE50
+```
+
+按 <kbd>Ctrl</kbd> + <kbd>G</kbd> 跳到 FOA `0xE50`，可以看到：
 
 ```text
 55 00 43 72 65 61 74 65 57 69 6E 64 6F 77 45 78 41 00
@@ -401,7 +400,7 @@ IMAGE_IMPORT_BY_NAME FOA
 Hint  ASCII 名称与结尾 NUL
 ```
 
-开头的 `55 00` 按小端序读成 `0x0055`，换成十进制是 `85`。后续字节按 ASCII 读取为 `CreateWindowExA`，最后的 `00` 是字符串结束符。由此可以确认，RVA `0x2250` 指向一个 `IMAGE_IMPORT_BY_NAME` 结构：
+`IMAGE_IMPORT_BY_NAME` 由一个固定的 2 字节 `Hint` 和一个不定长的 NUL 结尾字符串组成：
 
 | 字段   | FOA      | 大小    | 本例内容                       |
 | ------ | -------- | ------- | ------------------------------ |
@@ -411,82 +410,96 @@ Hint  ASCII 名称与结尾 NUL
 
 <!-- TODO: 010 Editor 截图：展开 ImportByName[5]，显示 Hint=85、Name[16]=CreateWindowExA，并让上方高亮 FOA 0xE50 开始的原始字节；Name[16] 的长度包含结尾 NUL。 -->
 
-模板将 15 个可见字符和结尾 NUL 合并显示为 `Name[16]`；上表为了让字符串边界更清楚，将 NUL 单独列出。
+![010 Editor 展开 CreateWindowExA 名称的字节和结尾 NUL](cracking-3-images/010-createwindowexa-name-bytes.png)
 
-`Hint` 可以帮助装载器优先尝试 DLL 导出名称表中的某个位置，但它不是函数地址，也不能在不核对名称的情况下当作可靠序号。真正指定导入对象的是后面的 `CreateWindowExA` 字符串。
+开头的 `55 00` 按小端序读成 `0x0055`，即十进制 `85`；后面的字节组成 `CreateWindowExA`。因此，INT 的第 6 项确实记录了这个 API 名称。
 
-> [!NOTE]- 按序号导入是什么
-> PE32 thunk 的最高位为 1 时，该项表示按序号导入，低 16 位保存 ordinal，而不是指向 `IMAGE_IMPORT_BY_NAME`。本章追踪的 `0x2250` 最高位为 0，因此只需按名称导入这条路径。两种方式不应同时套用到同一个表项。
+表项和它指向的结构大小不同：INT 表项始终只有 4 字节，而 `IMAGE_IMPORT_BY_NAME` 的总大小会随 API 名称长度变化。010 Editor 中 `ImportByName[5]` 的“开始”列显示 `0xE50`，表示名称结构的 FOA，不是第 6 个 INT 表项所在的 FOA `0xDB8`。
 
-### 模板树顺序不等于文件排列顺序
+> [!NOTE]- Hint 和按序号导入
+> `Hint` 只是帮助装载器查找导出名称的提示值，真正指定本次导入对象的是 `CreateWindowExA` 字符串。如果 INT 表项最高位为 1，则该项表示按序号导入，不再指向 `IMAGE_IMPORT_BY_NAME`；本例不走这条路径。
 
-010 Editor 将 `ImportByName[0]` 到 `ImportByName[20]` 作为 `ImportDescriptor[0]` 的子节点列出，方便查看 USER32 的所有名称。但这些结构在文件中并不按子节点编号连续排列。例如：
+### 用同一个索引定位 IAT 槽位
+
+现在已经通过 INT 的第 6 项确认 API 名称。描述符中的 `FirstThunk = 0x206C` 指向 USER32 对应的 **IAT（Import Address Table，导入地址表）** 起点。
+
+INT 和 IAT 按相同索引对应同一个 API：INT 的第 6 项记录 `CreateWindowExA` 的查找信息，IAT 的第 6 项则是 Windows 将要填写、程序运行时将要读取的地址槽位。因此仍使用索引 `5`：
 
 ```text
-ImportByName[0]  PostQuitMessage   FOA 0xEC8
-ImportByName[1]  UpdateWindow      FOA 0xE32
-ImportByName[5]  CreateWindowExA   FOA 0xE50
+IAT 槽位 RVA = 0x206C + 5 * 4
+             = 0x2080
+
+IAT 槽位 FOA = 0xC00 + (0x2080 - 0x2000)
+             = 0xC80
+
+IAT 槽位 VA  = 0x400000 + 0x2080
+             = 0x402080
 ```
 
-模板是沿 INT 中保存的 RVA 逐项跳转后生成这些节点，树形层级表达的是“谁引用谁”，不是磁盘中的连续物理布局。要确认文件位置，应查看模板的“开始”列或亲自进行 RVA 到 FOA 的换算。
+这三个地址表示同一个 IAT 槽位在不同坐标系中的位置：
+
+| 坐标 | 地址       | 用途                               |
+| ---- | ---------- | ---------------------------------- |
+| RVA  | `0x2080`   | 描述槽位相对映像基址的位置         |
+| FOA  | `0xC80`    | 在磁盘文件中查看槽位的初始 4 字节  |
+| VA   | `0x402080` | 程序运行时由 `call` 读取的内存地址 |
+
+FOA `0xC80` 中的初始 4 字节也是：
+
+```text
+50 22 00 00 -> RVA 0x2250
+```
+
+这不表示 INT 和 IAT 是同一张表。第 6 个 INT 表项位于 FOA `0xDB8`，第 6 个 IAT 表项位于 FOA `0xC80`；它们只是磁盘初值相同。在普通未绑定导入中，Windows 会保留 INT 中的名称查找信息，并把解析出的函数地址写入 IAT。
+
+到这里不需要再检查 USER32 的其他表项。只追踪索引 `5`，就建立了本章需要的对应关系：
+
+```text
+OriginalFirstThunk = RVA 0x21A4
+└─ INT 第 6 项位于 FOA 0xDB8
+   └─ 保存 RVA 0x2250
+      └─ FOA 0xE50: "CreateWindowExA"
+
+FirstThunk = RVA 0x206C
+└─ IAT 第 6 个槽位
+   ├─ RVA 0x2080
+   ├─ FOA 0xC80
+   └─ VA  0x402080
+```
+
+这也解释了 IDA 为什么把 `0x402080` 命名为 `CreateWindowExA`：它沿导入描述符和 INT 找到名称，再把同一索引对应到 IAT 槽位。
 
 ## Windows 如何填写 IAT
 
-到这里，磁盘文件已经提供了装载器需要的全部线索：
-
-```text
-ImportDescriptor[0]
-├─ Name -> "USER32.dll"
-├─ OriginalFirstThunk -> USER32 的 INT/ILT
-│  └─ 第 6 项 -> IMAGE_IMPORT_BY_NAME "CreateWindowExA"
-└─ FirstThunk -> USER32 的 IAT
-   └─ 第 6 个槽位 -> RVA 0x2080 / VA 0x402080
-```
+010 Editor 已经证明磁盘中的 IAT 槽位初值为 `0x2250`，它仍然指向名称结构，不是 USER32 中的函数地址。接下来要解释 Windows 如何把这个初值变成程序可以调用的地址。
 
 Windows 创建进程并映射 PE 时，会在执行程序入口之前处理普通导入。对本章追踪的这一项，可以把过程理解为：
 
-1. 从导入描述符的 `Name` 找到字符串 `USER32.dll`。
+1. 从导入描述符的 `Name` 找到 `USER32.dll`。
 2. 确保 USER32.dll 已装入当前进程。
-3. 遍历 `OriginalFirstThunk` 指向的 INT/ILT。
-4. 从第 6 项找到 `IMAGE_IMPORT_BY_NAME` 中的 `CreateWindowExA`。
-5. 根据 USER32.dll 的导出信息解析该函数在本次进程中的地址。
-6. 将解析结果写入 `FirstThunk` 对应的第 6 个 IAT 槽位 `0x402080`。
+3. 从 INT 的第 6 项找到名称 `CreateWindowExA`。
+4. 在 USER32.dll 的导出信息中解析该函数本次运行的地址。
+5. 把结果写入同一索引对应的 IAT 槽位。
 
-这个过程发生在 `phox.1.exe` 的入口 `0x401450` 开始执行之前。因此，即使 x32dbg 还停在系统断点或程序入口，普通 IAT 通常已经填写完成。
-
-磁盘证据只能证明 IAT 槽位的初值是名称结构 RVA `0x2250`。根据普通导入的装载过程，可以预期 Windows 会在执行入口前覆盖这个值，但实际写入了哪个地址、该地址是否确实属于 USER32.dll，还需要从运行中的进程读取。
-
-无论函数地址怎样变化，IAT 槽位本身与当前模块的关系是：
+本例的目标槽位是 RVA `0x2080`。如果 `phox.1.exe` 仍装载在基址 `0x400000`，它在进程中的地址就是：
 
 ```text
-IAT 槽位 VA = 本模块实际基址 + IAT 槽位 RVA
+IAT 槽位 VA = 模块基址 + 槽位 RVA
+            = 0x400000 + 0x2080
+            = 0x402080
 ```
 
-本次 `phox.1.exe` 若仍装载在 `0x400000`，槽位地址就是 `0x400000 + 0x2080 = 0x402080`；槽位里由装载器填写的 USER32 函数地址则必须以调试器实测为准。
+`FirstThunk = 0x206C` 指向 USER32 的 IAT 起点，索引 `5` 对应的第 6 个槽位位于 RVA `0x2080`。因此，程序运行时要查看的就是 VA `0x402080`。
 
-> [!NOTE]- 整个 IAT 如何容纳四个 DLL
-> 数据目录中的 IAT 范围是 RVA `0x2000-0x20C3`，大小为 `0xC4`。四个 DLL 各自通过 `FirstThunk` 指向其中一段：
->
-> | DLL            | `FirstThunk` | 非零槽位数 | 结束零项 |
-> | -------------- | ------------ | ---------- | -------- |
-> | `GDI32.dll`    | `0x2000`     | 4          | `0x2010` |
-> | `KERNEL32.dll` | `0x2014`     | 4          | `0x2024` |
-> | `MSVCRT.dll`   | `0x2028`     | 16         | `0x2068` |
-> | `USER32.dll`   | `0x206C`     | 21         | `0x20C0` |
->
-> 每段以零槽位结束，连续拼在一起后覆盖整个 IAT 数据目录。导入描述符与各段 IAT 的排列顺序并不相同，因此定位时应跟随每个描述符的 `FirstThunk`，不能依赖列表顺序。
-
-<!-- TODO: 010 Editor 截图：跳到 IAT 的 FOA 0xC00，显示四段初始 thunk 值及位于 FOA 0xC10、0xC24、0xC68、0xCC0 的结束零项；无需在一张图中展示全部 API 名称。 -->
-
-到这里，010 Editor 阶段已经回答了“IDA 的名称从哪里来”：`USER32.dll`、`CreateWindowExA` 和 IAT 槽位 RVA `0x2080` 都能从磁盘结构逐步推出。剩下的问题是装载后的槽位内容，以及 CPU 是否真的沿这个槽位进入 USER32.dll。
+静态文件只能告诉我们该槽位的初值是 `0x2250`。Windows 实际写入了哪个函数地址，还要到运行中的进程里观察。
 
 ## 用 x32dbg 验证运行时调用
 
-010 Editor 解释了磁盘结构，接下来用 x32dbg 回答两个运行时问题：`0x402080` 当前保存什么，以及 CPU 是否真的通过它进入 USER32.dll。
+这一阶段只回答两个问题：运行时的 `[0x402080]` 保存什么，以及 CPU 执行 `call [0x402080]` 后是否真的进入 `CreateWindowExA`。
 
 ### 查看装载器填写后的槽位
 
-用 x32dbg 打开 `phox.1.exe`，停在程序入口 `0x401450` 时，Windows 已经完成普通导入解析。在 Dump 窗口按 <kbd>Ctrl</kbd> + <kbd>G</kbd>，输入 `0x402080`，按 DWORD（4 字节、32 位整数）查看该位置。
+用 x32dbg 打开 `phox.1.exe`，停在程序入口 `0x401450` 时，Windows 已经完成普通导入解析。在 Dump 窗口按 <kbd>Ctrl</kbd> + <kbd>G</kbd>，输入 `0x402080`，按 DWORD 查看该位置。
 
 <!-- TODO: x32dbg 截图：程序停在入口时，Dump 跳到当前模块基址 + 0x2080，显示槽位的实际 4 字节和小端 DWORD；同时用符号或注释证明同一实际地址解析为 USER32.CreateWindowExA。若地址与正文不同，统一更新本节所有实测值。 -->
 
@@ -494,21 +507,21 @@ IAT 槽位 VA = 本模块实际基址 + IAT 槽位 RVA
 
 ```text
 地址        原始字节       小端序 DWORD
-0x402080    B0 E6 B3 74  -> 0x74B3E6B0
+0x402080    B0 E6 BB 75  -> 0x75BBE6B0
 ```
 
-在 x32dbg 的表达式框中查询 `user32.CreateWindowExA`，结果同样是 `0x74B3E6B0`。现在把磁盘初值、运行时槽位和符号查询结果放在一起比较。
+这 4 字节表示地址，不是字符串，所以 Dump 右侧的 ASCII 列出现不可读字符是正常现象。把它按小端序读成 DWORD，才能得到函数地址 `0x75BBE6B0`。
 
-现在才能把磁盘与运行内存中的同一个逻辑槽位并排比较：
+在 x32dbg 的表达式框中查询 `user32:CreateWindowExA`，结果同样是 `0x75BBE6B0`。现在可以比较同一个 IAT 槽位装载前后的内容：
 
-| 阶段     | 位置          | 4 字节        | 解释                  |
+| 阶段     | 槽位位置      | 4 字节        | 解释                  |
 | -------- | ------------- | ------------- | --------------------- |
 | 磁盘文件 | FOA `0xC80`   | `50 22 00 00` | 名称结构 RVA `0x2250` |
-| 当前进程 | VA `0x402080` | `B0 E6 B3 74` | 函数地址 `0x74B3E6B0` |
+| 当前进程 | VA `0x402080` | `B0 E6 BB 75` | 函数地址 `0x75BBE6B0` |
 
-磁盘中的 `0x2250` 用于按名称查找；运行内存中的槽位已经变成 `0x74B3E6B0`，表达式查询又将同一地址解析为 `USER32.CreateWindowExA`。三项证据共同证明 Windows 已经用本次运行的函数地址覆盖 IAT 槽位。
+磁盘中的 `0x2250` 用于查找名称；运行内存中的 `0x75BBE6B0` 是 Windows 解析后写入的函数地址。表达式查询又将该地址识别为 `USER32.CreateWindowExA`，因此三项证据能够互相对应。
 
-这里的 `0x74B3E6B0` 不是 PE 文件中的固定值。DLL 版本、Windows 版本和 ASLR 都可能使它在另一台机器或另一次运行中发生变化；正文记录的只是本次调试结果。
+这里的 `0x75BBE6B0` 只属于本次调试，不能把它当作 PE 文件中的固定值。ASLR 也不表示每次重新启动 `phox.1.exe` 都必须换一个地址；系统 DLL 在同一次 Windows 启动期间通常会保持相同的装载基址，因此反复关闭并打开样本时可能看到相同结果。重启 Windows、更新系统 DLL 或换到另一台机器后，这个地址都可能变化。
 
 ### 在调用点观察间接跳转
 
@@ -520,28 +533,32 @@ call dword ptr ds:[0x00402080]
 
 <!-- TODO: x32dbg 截图：在 0x4010A8 断下，CPU 窗口显示 call dword ptr ds:[0x00402080]，同时让右侧或底部可见目标解析为 USER32.CreateWindowExA。 -->
 
-此时尚未执行 `call`。可以按下面的顺序验证 CPU 使用了哪个地址：
+![x32dbg 在 CreateWindowExA 间接调用前断下并解析 IAT 目标](cracking-3-images/x32dbg-createwindowexa-call-site.png)
 
-1. 在 Dump 中确认 `[0x402080] = 0x74B3E6B0`。
+方括号表示 CPU 要先读取地址 `0x402080` 中的内容。按下面的顺序验证：
+
+1. 在 Dump 中确认 `[0x402080] = 0x75BBE6B0`。
 2. 按一次 <kbd>F7</kbd> 单步进入当前调用。
-3. 确认 `EIP` 到达 `0x74B3E6B0`，x32dbg 将其标为 `USER32.CreateWindowExA`。
-4. 查看栈顶，返回地址应为调用后的下一条指令 `0x4010AE`。
+3. 确认 `EIP` 到达 `0x75BBE6B0`，并由 x32dbg 将其识别为 `USER32.CreateWindowExA`。
+4. 查看栈顶，确认返回地址为下一条指令 `0x4010AE`。
 
 <!-- TODO: x32dbg 截图：F7 进入后显示 EIP 位于 USER32.CreateWindowExA，栈顶返回地址为 0x4010AE。实际 USER32 地址以截图环境为准。 -->
 
-这次单步把机器指令的语义完整验证出来了：
+![x32dbg 单步进入 USER32 CreateWindowExA 并显示返回地址](cracking-3-images/x32dbg-createwindowexa-entry.png)
+
+这次单步验证了整条运行时路径：
 
 ```text
 0x4010A8 执行 call [0x402080]
               ↓
-读取 IAT 槽位中的 0x74B3E6B0
+读取 IAT 槽位中的 0x75BBE6B0
               ↓
 压入返回地址 0x4010AE
               ↓
 EIP 跳到 USER32.CreateWindowExA
 ```
 
-IDA、010 Editor 和 x32dbg 至此看到的是同一条导入链，而不是三个互不相关的界面结果。
+至此，三个工具分别完成了自己的任务：IDA 找到调用点，010 Editor 从磁盘结构证明名称和槽位的对应关系，x32dbg 则证明 Windows 已填入函数地址，而且 CPU 确实通过该槽位完成调用。
 
 ## 回到 IDA：IAT 对逆向有什么用
 
@@ -583,15 +600,13 @@ call esi
 
 ### IAT 也可能成为动态观察点
 
-因为多个调用点可能共用同一个 IAT 槽位，调试时可以围绕该槽位观察程序行为。例如检查槽位内容是否被改写，或者跟随其值进入系统 DLL。某些软件和恶意代码也会通过 **IAT Hook** 把槽位改成自己的函数地址，从而截获原本的 API 调用。
-
-本章只观察 Windows 正常填写的 IAT，不修改槽位，也不展开 Hook 实现。现阶段需要记住的是：IAT 位于进程内存中，代码真正使用的是槽位当前保存的值，而不是磁盘文件中最初的名称 RVA。
+因为多个调用点可能共用同一个 IAT 槽位，调试时可以直接查看槽位当前保存的地址，或者跟随该地址进入系统 DLL。现阶段需要记住的是：代码使用的是进程内存中 IAT 槽位的当前值，不是磁盘文件中最初的名称 RVA。
 
 ## 常见误区
 
 ### 把导入目录当成 IAT
 
-导入目录从 RVA `0x20D4` 开始，首先是多个 `IMAGE_IMPORT_DESCRIPTOR`；IAT 从 RVA `0x2000` 开始，是一组运行时地址槽位。两者都服务于导入机制，但结构和用途不同。
+导入目录从 RVA `0x20D4` 开始，内容是多个 `IMAGE_IMPORT_DESCRIPTOR`；USER32 描述符中的 `FirstThunk = 0x206C` 则指向该 DLL 的 IAT 起点。描述符负责提供导入信息，IAT 槽位负责在运行时保存函数地址，两者不是同一种结构。
 
 ### 把 0x402080 当成函数入口
 
@@ -603,7 +618,7 @@ call esi
 
 ### 把 OriginalFirstThunk 和 FirstThunk 当成同一个字段
 
-两者在本样本的磁盘初始内容相同，但起点不同、职责也不同。`OriginalFirstThunk` 指向供装载器查找名称的 INT/ILT，`FirstThunk` 指向将被填写并供程序调用的 IAT。
+两者指向的表在本样本中具有相同的磁盘初始表项，但表的起点和职责不同。`OriginalFirstThunk` 指向供装载器查找名称的 INT/ILT，`FirstThunk` 指向将被填写并供程序调用的 IAT。
 
 ### 把 Hint 当成固定函数序号
 
@@ -611,7 +626,7 @@ call esi
 
 ### 认为 USER32 的实际地址永远相同
 
-本次运行中 IAT 槽位为 `0x74B3E6B0`，只代表当前系统和当前进程。分析其他环境时，应重新从 IAT、模块列表或符号解析中读取，不能照抄该地址。
+本次运行中 IAT 槽位为 `0x75BBE6B0`，只代表当前系统和当前进程。分析其他环境时，应重新从 IAT、模块列表或符号解析中读取，不能照抄该地址。
 
 ### 把 IDA 的 .idata 当成原始节名
 
@@ -624,59 +639,59 @@ call esi
 整条关系可以收拢为：
 
 ```text
+ImportDescriptor[0]
+├─ Name = RVA 0x2352
+│  └─ "USER32.dll"
+│
+├─ OriginalFirstThunk = RVA 0x21A4
+│  └─ INT 第 6 项位于 FOA 0xDB8
+│     └─ 保存 RVA 0x2250
+│        └─ FOA 0xE50: Hint 85, "CreateWindowExA"
+│
+└─ FirstThunk = RVA 0x206C
+   └─ IAT 第 6 个槽位
+      ├─ RVA 0x2080 / FOA 0xC80 / VA 0x402080
+      ├─ 磁盘初值：RVA 0x2250
+      └─ 装载后：[0x402080] = USER32.CreateWindowExA 的地址
+                               ↑
 0x4010A8: call dword ptr [0x402080]
-                         │
-                         ├─ IAT 槽位 RVA 0x2080 / FOA 0xC80
-                         │  磁盘初值：0x2250
-                         │
-ImportDescriptor[0]      ├─ FirstThunk = 0x206C
-USER32.dll               └─ 第 6 项，索引 5
-        │
-        ├─ OriginalFirstThunk = 0x21A4
-        │  第 6 项 -> RVA 0x2250
-        │
-        └─ IMAGE_IMPORT_BY_NAME at FOA 0xE50
-           Hint = 85
-           Name = "CreateWindowExA"
-
-Windows 装载后：
-[0x402080] = USER32.CreateWindowExA 的本次运行地址
 ```
 
 IAT 对逆向最直接的价值，是把难以理解的间接地址调用恢复成有行为含义的 API 名称，并让我们能从 API 交叉引用快速定位代码。理解磁盘结构和装载过程，则让这项分析结果不再是“IDA 自动显示出来的答案”：你已经知道名称来自哪里、地址何时被填写，以及 CPU 最终怎样使用它。
 
 ## 练习
 
-1. `GetWindowTextA` 是 USER32 导入列表中索引为 `10` 的项目。已知 `OriginalFirstThunk = 0x21A4`、`FirstThunk = 0x206C`，计算它的 INT 表项 RVA 和 IAT 表项 RVA。
+1. `GetWindowTextA` 是 USER32 导入列表中索引为 `10` 的项目。已知 `OriginalFirstThunk = 0x21A4`，计算它的 INT 表项 RVA 和 FOA。
 
    > [!NOTE]- 参考答案
    > PE32 每个 thunk 表项占 4 字节：
    >
    > ```text
    > INT RVA = 0x21A4 + 10 * 4 = 0x21CC
-   > IAT RVA = 0x206C + 10 * 4 = 0x2094
+   > INT FOA = 0xC00 + (0x21CC - 0x2000) = 0xDCC
    > ```
 
-2. 将上一题的 IAT RVA `0x2094` 换算为文件偏移和静态 VA。已知 `.rdata.PointerToRawData = 0xC00`、`.rdata.VirtualAddress = 0x2000`、`ImageBase = 0x400000`。
+2. `GetWindowTextA` 对应的 INT 表项保存 `0x22F4`。计算 `IMAGE_IMPORT_BY_NAME` 的 FOA，并说明该位置应包含什么。
 
    > [!NOTE]- 参考答案
    >
    > ```text
-   > FOA = 0xC00 + (0x2094 - 0x2000) = 0xC94
-   > VA  = 0x400000 + 0x2094 = 0x402094
-   > ```
-   >
-   > IDA 和 x32dbg 中的 `0x402094` 就是 `GetWindowTextA` 的 IAT 槽位。
-
-3. `GetWindowTextA` 对应的 INT 表项保存 `0x22F4`。计算 `IMAGE_IMPORT_BY_NAME` 的文件偏移，并说明该位置应包含什么。
-
-   > [!NOTE]- 参考答案
-   >
-   > ```text
-   > FOA = 0xC00 + (0x22F4 - 0x2000) = 0xEF4
+   > 名称结构 FOA = 0xC00 + (0x22F4 - 0x2000) = 0xEF4
    > ```
    >
    > 从 FOA `0xEF4` 开始先有 2 字节 `Hint`，随后是以 NUL 结尾的 ASCII 字符串 `GetWindowTextA`。
+
+3. 已知 `FirstThunk = 0x206C`，使用同一个索引 `10`，计算 `GetWindowTextA` 的 IAT 槽位 RVA、FOA 和静态 VA。
+
+   > [!NOTE]- 参考答案
+   >
+   > ```text
+   > IAT RVA = 0x206C + 10 * 4 = 0x2094
+   > IAT FOA = 0xC00 + (0x2094 - 0x2000) = 0xC94
+   > IAT VA  = 0x400000 + 0x2094 = 0x402094
+   > ```
+   >
+   > IDA 和 x32dbg 中的 `0x402094` 就是 `GetWindowTextA` 的 IAT 槽位。
 
 4. 为什么磁盘文件 FOA `0xC80` 中的 `0x2250` 与运行时 VA `0x402080` 中的函数地址不同？
 
@@ -686,9 +701,9 @@ IAT 对逆向最直接的价值，是把难以理解的间接地址调用恢复�
 5. `ImportDescriptor[0]` 表示 USER32.dll。为什么不能把它理解成 `CreateWindowExA` 的描述符？
 
    > [!NOTE]- 参考答案
-   > 一个导入描述符对应一个 DLL，并通过 `OriginalFirstThunk` 和 `FirstThunk` 指向该 DLL 的整组导入项。USER32 描述符下面有 21 个非零 thunk 项，`CreateWindowExA` 只是索引为 `5` 的其中一项。
+   > 一个导入描述符对应一个 DLL，并通过 `OriginalFirstThunk` 和 `FirstThunk` 指向该 DLL 的整组导入项。`CreateWindowExA` 只是 USER32 导入列表中索引为 `5` 的一项，不是一个独立的 DLL 描述符。
 
-6. x32dbg 在 `0x4010A8` 执行 `call dword ptr [0x402080]` 前断下。已知当前 `[0x402080] = 0x74B3E6B0`，这次调用应怎样改变 `EIP` 和栈？还应检查什么，才能确认目标确实是 `CreateWindowExA`？
+6. x32dbg 在 `0x4010A8` 执行 `call dword ptr [0x402080]` 前断下。已知当前 `[0x402080] = 0x75BBE6B0`，这次调用应怎样改变 `EIP` 和栈？还应检查什么，才能确认目标确实是 `CreateWindowExA`？
 
    > [!NOTE]- 参考答案
-   > CPU 先读取 IAT 槽位中的 `0x74B3E6B0`，把下一条指令地址 `0x4010AE` 压入栈，再把 `EIP` 改为 `0x74B3E6B0`。还应使用 x32dbg 的符号解析或模块信息确认 `0x74B3E6B0` 位于 USER32.dll，并对应 `CreateWindowExA`；不能只因它看起来像 DLL 地址就直接下结论。
+   > CPU 先读取 IAT 槽位中的 `0x75BBE6B0`，把下一条指令地址 `0x4010AE` 压入栈，再把 `EIP` 改为 `0x75BBE6B0`。还应使用 x32dbg 的符号解析或模块信息确认 `0x75BBE6B0` 位于 USER32.dll，并对应 `CreateWindowExA`；不能只因它看起来像 DLL 地址就直接下结论。
