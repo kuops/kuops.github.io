@@ -9,11 +9,7 @@ order: 24
 
 上一章一直追踪 `phox.1.exe` 的程序入口，最终把磁盘中的机器码与运行时执行的指令对应起来。但一个 Windows 程序不只执行 exe 自己的代码。双击运行这个样本后，程序会先弹出标题为 `CrackMe` 的提示框；点击“确定”后，才会显示标题为 `PhoX' CrackMe` 的主窗口。
 
-<!-- TODO: 程序运行截图：显示标题为 CrackMe、正文以 "Ok...ur first task" 开头的启动提示框。 -->
-
 ![PhoX CrackMe 启动时显示的 CrackMe 提示框](cracking-3-images/crackme-startup-nag.png)
-
-<!-- TODO: 程序运行截图：关闭提示框后显示的 PhoX' CrackMe 主窗口，用于提出“窗口由谁创建”的问题。 -->
 
 ![PhoX CrackMe 主窗口包含两个输入框和 OK 按钮](cracking-3-images/crackme-main-window.png)
 
@@ -50,15 +46,11 @@ Windows 将这些可供程序调用的功能组织成 **API（Application Progra
 
 选择 **View -> Open subviews -> Imports**，可以看到 IDA 从 PE 导入信息中恢复出的 DLL 和函数名称。现在要寻找创建窗口的候选函数，因此先查看名称中包含 `Window` 的项目，再从中找到 `CreateWindowExA`。
 
-<!-- TODO: IDA 截图：Imports 窗口定位 CreateWindowExA，显示模块 USER32 和地址 0x402080。 -->
-
 ![IDA Imports 窗口选中 USER32 的 CreateWindowExA 导入项](cracking-3-images/ida-imports-createwindowexa.png)
 
 这一行显示三项直接观察结果：函数名是 `CreateWindowExA`，来自 `USER32`，地址为 `0x402080`。函数名说明它可能负责创建窗口，但名称本身还不能证明它创建的就是刚才看到的主窗口；还要检查调用位置和参数。
 
 双击 `CreateWindowExA` 进入这个地址项，再按 <kbd>X</kbd> 查看哪些代码引用了它。
-
-<!-- TODO: IDA 截图：在 CreateWindowExA 导入项查看 xref，显示 WinMain(...)+A8 的 p/r、sub_4010FB+1F4 的 r，以及 sub_4010FB+1FA、+231、+26A 的 p；选中 WinMain(...)+A8 的 p 引用。 -->
 
 ![IDA 显示 CreateWindowExA 地址项及其交叉引用列表](cracking-3-images/ida-createwindowexa-xrefs-overview.png)
 
@@ -102,8 +94,6 @@ _WinMain@16 起点 + 函数内偏移
 0x4010A7  push esi
 0x4010A8  call ds:CreateWindowExA
 ```
-
-<!-- TODO: IDA 截图：跳到 0x4010A8，显示 call ds:CreateWindowExA、上方 12 个参数压栈，并让 WindowName 注释中的 "PhoX' CrackMe" 可见；若当前界面已开启指令字节显示，再让 FF 15 80 20 40 00 出现在同一行。 -->
 
 ![IDA 在 WinMain 中显示 CreateWindowExA 调用及窗口标题参数](cracking-3-images/ida-createwindowexa-call-site.png)
 
@@ -186,9 +176,13 @@ NtHeader
 | ---------- | -------- | ------ | ------------------ |
 | `Import`   | `0x20D4` | `0x64` | 定位导入描述符数组 |
 
-<!-- TODO: 010 Editor 截图：展开 NtHeader -> OptionalHeader -> DataDirArray，突出显示 Import 的 RVA 0x20D4 和大小 0x64；本节不讲 ImportAddressTable 数据目录，截图尽量不要让它成为视觉重点。 -->
-
 ![010 Editor 展开 Import 数据目录项并显示 RVA 和大小](cracking-3-images/010-import-directory-entry.png)
+
+模板父节点摘要中的 `size = 100` 使用十进制，展开后的 `Size = 64h` 使用十六进制；两者表示同一个大小：
+
+```text
+100（十进制）= 0x64（十六进制）
+```
 
 `Import` 数据目录指向一个导入描述符数组。数组中的每个有效描述符对应一个 DLL，并通过字段继续指向该 DLL 的名称和导入项。这里的 `0x20D4` 是 RVA，不能直接当作文件偏移使用，因此先利用 `.rdata` 的节信息将它换算成 FOA。上一章读到 `.rdata` 的字段为：
 
@@ -287,8 +281,6 @@ DLL 名称 FOA = 0xC00 + (0x2352 - 0x2000)
 | `OriginalFirstThunk` | `0xCD4`  | `A4 21 00 00` | RVA `0x21A4` | 查找 API 名称 |
 | `FirstThunk`         | `0xCE4`  | `6C 20 00 00` | RVA `0x206C` | 定位 IAT 槽位 |
 
-<!-- TODO: 010 Editor 截图：展开 ImportDescriptor[0] 和 DUMMYUNIONNAME，同屏显示 OriginalFirstThunk=0x21A4、Name=0x2352、FirstThunk=0x206C；让 Characteristics 与 OriginalFirstThunk 显示相同起点 0xCD4，并高亮原始字节 A4 21 00 00。说明两者是 union 中同一个 DWORD 的两个名称，模板分别用十进制 8612 和十六进制 21A4h 显示。 -->
-
 ![010 Editor 展开 USER32 导入描述符的五个字段](cracking-3-images/010-user32-import-descriptor.png)
 
 模板把第一个 DWORD 显示成名为 `DUMMYUNIONNAME` 的 union，其中有 `Characteristics` 和 `OriginalFirstThunk` 两种解释。两行都从 FOA `0xCD4` 开始，共用原始字节 `A4 21 00 00`，不是两个连续字段：
@@ -299,6 +291,18 @@ OriginalFirstThunk = 0x21A4（十六进制）
 ```
 
 本章分析普通导入，因此按 `OriginalFirstThunk = RVA 0x21A4` 解释。中间的 `TimeDateStamp` 和 `ForwarderChain` 与绑定导入有关，本例都为 `0`，不参与当前主线。
+
+这两个字段指向两张索引一一对应的表，但职责不同：
+
+```text
+OriginalFirstThunk -> INT
+装载器的输入：记录要查找的 API 名称或序号
+
+FirstThunk -> IAT
+装载器的输出：保存解析得到的真实函数地址
+```
+
+本例磁盘中的 INT 和 IAT 初始表项相同，都保存名称查找信息。Windows 装载程序时读取 INT，再把查到的函数地址写入相同索引的 IAT 槽位；因此装载后 INT 仍保留查找信息，IAT 则变成程序真正使用的函数地址表。这就是本章先沿 `OriginalFirstThunk` 找到 `CreateWindowExA` 及其索引，再沿 `FirstThunk` 用同一个索引定位调用槽位的原因。
 
 ## 从 USER32 描述符找到 CreateWindowExA
 
@@ -318,6 +322,8 @@ FirstThunk         = RVA 0x206C  -> 从这里定位 IAT 槽位
 Microsoft PE 规范把 `OriginalFirstThunk` 指向的表称为 **Import Lookup Table（ILT，导入查找表）**。很多逆向资料也称它为 **Import Name Table（INT，导入名称表）**；这两个名称指的是同一张表，本章简写为 `INT`。
 
 INT 可以看成一个连续数组。当前样本是 PE32，每个表项固定占 4 字节，保存下一步查找 API 所需的信息；最后再用一个全零表项标记结束。这里的“4 字节”只指 INT 表项本身，不是它稍后指向的 API 名称结构大小。
+
+读取一个 INT 表项后，要先检查这个 32 位值的最高位：最高位为 `0` 时，其余位是 `IMAGE_IMPORT_BY_NAME` 的 RVA；最高位为 `1` 时，低 16 位表示导入序号。本例追踪的表项最高位为 `0`，因此沿名称结构继续查找。
 
 `OriginalFirstThunk = 0x21A4` 是 RVA。将它换算成 FOA：
 
@@ -377,13 +383,11 @@ RVA 0x2250
 
 010 Editor 模板自动执行了上述逐项解析，所以在 `ImportDescriptor[0]` 下把这一项显示为 `ImportByName[5] = CreateWindowExA`。方括号中的 `[5]` 就是刚才手工得到的索引；该节点“开始”列中的 FOA `0xE50` 是名称结构的位置，不是 INT 表项自身的 FOA `0xDB8`。
 
-<!-- TODO: 010 Editor 截图：在 ImportDescriptor[0] 下定位 ImportByName[5]，显示值 CreateWindowExA、开始 FOA 0xE50，并保留 OriginalFirstThunk=0x21A4。 -->
-
 ![010 Editor 将 CreateWindowExA 解析为 ImportByName 第六项](cracking-3-images/010-createwindowexa-import-by-name.png)
 
 ### 沿 RVA 0x2250 读取 API 名称
 
-PE32 的 INT 表项有两种解释：最高位为 1 时表示按序号导入；最高位为 0 时，其余位是一个 `IMAGE_IMPORT_BY_NAME` 结构的 RVA。本例的 `0x2250` 最高位为 0，所以它指向名称结构。
+第 6 个 INT 表项保存 `0x2250`，它的最高位为 `0`，所以这个值是一个 `IMAGE_IMPORT_BY_NAME` 结构的 RVA。
 
 把 RVA `0x2250` 换算成 FOA：
 
@@ -407,8 +411,6 @@ Hint  ASCII 名称与结尾 NUL
 | `Hint` | `0x0E50` | 2 字节  | `85`，即十六进制 `0x0055`      |
 | `Name` | `0x0E52` | 15 字节 | ASCII 字符串 `CreateWindowExA` |
 | 结尾   | `0x0E61` | 1 字节  | NUL `0x00`                     |
-
-<!-- TODO: 010 Editor 截图：展开 ImportByName[5]，显示 Hint=85、Name[16]=CreateWindowExA，并让上方高亮 FOA 0xE50 开始的原始字节；Name[16] 的长度包含结尾 NUL。 -->
 
 ![010 Editor 展开 CreateWindowExA 名称的字节和结尾 NUL](cracking-3-images/010-createwindowexa-name-bytes.png)
 
@@ -481,7 +483,7 @@ Windows 创建进程并映射 PE 时，会在执行程序入口之前处理普�
 4. 在 USER32.dll 的导出信息中解析该函数本次运行的地址。
 5. 把结果写入同一索引对应的 IAT 槽位。
 
-本例的目标槽位是 RVA `0x2080`。如果 `phox.1.exe` 仍装载在基址 `0x400000`，它在进程中的地址就是：
+本例的目标槽位是 RVA `0x2080`。PE 可选头中的 `ImageBase = 0x400000` 是首选基址；上一章又通过 x32dbg Memory Map 确认本次运行的实际模块基址确实是 `0x400000`，因此它在当前进程中的地址是：
 
 ```text
 IAT 槽位 VA = 模块基址 + 槽位 RVA
@@ -500,8 +502,6 @@ IAT 槽位 VA = 模块基址 + 槽位 RVA
 ### 查看装载器填写后的槽位
 
 用 x32dbg 打开 `phox.1.exe`，停在程序入口 `0x401450` 时，Windows 已经完成普通导入解析。在 Dump 窗口按 <kbd>Ctrl</kbd> + <kbd>G</kbd>，输入 `0x402080`，按 DWORD 查看该位置。
-
-<!-- TODO: x32dbg 截图：程序停在入口时，Dump 跳到当前模块基址 + 0x2080，显示槽位的实际 4 字节和小端 DWORD；同时用符号或注释证明同一实际地址解析为 USER32.CreateWindowExA。若地址与正文不同，统一更新本节所有实测值。 -->
 
 本次运行读到：
 
@@ -531,9 +531,15 @@ IAT 槽位 VA = 模块基址 + 槽位 RVA
 call dword ptr ds:[0x00402080]
 ```
 
-<!-- TODO: x32dbg 截图：在 0x4010A8 断下，CPU 窗口显示 call dword ptr ds:[0x00402080]，同时让右侧或底部可见目标解析为 USER32.CreateWindowExA。 -->
-
 ![x32dbg 在 CreateWindowExA 间接调用前断下并解析 IAT 目标](cracking-3-images/x32dbg-createwindowexa-call-site.png)
+
+反汇编窗口下方的信息栏显示：
+
+```text
+dword ptr ds:[00402080 <phox.1.CreateWindowExA>]=<user32.CreateWindowExA>
+```
+
+等号左边是 `phox.1.exe` 中的 IAT 槽位，右边是槽位当前指向的 USER32 函数。这与前面读取 `[0x402080]` 和查询符号得到的结果一致。
 
 方括号表示 CPU 要先读取地址 `0x402080` 中的内容。按下面的顺序验证：
 
@@ -541,8 +547,6 @@ call dword ptr ds:[0x00402080]
 2. 按一次 <kbd>F7</kbd> 单步进入当前调用。
 3. 确认 `EIP` 到达 `0x75BBE6B0`，并由 x32dbg 将其识别为 `USER32.CreateWindowExA`。
 4. 查看栈顶，确认返回地址为下一条指令 `0x4010AE`。
-
-<!-- TODO: x32dbg 截图：F7 进入后显示 EIP 位于 USER32.CreateWindowExA，栈顶返回地址为 0x4010AE。实际 USER32 地址以截图环境为准。 -->
 
 ![x32dbg 单步进入 USER32 CreateWindowExA 并显示返回地址](cracking-3-images/x32dbg-createwindowexa-entry.png)
 
@@ -626,7 +630,7 @@ call esi
 
 ### 认为 USER32 的实际地址永远相同
 
-本次运行中 IAT 槽位为 `0x75BBE6B0`，只代表当前系统和当前进程。分析其他环境时，应重新从 IAT、模块列表或符号解析中读取，不能照抄该地址。
+本次运行中 IAT 槽位保存的函数地址为 `0x75BBE6B0`，只代表当前系统和当前进程。分析其他环境时，应重新从 IAT、模块列表或符号解析中读取，不能照抄该地址。
 
 ### 把 IDA 的 .idata 当成原始节名
 
