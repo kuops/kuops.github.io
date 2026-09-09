@@ -84,30 +84,33 @@ src/data/books/reverse-engineering/
 - [x] 重构 c-asm-10（结构体）— 已完成，含对齐/padding/嵌套/柔性数组/反推结构体
 - [x] 审查 asm-memory.md — 已删除，内容移至破解篇
 
-#### 破解篇 — 1/7 已发布，1 章草稿
+#### 破解篇 — 3/8 已发布，1 章草稿
 
 > 2026-07-27 样本调研后规划。已对 `~/crackme/a.chm` 中可提取的 157 个 ZIP 做不执行的静态筛选：识别到 155 个 PE32 对象、42 个 VB 运行时样本、11 个 MFC 样本和 12 个 UPX 样本。主线按单一教学目标选择小型样本；反调试不复用库中任务不明的样本，改用可控的自建训练程序。
+>
+> 2026-09-08 将原 UPX 全流程拆成两章：`cracking-4` 只完成壳识别、解压过程观察和 OEP 定位；`cracking-5` 从已确认的 OEP 继续完成 Dump、入口点修正、IAT 重建和脱壳文件验证。拆分后每章只解决一个核心问题，避免把“怎样回到原程序”和“怎样恢复可独立运行文件”混成一次长实验。
 
-**样本准备清单：** 以下编号是 `~/crackme/a.chm` 的目录编号。除第 6 章外，写作前均需解压并分别加载到 IDA 与 x32dbg。
+**样本准备清单：** 以下编号是 `~/crackme/a.chm` 的目录编号。除自建样本章节外，写作前均需解压并分别加载到 IDA 与 x32dbg。
 
 | CHM 编号 | 压缩包 | 章节职责 | 准备状态 |
 |---|---|---|---|
 | 129 | `phox.2.zip` | `cracking-1`：从 GUI 线索定位验证逻辑 | 已发布 |
-| 128 | `phox.1.zip` | `cracking-2`、`cracking-3`：PE、装载和导入 | `cracking-2` 草稿中 |
-| 108 | `Acid Bytes.2.zip` | `cracking-4`：UPX 脱壳 | 待准备 |
-| 154 | `The_q.2.zip` | `cracking-5`：Name/Serial 验证算法 | 已准备 |
-| 自建 | `anti-debug-demo.exe` | `cracking-6`：反调试与完整性检查 | 待创建 |
-| 100 | `Acid_Cool_178.1.zip` | `cracking-7`：Patch 与行为验证 | 待准备 |
+| 128 | `phox.1.zip` | `cracking-2`、`cracking-3`：PE、装载和导入 | 已发布 |
+| 108 | `Acid Bytes.2.zip` | `cracking-4`：UPX 与 OEP；`cracking-5`：Dump 与 IAT 修复 | 已完成静态检查和 OEP 动态验证 |
+| 154 | `The_q.2.zip` | `cracking-6`：Name/Serial 验证算法 | 已准备 |
+| 自建 | `anti-debug-demo.exe` | `cracking-7`：反调试与完整性检查 | 待创建 |
+| 100 | `Acid_Cool_178.1.zip` | `cracking-8`：Patch 与行为验证 | 待准备 |
 
 | Order | 文件 | 标题 | 样本 | 内容要点 |
 |---|---|---|---|---|
 | 22 | cracking-1.md | 从线索定位验证逻辑 | `phox.2.zip`（#129） | PhoX CrackMe 5.1：从失败提示、字符串、xref、导入函数和伪代码定位 `check_serial`，再用 x32dbg 验证输入到比较目标的完整数据流。已发布 |
-| 23 | cracking-2.md | PE 文件与映像布局 | `phox.1.zip`（#128） | 磁盘文件与内存映像的对应关系；DOS 头、PE 头、节表、文件偏移、RVA、VA、节对齐、入口点；用 010 Editor 和 IDA 对照 `phox.1` 的四个节 |
-| 24 | cracking-3.md | Windows 装载、导入表与 IAT | `phox.1.zip`（#128） | 装载器如何映射节、解析导入描述符和填充 IAT；从 `.idata`、Imports 窗口到 `CreateWindowExA`、`GetWindowTextA` 等真实调用；区分磁盘导入表和内存 IAT |
-| 25 | cracking-4.md | UPX 脱壳：从壳入口到 OEP | `Acid Bytes.2.zip`（#108） | UPX 1.01 壳的节与入口特征；在 x32dbg 中识别解压 stub、定位 OEP、Dump 内存映像、检查并修复 IAT；`Acid Bytes.2` 随包说明明确面向新手，保护目标单一为 Serial |
-| 26 | cracking-5.md | Name/Serial 验证算法 | `The_q.2.zip`（#154） | 从对话框控件读取最多 8 字节名称和数值 Serial；名称补位、逐字节加法/XOR、循环移位与最终比较；静态还原后用断点验证数据流与成功分支 |
-| 27 | cracking-6.md | 反调试与完整性检查 | 自建 `anti-debug-demo.exe` | 使用可控源码分别展示 `IsDebuggerPresent`、PEB 调试标志、`CheckRemoteDebuggerPresent`、简单时间检测和代码完整性校验；在 x32dbg 中观察检测点与失败路径，避免将多个未知保护机制混入一个样本 |
-| 28 | cracking-7.md | 二进制 Patch 与行为验证 | `Acid_Cool_178.1.zip`（#100） | 定位第三个 `MessageBoxA` 的 Nag 调用，选择最小补丁，记录原始字节与修改后字节，重启验证并说明静态补丁与运行时修改的边界。随包 MASM 源码仅用于章节末尾核对，不在逆向过程前展示 |
+| 23 | cracking-2.md | PE 文件与映像布局 | `phox.1.zip`（#128） | 磁盘文件与内存映像的对应关系；DOS 头、PE 头、节表、文件偏移、RVA、VA、节对齐、入口点；用 010 Editor 和 IDA 对照 `phox.1` 的四个节。已发布 |
+| 24 | cracking-3.md | 从导入表到 API 调用 | `phox.1.zip`（#128） | 从 IDA 的 `CreateWindowExA` 调用出发，用 010 Editor 验证 USER32 描述符、INT 名称项和 IAT 槽位，再用 x32dbg 确认装载器填写的函数地址与间接调用。已发布 |
+| 25 | cracking-4.md | UPX 壳入口与 OEP 定位 | `Acid Bytes.2.zip`（#108） | 识别 UPX 1.01 标记、`UPX0`/`UPX1` 节和位于 `UPX1` 的入口；在 x32dbg 中观察解压 stub 从 `UPX0` 起点写入数据，使用 ESP 硬件访问断点停在 `popad` 后的跳转，并动态确认 OEP 为 VA `0x442E44` / RVA `0x42E44`。本章不 Dump 文件、不分析 Serial。 |
+| 26 | cracking-5.md | Dump、IAT 修复与脱壳验证 | `Acid Bytes.2.zip`（#108） | 从 `cracking-4` 已确认的 OEP 继续，Dump 当前内存映像，修正入口点，搜索并重建导入表/IAT，保存脱壳文件；重新启动并用 IDA 检查原程序代码和完整导入，形成可复现的脱壳验证闭环。 |
+| 27 | cracking-6.md | Name/Serial 验证算法 | `The_q.2.zip`（#154） | 从对话框控件读取最多 8 字节名称和数值 Serial；名称补位、逐字节加法/XOR、循环移位与最终比较；静态还原后用断点验证数据流与成功分支 |
+| 28 | cracking-7.md | 反调试与完整性检查 | 自建 `anti-debug-demo.exe` | 使用可控源码分别展示 `IsDebuggerPresent`、PEB 调试标志、`CheckRemoteDebuggerPresent`、简单时间检测和代码完整性校验；在 x32dbg 中观察检测点与失败路径，避免将多个未知保护机制混入一个样本 |
+| 29 | cracking-8.md | 二进制 Patch 与行为验证 | `Acid_Cool_178.1.zip`（#100） | 定位第三个 `MessageBoxA` 的 Nag 调用，选择最小补丁，记录原始字节与修改后字节，重启验证并说明静态补丁与运行时修改的边界。随包 MASM 源码仅用于章节末尾核对，不在逆向过程前展示 |
 
 #### 游戏篇 — 待开始
 
